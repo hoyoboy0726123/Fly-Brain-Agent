@@ -11,11 +11,9 @@ concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-env:
-  # Every job runs on the committed synthetic fixture and the committed escape_v1 circuit
-  # artifact. Nothing downloads the MaleCNS dataset (data/raw is git-ignored and untouched).
-  FLYBRAIN_ENVIRONMENT: test
-
+# Every job runs on the committed synthetic fixture and the committed escape_v1 circuit
+# artifact. Nothing downloads the MaleCNS dataset (data/raw is git-ignored and untouched).
+# No FLYBRAIN_* variables are set: the suites exercise the defaults a developer gets locally.
 jobs:
   backend:
     name: backend (python ${{ matrix.python-version }})
