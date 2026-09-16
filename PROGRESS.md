@@ -4,8 +4,8 @@
 |---|---|---|
 | P0 Bootstrap | ✅ Done (reviewer approved, merged PR #1) | backend/frontend/tests runnable |
 | P1 Data ingestion | ✅ Done (reviewer approved, PR #2); P1.1 canonical graph definition ✅ Done (reviewer approved, PR #3) | normalized data + provenance |
-| P2 Circuit extraction | ✅ Done (awaiting human confirmation) | deterministic bounded circuit |
-| P3 Simulation | ⬜ Not started | tested simplified dynamics |
+| P2 Circuit extraction | ✅ Done (reviewer approved, PR #4) | deterministic bounded circuit |
+| P3 Simulation | ✅ Done (awaiting human confirmation) | tested simplified dynamics |
 | P4 Escape | ⬜ Not started | stimulus → action |
 | P5 Web UI | ⬜ Not started | interactive end-to-end demo |
 | P6 Brain inspector | ⬜ Not started | inspectable provenance |
@@ -14,7 +14,7 @@
 | P9 Robot | ⬜ Future | safe physical adapter |
 
 ## Current Phase
-P2 (Graph & Circuit Extractor) complete. Stopped before P3, waiting for human confirmation.
+P3 (Neural Simulation Engine) complete. Stopped before P4, waiting for human confirmation.
 
 ## Blockers
 None recorded.
@@ -42,6 +42,12 @@ None recorded.
 - (P2) Extraction = multi-source BFS by hop level (downstream = out-edges, upstream = in-edges), `synapse_count >= min_synapses`, `max_neurons` checked *before* a hop level is added (hard abort, nothing truncated). The artifact is the induced subgraph: every canonical edge between included neurons above the threshold, stored pre→post regardless of traversal direction. Ids in configs are deduplicated and sorted, so output is independent of input order.
 - (P2) Targets only report reachability (`reachable`, `minimum_path_length` = BFS hop); no path is fabricated. Optional `restrict_to_target_paths` keeps neurons with `hop_from_seed + hop_to_target <= max_hops` (off by default).
 - (P2) Artifacts: `data/circuits/<id>.json` (full) + `<id>.parquet` (edges with the five provenance columns + schema metadata) sealed with a sha256 `circuit_hash`; `Circuit.load` verifies it. Large technical smoke circuits with real ids are git-ignored; the perf report and the fixture circuit are committed. New runtime dependency: `numpy`.
+- (P3) COMPUTATIONAL DYNAMICS layer = `backend/app/simulation/`: simplified discrete-time LIF-like model on a P2 `Circuit`. `SimulationConfig` is frozen pydantic, labelled **COMPUTATIONAL MODEL PARAMETERS — NOT MEASURED MALECNS PARAMETERS**; every output is SIMULATED and labelled so.
+- (P3) Weights: `w = transform(synapse_count) × weight_scale`, transform ∈ {log1p (default), linear, sqrt, binary}. `synapse_count` = structural observation; `w` = computational transformation, not an electrophysiological strength.
+- (P3) No excitatory/inhibitory sign is derived: `sign_mode = unsigned_excitatory_only` is the only mode. Neurotransmitter *predictions* ride along as `neurotransmitter_prediction` metadata and do not influence dynamics; a signed mode would need explicit implementation, documentation and justification.
+- (P3) Stimulus is generic input injection (`stimulate(neuron_ids, intensity, duration_steps)`); no sensory/behavioural naming. One-step synaptic delay; refractory neurons hold the reset potential and ignore input.
+- (P3) Snapshots reference the circuit by `circuit_id` + `circuit_hash` only; biological provenance is never copied into simulation artifacts. Large snapshots are git-ignored; run reports are committed.
+- (P3) Stability is a model property: on the dense 1,992-neuron technical subgraph the default parameters reverberate (period 3); `weight_scale ≈ 0.2` propagates then decays; ≤ 0.15 does not propagate. Recorded in NEUROSCIENCE.md §8; parameters must be recorded with every experiment.
 - (P1.1) **Source dataset ≠ canonical simulation graph** (DATA.md §8). SOURCE DATASET = MaleCNS v1.0, ≈166,700 neurons (project figure; equals the 166,700 bodies with a `superclass`; paper 166,691). CANONICAL SIMULATION GRAPH = `status == "Traced"`, 165,122 neurons, 25,563,197 connections. The canonical count is never presented as the dataset census. Both blocks are mandatory in `provenance.json` for biological data (`Provenance` validator), reported by `inspect_dataset.py`, written into the parquet schema metadata, and guarded by `tests/test_canonical_graph.py`. Traced filtering behaviour is unchanged.
 
 ---
@@ -300,3 +306,85 @@ Report file: `data/circuits/smoke_technical_extraction.perf.json`.
 1. `SimulationConfig` + weight normalization function from `synapse_count` (documented, config-driven).
 2. Discrete-time LIF-like engine over a `Circuit` artifact (vectorized numpy over the induced edge list), deterministic seed, stimulate/step/run/reset, activity snapshots; clearly labelled modeled, not measured.
 3. Tests: decay without input, firing with sufficient input, propagation across a fixture edge, deterministic reset; no inhibition unless a documented sign source exists (the canonical table has NT *predictions* only).
+
+---
+
+## P3 Report (2026-09-16) — Neural Simulation Engine
+
+### A. Simulation architecture (`backend/app/simulation/`, COMPUTATIONAL DYNAMICS layer)
+- `config.py` — `SimulationConfig` (frozen, `extra="forbid"`, label field pinned to "COMPUTATIONAL MODEL PARAMETERS — NOT MEASURED MALECNS PARAMETERS"): `dt`, `resting_potential`, `reset_potential`, `threshold`, `leak`, `refractory_steps`, `weight_transform`, `weight_scale`, `stimulus_gain`, `noise_std`, `max_potential`, `max_steps_per_run`, `random_seed`, `sign_mode`. Cross-field validation: `threshold > reset`, `threshold > resting`, `max_potential > threshold`, `0 ≤ leak·dt ≤ 1`, all values finite.
+- `weights.py` — `normalize_weights(counts, transform, scale)`; rejects negative/non-finite counts, non-positive/non-finite scale, unknown transform, non-finite results.
+- `engine.py` — `SimulationEngine(circuit, config)`: reads the circuit once (ids, edges, counts, NT metadata; edges to unknown nodes → `CircuitCompatibilityError`), builds per-neuron arrays (`threshold`, `reset_potential`, `leak` — heterogeneity hook) and mutable state (`membrane_potential`, `refractory_remaining`, `fired`). Methods `reset()`, `stimulate()`, `step()`, `run()`, `get_state()`, `get_activity()`, `snapshot()`, `from_snapshot()`; numpy-vectorised (`np.bincount` over the edge list for synaptic input).
+- `state.py` — `NeuronState`, `StimulusRecord`, `SimulationState`, `StepSummary`, `RunSummary`, `SimulationSnapshot` (JSON save/load).
+- `errors.py` — `CircuitCompatibilityError`, `UnknownNeuronError`, `InvalidStimulusError`, `NumericalInstabilityError`, `SimulationLimitError`, `SnapshotMismatchError`.
+- Scripts `scripts/run_simulation.py`, `scripts/smoke_simulation.py`; Makefile `simulate`, `smoke-simulation` (part of `smoke`); `Settings.simulations_data_dir`; outputs in `data/simulations/` (`*.report.json` tracked, `*.snapshot.json` ignored).
+- The three layers stay separate: BIOLOGICAL STRUCTURE (canonical graph, circuit artifact) → COMPUTATIONAL DYNAMICS (this engine) → APPLICATION DECODING (not implemented).
+
+### B. Equations / model
+Per step, for a non-refractory neuron *i* (model units):
+`V_i ← V_rest + (V_i − V_rest)(1 − leak·dt) + Σ_j w_ji·fired_j(prev) + gain·Σ intensity + N(0, noise_std)`;
+`V_i ← min(V_i, max_potential)`; NaN/Inf → `NumericalInstabilityError`;
+`fired_i ← V_i ≥ threshold` ⇒ `V_i = V_reset`, `refractory_i = refractory_steps`.
+Refractory neurons hold `V_reset`, ignore input, count down. Synaptic delay = one step. Defaults: dt 1.0, rest 0, reset 0, threshold 1.0, leak 0.2 (decay factor 0.8), refractory 2, noise 0, max_potential 100, max_steps_per_run 10,000, seed 0.
+
+### C. Weight normalization
+`w = transform(synapse_count) × weight_scale`, transform ∈ {`log1p` (default), `linear`, `sqrt`, `binary`}; configurable via `SimulationConfig`, tested for each transform (values, monotonicity, non-negativity, scale linearity, invalid inputs). Documented in NEUROSCIENCE.md §8 and SDD.md §6: synapse_count is the biological structural observation, the weight is a computational transformation. Signs: none invented (`unsigned_excitatory_only`).
+
+### D. Tests
+`pytest`: **205 passed** (134 previous + 71 new: config 28, weights 8, engine 27, snapshot 4, scripts 3). Coverage of the required list: reset; single neuron firing; threshold (inclusive, boundary); leak (geometric, configurable, non-zero rest, leak 0 and 1); refractory (blocks firing for N steps, holds reset, ignores input); weighted propagation (strong vs weak edge); multi-hop propagation with one-step delay (chain and fixture: hop k fires at step k+1, then activity stops and potentials return to rest); weight normalization (all transforms); explicit transform/scale changing dynamics; unsigned mode (no negative weights, NT metadata preserved but inert); determinism (with and without noise, seed sensitivity); unknown neuron; invalid stimuli (duration 0/negative/non-int, intensity negative/NaN/Inf/non-numeric, empty ids); run limits; NaN/Inf protection (state NaN, non-finite weights rejected, clamp keeps finite); incompatible circuits; state fields; activity raster; snapshot serialization + round trip; snapshot references circuit hash and carries no provenance; resume from snapshot equals uninterrupted run (RNG state restored); snapshot/circuit mismatch rejected; no biological metadata mutation (circuit unchanged and hash intact after runs); CLI scripts. `ruff check` clean; frontend typecheck unchanged. No test needs MaleCNS.
+
+### E. Technical smoke — TECHNICAL CONNECTOME-GROUNDED SIMULATION — NOT A BIOLOGICAL ACTIVITY CLAIM
+- Fixture demo (synthetic): stimulate `syn_001` (intensity 2.0, 3 steps) → seed fires at step 1, hop-1 neurons at step 2, hop-2 at step 3, then no firing for 27 steps and all potentials back at rest. PASS.
+- Real P2 circuit `smoke_technical_downstream_min10_hops2` (1,992 neurons / 36,755 edges, seed 10001 chosen mechanically in P2), generic stimulus intensity 2.0 for 5 steps, 50 steps:
+
+| Variant (`weight_scale`) | Neurons activated | Firing events | Activity stopped by step 40 | Pattern |
+|---|---:|---:|---|---|
+| default (1.0) | 1,992 | 31,900 | no | period-3 reverberation 1 → 27 → 1,964 |
+| 0.5 | 1,992 | 31,900 | no | same period-3 pattern |
+| 0.3 | 1,992 | 30,628 | no | sustained irregular (1, 2, 105, 211, 819, …) |
+| 0.2 | 10 | 11 | yes (quiet after step 8) | transient propagation then decay |
+| 0.15 / 0.1 / 0.05 | 1 | 2 | yes | seed only, no propagation |
+
+Report: `data/simulations/smoke_technical_simulation.report.json`. These outcomes describe the computational model on a positive-only dense subgraph; no behaviour or biological meaning is assigned.
+
+### F. Performance (this container)
+| Measure | Value |
+|---|---|
+| Engine build for 1,992 neurons / 36,755 edges | ≈ 9 ms |
+| Mean step time (default params, 1,000-step benchmark) | ≈ 0.19 ms/step |
+| Mean step time (damped, few spikes) | ≈ 0.11 ms/step |
+| 50-step run | ≈ 10 ms |
+| Peak RSS of the smoke process (incl. circuit load) | ≈ 184 MB |
+| Fixture (6 neurons) 30 steps | < 1 ms |
+
+The MVP target (≈ 2,000 neurons, tens of thousands of edges, interactive runs) is met with large margin; the full 165,122-neuron graph is intentionally not simulated.
+
+### Acceptance Criteria (P3)
+| Criterion | Result |
+|---|---|
+| simulation runs on P2 Circuit artifact | ✅ fixture and real technical circuit |
+| generic stimulus can trigger firing | ✅ |
+| firing propagates through structural edges | ✅ chain, fixture (hop k → step k+1), real circuit |
+| leak works | ✅ geometric decay tests |
+| refractory works | ✅ |
+| reset works | ✅ state equals a fresh engine |
+| deterministic replay works | ✅ incl. seeded noise and snapshot resume |
+| weight transformation is explicit | ✅ configurable, tested, documented |
+| no E/I sign is invented | ✅ single `unsigned_excitatory_only` mode; NT metadata inert |
+| numerical safeguards work | ✅ validation, clamp, NaN/Inf abort, run limits |
+| snapshots serialize | ✅ JSON round trip, circuit hash reference, resume |
+| tests pass | ✅ 205 |
+| technical MaleCNS smoke passes | ✅ |
+
+### G. Known limitations
+- Unsigned excitatory-only dynamics: with no inhibition, dense subgraphs either reverberate or stay silent depending on `weight_scale`; the transient regime is narrow (≈ 0.2 on the technical circuit). Signed dynamics need a justified sign source first.
+- Global parameters only (per-neuron arrays exist but are initialised from the global config); no synaptic delays other than one step; no conductance-based synapses; no adaptation.
+- `settled_to_rest` in the report only checks potentials at the final step and can read "true" during a reset-dominated oscillation; use `activity_stopped_in_last_10_steps` for activity.
+- Snapshots do not store the spike history, only the current state, stimuli and RNG state (activity logs are in the run report).
+- The engine runs in-process; no API/WebSocket streaming yet (P5).
+- Model units are dimensionless; nothing maps to mV or ms.
+
+### Next phase suggestions (P4 — do not start without confirmation)
+1. Research gate first: `docs/circuits/escape_v1.md` with defensible visual/looming input and descending output populations from authoritative MaleCNS annotations/literature; stop and document if the mapping cannot be verified (NEUROSCIENCE.md §5).
+2. Only then: `LoomingStimulus` → generic `stimulate()` mapping, selected circuit config, `MotorDecoder` (activity → IDLE/FORWARD/LEFT/RIGHT/ESCAPE_LEFT/ESCAPE_RIGHT), action enum, end-to-end experiment runner recording dataset/version, circuit hash, config, seed, stimulus, output (NEUROSCIENCE.md §6).
+3. If the biological mapping is uncertain, build the pipeline on the synthetic fixture and label it as such.

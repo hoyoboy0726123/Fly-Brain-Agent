@@ -74,6 +74,11 @@ class Settings(BaseSettings):
         return self.raw_data_dir / self.malecns_raw_subdir
 
     @property
+    def simulations_data_dir(self) -> Path:
+        """Simulation snapshots and reports (SIMULATED activity; large snapshots git-ignored)."""
+        return self.data_dir / "simulations"
+
+    @property
     def graph_cache_dir(self) -> Path:
         """Memory-mappable ``.npy`` cache of the canonical graph adjacency (git-ignored)."""
         return self.processed_data_dir / "graph_cache"

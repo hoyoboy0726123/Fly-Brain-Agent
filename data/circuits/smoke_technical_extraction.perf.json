@@ -4,7 +4,7 @@
     "neurons": 165122,
     "edges": 25563197,
     "selection_rule": "status == \"Traced\"",
-    "load_seconds": 0.262,
+    "load_seconds": 0.122,
     "cache_hit": true,
     "strategy": "neurons.parquet + memory-mapped .npy CSR cache",
     "array_bytes": 418258000
@@ -30,11 +30,11 @@
         "returned_neurons": 1992,
         "returned_edges": 36755,
         "examined_edges": 15060,
-        "extraction_seconds": 0.347465,
-        "graph_load_seconds": 0.166595,
+        "extraction_seconds": 0.339524,
+        "graph_load_seconds": 0.058033,
         "graph_cache_hit": true,
         "graph_memory_bytes": 418258000,
-        "process_max_rss_bytes": 584744960,
+        "process_max_rss_bytes": 475336704,
         "graph_strategy": "neurons.parquet + memory-mapped .npy CSR cache"
       },
       "targets": [
@@ -80,11 +80,11 @@
         "returned_neurons": 330,
         "returned_edges": 3129,
         "examined_edges": 695,
-        "extraction_seconds": 0.016995,
-        "graph_load_seconds": 0.166595,
+        "extraction_seconds": 0.01754,
+        "graph_load_seconds": 0.058033,
         "graph_cache_hit": true,
         "graph_memory_bytes": 418258000,
-        "process_max_rss_bytes": 811069440,
+        "process_max_rss_bytes": 617578496,
         "graph_strategy": "neurons.parquet + memory-mapped .npy CSR cache"
       },
       "targets": [],

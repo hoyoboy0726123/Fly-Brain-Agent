@@ -150,16 +150,32 @@ Artifacts must include source IDs and extraction configuration.
 - decode(activity) -> Action
 
 ## 6. Simulation Model
-MVP default: simplified discrete-time LIF.
+MVP default: simplified discrete-time LIF (implemented in P3, `backend/app/simulation/`).
 
-Conceptual state:
-- membrane potential V
-- threshold
-- leak
-- refractory state
-- spike state
+Conceptual state per neuron (all SIMULATED): membrane potential V, threshold, reset
+potential, leak, refractory_remaining, fired. Global `SimulationConfig` (pydantic, frozen,
+labelled **COMPUTATIONAL MODEL PARAMETERS — NOT MEASURED MALECNS PARAMETERS**): `dt`,
+`resting_potential`, `reset_potential`, `threshold`, `leak`, `refractory_steps`,
+`weight_transform`, `weight_scale`, `stimulus_gain`, `noise_std`, `max_potential`,
+`max_steps_per_run`, `random_seed`, `sign_mode`.
 
-Connection strength is derived from synapse_count through a documented normalization function.
+Update per step (see NEUROSCIENCE.md §8 for the full rule): leak toward rest with factor
+`1 − leak·dt`, add synaptic input from spikes of the previous step (one-step delay), add
+generic external input, clamp to `max_potential`, fire when `V ≥ threshold` (reset + refractory).
+
+Connection strength is derived from `synapse_count` through the documented, configurable
+normalization `w = transform(synapse_count) × weight_scale` (`log1p` default). Signs are not
+derived from the dataset: `sign_mode = unsigned_excitatory_only`.
+
+Engine interface (`SimulationEngine(circuit, config)`): `reset()`,
+`stimulate(neuron_ids, intensity, duration_steps)`, `step()`, `run(steps)`, `get_state()`,
+`get_activity()`, `snapshot(simulation_id)` / `from_snapshot(circuit, snapshot)`.
+Snapshots reference the circuit artifact by `circuit_id` + `circuit_hash`; biological
+provenance is never copied into them.
+
+Safeguards: validated configuration (finite values, `threshold > reset`, `max_potential >
+threshold`, `0 ≤ leak·dt ≤ 1`), unknown neuron ids / negative durations / non-finite
+intensities fail loudly, NaN/Inf aborts, `max_steps_per_run` bounds each run.
 
 All parameters live in configuration, not hard-coded in UI/API handlers.
 
