@@ -1,4 +1,22 @@
-"""APPLICATION DECODING layer: sensor adapters and stimulus mapping.
+"""APPLICATION DECODING layer (input side): stimuli and stimulus → current mapping (P4).
 
-Scheduled for P4 (Escape Behavior). Intentionally empty in P0.
+Stimuli are application inputs; the mapping to injected current is a computational rule.
 """
+
+from app.sensors.looming import (
+    DIRECTION_TO_SIDES,
+    MAPPING_LABEL,
+    LoomingSensorAdapter,
+    LoomingStimulus,
+    SensoryDrive,
+    StimulusMapper,
+)
+
+__all__ = [
+    "DIRECTION_TO_SIDES",
+    "MAPPING_LABEL",
+    "LoomingSensorAdapter",
+    "LoomingStimulus",
+    "SensoryDrive",
+    "StimulusMapper",
+]

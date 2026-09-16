@@ -46,6 +46,12 @@ For the Escape MVP:
 3. Store citations/URLs in `docs/circuits/escape_v1.md`.
 4. If the exact MCNS annotation mapping is uncertain, stop and document uncertainty rather than inventing neuron IDs.
 
+P4 outcome: `docs/circuits/escape_v1.md` — LC4 + LPLC2 (visual projection) → DNp01 (giant
+fiber), monosynaptic, **PARTIALLY SUPPORTED** (structure and identities supported; literature
+metadata-verified only; unsigned dynamics; no left/right decoding because the GF is
+azimuth-invariant). The decoded output is `ESCAPE` / `NO_ACTION`, described as "an action
+decoded from simulated activity on a biologically grounded structural circuit".
+
 ## 6. Reproducibility
 Every experiment records:
 - dataset/version

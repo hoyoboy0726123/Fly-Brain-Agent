@@ -1,4 +1,5 @@
-"""APPLICATION DECODING layer: motor decoder and action set.
+"""APPLICATION DECODING layer (output side): motor decoder and action set (P4)."""
 
-Scheduled for P4 (Escape Behavior). Intentionally empty in P0.
-"""
+from app.motor.decoder import DECODER_LABEL, Action, MotorDecision, MotorDecoder
+
+__all__ = ["DECODER_LABEL", "Action", "MotorDecision", "MotorDecoder"]
