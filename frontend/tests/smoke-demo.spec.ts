@@ -1,15 +1,11 @@
-import { mkdirSync } from 'node:fs'
-import path from 'node:path'
+import { expect, test } from '@playwright/test'
 
-import { expect, test, type Page } from '@playwright/test'
+import { RELEASE_VIEWPORT, shoot } from './helpers/screenshots'
 
 /**
  * P5 smoke demo: the three documented scenarios end to end (live backend, no mocking),
  * with screenshots saved under docs/screenshots/.
  */
-
-const SCREENSHOT_DIR = path.resolve(import.meta.dirname, '..', '..', 'docs', 'screenshots')
-mkdirSync(SCREENSHOT_DIR, { recursive: true })
 
 const SCENARIOS = [
   { name: 'center-0.2-no-action', direction: 'center', intensity: 0.2, action: 'NO ACTION', gf: 'None' },
@@ -17,12 +13,8 @@ const SCENARIOS = [
   { name: 'left-1.0-escape', direction: 'left', intensity: 1, action: 'ESCAPE', gf: 'Left' },
 ] as const
 
-async function shoot(page: Page, name: string): Promise<void> {
-  await page.screenshot({ path: path.join(SCREENSHOT_DIR, `${name}.png`), fullPage: false })
-}
-
 test.describe('P5 smoke demo', () => {
-  test.use({ viewport: { width: 1440, height: 900 } })
+  test.use({ viewport: RELEASE_VIEWPORT })
 
   test('idle dashboard', async ({ page }) => {
     await page.goto('/?pace=30')

@@ -1,6 +1,7 @@
 import type { ChangeEvent } from 'react'
 
 import { DIRECTIONS, type Direction } from '../api/types.ts'
+import { DEMO_PRESETS, EXPECTED_RESULT_LABEL, actionLabel, presetFor, type DemoPreset } from '../demo/presets.ts'
 import type { DemoPhase, DemoView } from '../demo/useEscapeDemo.ts'
 
 export interface EnvironmentPanelProps {
@@ -11,6 +12,7 @@ export interface EnvironmentPanelProps {
   view: DemoView
   onDirectionChange: (direction: Direction) => void
   onIntensityChange: (intensity: number) => void
+  onPreset: (preset: DemoPreset) => void
   onTrigger: () => void
   onReset: () => void
 }
@@ -33,6 +35,7 @@ export function EnvironmentPanel(props: EnvironmentPanelProps) {
   const loomVisible = radius > 0
   const loomState = view.stimulusActive ? 'active' : loomVisible ? 'held' : 'idle'
   const loomX = LOOM_X[direction]
+  const activePreset = presetFor(direction, intensity)
 
   const onSlider = (event: ChangeEvent<HTMLInputElement>) => props.onIntensityChange(Number(event.target.value))
   const onNumber = (event: ChangeEvent<HTMLInputElement>) => {
@@ -114,6 +117,33 @@ export function EnvironmentPanel(props: EnvironmentPanelProps) {
       </div>
 
       <div className="controls">
+        <fieldset className="control" disabled={busy}>
+          <legend className="control__label">
+            Demo presets <span className="muted">({EXPECTED_RESULT_LABEL.toLowerCase()} — not a biological threshold)</span>
+          </legend>
+          <div className="presets" role="group" aria-label="Demo presets">
+            {DEMO_PRESETS.map((preset) => (
+              <button
+                key={preset.id}
+                type="button"
+                className={`preset ${activePreset?.id === preset.id ? 'preset--selected' : ''}`}
+                aria-pressed={activePreset?.id === preset.id}
+                onClick={() => props.onPreset(preset)}
+                data-testid={`preset-${preset.id}`}
+                data-expected={preset.expected}
+              >
+                <span className="preset__label">{preset.label}</span>
+                <span className="preset__values mono">
+                  {preset.direction.toUpperCase()} / {preset.intensity.toFixed(1)}
+                </span>
+                <span className="preset__expected">
+                  {EXPECTED_RESULT_LABEL}: <strong>{actionLabel(preset.expected)}</strong>
+                </span>
+              </button>
+            ))}
+          </div>
+        </fieldset>
+
         <fieldset className="control" disabled={busy}>
           <legend className="control__label">Looming direction</legend>
           <div className="segmented" role="group" aria-label="Looming direction">

@@ -5,6 +5,7 @@ import { APP_SUBTITLE, APP_TITLE, DEFAULT_PACE_MS, DISCLAIMER, SCIENTIFIC_LABELS
 import { DemoView } from './demo/DemoView.tsx'
 import { useEscapeDemo, type DemoOptions } from './demo/useEscapeDemo.ts'
 import { InspectorView } from './inspector/InspectorView.tsx'
+import { Hero } from './landing/Hero.tsx'
 
 type View = 'demo' | 'inspector'
 
@@ -39,16 +40,28 @@ export function App() {
     setView(next)
     const hash = next === 'inspector' ? '#inspector' : ''
     window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}${hash}`)
+    window.scrollTo({ top: 0 })
+  }
+
+  const runDemo = () => {
+    demo.trigger()
+    window.setTimeout(() => document.getElementById('demo-panels')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50)
   }
 
   return (
     <div className="app">
-      <header className="app__header">
+      <header className={`app__header ${view === 'demo' ? 'app__header--landing' : ''}`}>
         <div className="app__brand">
-          <h1>{APP_TITLE}</h1>
-          <p className="subtitle" data-testid="subtitle">
-            {APP_SUBTITLE}
-          </p>
+          {view === 'demo' ? (
+            <Hero running={state.phase === 'requesting'} canRun={demo.intensityValid} onRunDemo={runDemo} onExplore={() => switchView('inspector')} />
+          ) : (
+            <>
+              <h1>{APP_TITLE}</h1>
+              <p className="subtitle" data-testid="subtitle">
+                {APP_SUBTITLE}
+              </p>
+            </>
+          )}
           <ul className="labels" data-testid="scientific-labels" aria-label="Scientific labelling">
             {labels.map((label) => (
               <li key={label} className="labels__item">

@@ -1,7 +1,7 @@
 {
   "name": "flybrain-agent-frontend",
   "private": true,
-  "version": "0.0.1",
+  "version": "0.1.0",
   "type": "module",
   "description": "FlyBrain Agent web UI: connectome-grounded escape demo + brain inspector (MVP v0.1)",
   "engines": {

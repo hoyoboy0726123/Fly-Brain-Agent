@@ -8,16 +8,17 @@
 | P3 Simulation | ✅ Done (reviewer approved, PR #5) | tested simplified dynamics |
 | P4 Escape | ✅ Done (reviewer approved, PR #6) — biological status PARTIALLY SUPPORTED | stimulus → action |
 | P5 Web UI | ✅ Done (reviewer approved, PR #7) | interactive end-to-end demo |
-| P6 Brain inspector | ✅ Done (awaiting human confirmation) — MVP v0.1 candidate | inspectable provenance |
+| P6 Brain inspector | ✅ Done (reviewer approved, PR #8) — MVP v0.1 APPROVED | inspectable provenance |
+| P6.1 Release polish | ✅ Done (awaiting human confirmation) — v0.1.0 release candidate, no tag | CI, one-command demo, presentation-ready docs |
 | P7 Food | ⬜ Future | second behavior |
 | P8 Webcam | ⬜ Future | camera stimulus adapter |
 | P9 Robot | ⬜ Future | safe physical adapter |
 
 ## Current Phase
-P6 (Brain Inspector & Provenance Explorer) complete — final phase of MVP v0.1. Stopped before P7, waiting for human confirmation.
+P6.1 (MVP Release Polish) complete — v0.1.0 release candidate. No tag or GitHub Release created (not authorized). Stopped before P7, waiting for human confirmation. Open decision: project code license.
 
 ## Blockers
-None recorded.
+- **Release blocker (human decision):** the repository has no project-code `LICENSE`; the dataset license (CC-BY 4.0) is documented separately. Choose a license before tagging v0.1.0.
 
 ## Decision Log
 - MVP is P0-P6.
@@ -67,6 +68,11 @@ None recorded.
 - (P6) Rendering: D3 (`d3-force` for a deterministic column/band layout — L/R columns, sensory rows above the output row, 220 relaxation ticks; `d3-zoom` for zoom/pan) over an SVG rendered by React; 286 nodes + 932 edges (+ 932 transparent hit lines). No Three.js. Node fill = cell type (biological identity); ring/glow = simulated state (inactive / active / fired / refractory) — two separate visual channels documented in the legend.
 - (P6) Layout positions are presentation only (no anatomical meaning); the UI states this. Search is exact-id or cell-type over loaded data (no invented autocomplete).
 - (P6) README documents MVP v0.1 (architecture chain, how to run, trigger looming, inspect a neuron, inspect provenance). Original PRD/README wording about `ESCAPE_LEFT / ESCAPE_RIGHT` is clarified: v0.1 decodes NO_ACTION / ESCAPE only (GF azimuth-invariant).
+- (P6.1) CI (`.github/workflows/ci.yml`): backend on Python 3.11 + 3.12 (ruff, pytest, smoke scripts), frontend on Node 22 (`npm ci`, typecheck, build), e2e (launcher `--check` / `--smoke`, full Playwright suite on the live backend). Everything runs on the synthetic fixture and the committed `escape_v1` artifact; CI never downloads MaleCNS; dataset-dependent smokes skip themselves.
+- (P6.1) One-command start: `make demo` → `scripts/run_demo.py` (pure Python, cross-platform, no absolute developer paths). It validates backend deps, escape config, the committed circuit artifact (integrity + configured hash + P4 consistency checks), npm and node_modules, and refuses to start with the fix command otherwise; `--check` and `--smoke` modes back `make demo-check` / `make demo-smoke` and CI.
+- (P6.1) Landing: hero (title, "Real fruit-fly connectome. Simulated neural activity. Observable behavior.", RUN LOOMING DEMO, EXPLORE THE BRAIN, qualifier) + four-step story strip (OBJECT APPROACHES → LC4 / LPLC2 ACTIVATE → SIGNAL REACHES GIANT FIBER → ESCAPE) driven by the replayed backend result; demo presets LOW / MEDIUM / HIGH labelled "Expected current model result" (never biological thresholds); manual controls unchanged. Scientific labels and disclaimer untouched.
+- (P6.1) Screenshots are curated: specs write to `frontend/test-results/screenshots/` (ignored) and `make screenshots` refreshes `docs/screenshots/` (`release-*` + `mvp-*`); the superseded `p5-*` set was removed. Version bumped to 0.1.0 (backend + frontend); `CURRENT_PHASE = "P6.1"`.
+- (P6.1) README rewritten as the presentation-ready entry point (one-liner, hero, story, Mermaid diagrams, quick start, scientific boundaries, inspector, provenance + attribution, testing + CI coverage, roadmap); the original Chinese brief is preserved verbatim in `docs/PROJECT_BRIEF.md`. `CHANGELOG.md` v0.1.0 added. No tag / release created. Project code license: not chosen — recorded as a release blocker, not invented.
 - (P1.1) **Source dataset ≠ canonical simulation graph** (DATA.md §8). SOURCE DATASET = MaleCNS v1.0, ≈166,700 neurons (project figure; equals the 166,700 bodies with a `superclass`; paper 166,691). CANONICAL SIMULATION GRAPH = `status == "Traced"`, 165,122 neurons, 25,563,197 connections. The canonical count is never presented as the dataset census. Both blocks are mandatory in `provenance.json` for biological data (`Provenance` validator), reported by `inspect_dataset.py`, written into the parquet schema metadata, and guarded by `tests/test_canonical_graph.py`. Traced filtering behaviour is unchanged.
 
 ---
@@ -514,7 +520,7 @@ Observed timelines: CENTER 0.5 → sensory step 3 (284 neurons), GF step 4 (both
 Invalid intensity 1.5 → HTTP 422. Report: `data/simulations/web_demo_smoke.report.json`. `make smoke` = backend health, data, circuit, simulation, escape, web, Playwright — all PASS.
 
 ### F. Screenshots (`docs/screenshots/`, 1440×900 unless noted)
-`p5-idle-dashboard.png`, `p5-center-0.2-no-action.png`, `p5-center-0.5-escape.png`, `p5-left-1.0-escape.png`, `p5-replay-step1-sensory.png` (sensory groups glowing at backend step 1), `p5-replay-step2-giant-fiber.png` (both GF nodes glowing at step 2), `p5-how-it-works.png` (BIOLOGICAL CIRCUIT STATUS: PARTIALLY SUPPORTED), `p5-tablet-1024x768.png`. Regenerated by `tests/smoke-demo.spec.ts` on every Playwright run.
+`p5-idle-dashboard.png`, `p5-center-0.2-no-action.png`, `p5-center-0.5-escape.png`, `p5-left-1.0-escape.png`, `p5-replay-step1-sensory.png` (sensory groups glowing at backend step 1), `p5-replay-step2-giant-fiber.png` (both GF nodes glowing at step 2), `p5-how-it-works.png` (BIOLOGICAL CIRCUIT STATUS: PARTIALLY SUPPORTED), `p5-tablet-1024x768.png`. *(P6.1: these were superseded by the curated `mvp-*` / `release-*` set and removed from the repository; `tests/smoke-demo.spec.ts` still produces them under `frontend/test-results/screenshots/`.)*
 
 ### Acceptance Criteria (P5)
 | Criterion | Status |
@@ -614,3 +620,54 @@ Only the loaded circuit is transferred: `/nodes` 286 items (~60 KB) + `/edges` 9
 1. Second behaviour (`food_v1`): research gate first (gustatory / olfactory sensory populations → descending or motor targets), same config + runner pattern.
 2. Snapshot export/import from the UI and a per-neuron voltage trace chart in the inspector.
 3. Optional `escape_v2` with DNp02/DNp04/DNp11 (forward/backward takeoff) once directional decoding is evidence-backed.
+
+---
+
+## P6.1 Report (2026-09-16) — MVP Release Polish (v0.1.0 candidate)
+
+### A. CI
+`.github/workflows/ci.yml` on `push` + `pull_request`, `permissions: contents: read`, per-ref concurrency. Jobs: **backend** (matrix Python 3.11 / 3.12; `pip install -e backend[dev]`; `ruff check` + `ruff format --check` on backend and scripts; `pytest`; smoke scripts `smoke_test`, `inspect_dataset --fixture` / `--allow-missing`, `smoke_circuit`, `smoke_simulation`, `smoke_escape`, `smoke_web_demo`), **frontend** (Node 22; `npm ci`; typecheck; production build), **e2e** (Python 3.12 + Node 22; `npx playwright install --with-deps chromium`; `scripts/run_demo.py --check` and `--smoke`; `npm run test:e2e` = all Playwright specs against the live backend; Playwright artifacts uploaded on failure). Data: synthetic fixture + committed `escape_v1` artifact only — no MaleCNS download (documented in README → Testing and DEVELOPMENT.md §2b). Badge added to README. First green run: #2 on `a0b4acc`, all four jobs success (see section L).
+
+### B. One-command startup
+`make demo` → `scripts/run_demo.py` (also `make demo-check`, `make demo-smoke`). Validation before start: backend deps importable; escape config loads; `data/circuits/escape_v1.json` exists, `Circuit.load(verify=True)` passes, hash equals `expected_circuit_hash`, `EscapeExperiment` consistency checks; `npm` on PATH; `node_modules` contains vite / react / react-dom / d3-force / d3-zoom / d3-selection. Failure output: `FlyBrain Agent cannot start:` + one bullet per problem with `Run: <command>`. Then: uvicorn (waits for `/health`), `npm run dev` (waits for the page and `/api/escape/config` through the proxy), prints Demo / Inspector / API docs URLs and the circuit hash + status, Ctrl+C stops both process groups (POSIX `killpg`, Windows `taskkill /T`). Ports configurable (`--backend-port`, `--frontend-port`, env `FLYBRAIN_*_PORT`), busy ports reported. Tests: `backend/tests/test_run_demo.py` (7).
+
+### C. Landing changes
+Hero above the fold (`frontend/src/landing/Hero.tsx`): **FlyBrain Agent** · "Real fruit-fly connectome. Simulated neural activity. Observable behavior." · **RUN LOOMING DEMO** (runs the current preset, scrolls to the panels) · **EXPLORE THE BRAIN** (opens the inspector) · qualifier "Connectome-grounded simulation using MaleCNS v1.0" · the three scientific labels · backend badge · Demo / Brain Inspector tabs. Story strip (`demo/StoryStrip.tsx`): OBJECT APPROACHES → LC4 / LPLC2 ACTIVATE → SIGNAL REACHES GIANT FIBER → ESCAPE with plain-language captions, states idle / happening now / done / did not happen / NO ACTION derived from the replayed backend result. The inspector header stays compact; technical detail remains in Brain Inspector, How this works and Provenance. Disclaimer unchanged in the footer.
+
+### D. README
+Rewritten: title + one-line description, CI / version / data / status badges, hero screenshot, "What happens when you click RUN LOOMING DEMO", two Mermaid diagrams (runtime path with the three layers as subgraphs; MaleCNS → Canonical Graph → Circuit Extractor → escape_v1), Quick Start (`make install`, `make demo`, validation example, presets table), Scientific Boundaries, Brain Inspector, Data Provenance (+ attribution), Testing (+ CI coverage), Roadmap, project documents. Original Chinese brief moved verbatim to `docs/PROJECT_BRIEF.md`.
+
+### E. Scientific boundaries
+README states BIOLOGICAL DATA (neuron identities, structural connectivity, synapse counts) / SIMULATED (membrane potential, firing events, refractory state) / COMPUTATIONAL INTERPRETATION (looming mapping, motor decoding, ESCAPE / NO_ACTION) and **BIOLOGICAL CIRCUIT STATUS: PARTIALLY SUPPORTED**, plus explicit non-claims. UI labels, tags and disclaimer are unchanged from P5/P6; presets are labelled "Expected current model result — not a biological threshold". No scientific interpretation of escape_v1 was changed.
+
+### F. Demo presets
+LOW CENTER / 0.2 → NO ACTION · MEDIUM CENTER / 0.5 → ESCAPE · HIGH CENTER / 1.0 → ESCAPE (values from the P4/P5 records). Selecting a preset sets direction + intensity; direction buttons, slider and numeric field remain fully manual and un-select the preset. Verified in `tests/landing.spec.ts`.
+
+### G. Release metadata
+Version 0.1.0 (backend `__version__`, frontend `package.json`); `CURRENT_PHASE = "P6.1"`; `CHANGELOG.md` with the v0.1.0 entry (MaleCNS ingestion, canonical graph, circuit extraction, LIF-like simulation, escape_v1, interactive demo, brain inspector, provenance explorer, release polish). **No Git tag and no GitHub Release were created** (not authorized).
+
+### H. License / attribution
+Dataset: MaleCNS v1.0, CC-BY 4.0, attribution and official URLs in README → Data Provenance, DATA.md §9 and every provenance artifact; the project never implies ownership of the data. **Project code license: none in the repository — decision for the human (release blocker).** Nothing was invented.
+
+### I. Cleanup
+Checked: no tracked temporary / editor / Claude / Codex files, no absolute developer paths, no secrets or keys (grep over tracked files), no large generated artifacts beyond the provenance-bearing reports (largest tracked data file 228 KB); `.ruff_cache` / `node_modules` / `.venv` / `test-results` ignored. Removed the eight superseded `p5-*` screenshots (≈3 MB); kept `mvp-*` and added `release-*` (curated, refreshed by `make screenshots`). Stale phase references fixed (`CURRENT_PHASE`, package descriptions, README). Scientific provenance artifacts untouched.
+
+### J. Tests (release test run, this container)
+| Check | Result |
+|---|---|
+| `make lint` (ruff check + format, backend + scripts) | clean |
+| `make test` — backend `pytest` | **301 passed** (294 + 7 launcher validation tests) |
+| `make test` — frontend `tsc` typecheck | clean |
+| `make build-frontend` (`vite build`) | OK — `dist/` 358 kB JS (112 kB gzip), 24 kB CSS |
+| `make demo-smoke` (launcher: validate → start both → verify `/health`, page, `/api` proxy → stop) | PASS |
+| `make smoke` (health, fixture data, circuit, simulation, escape demo, web demo REST + WS + inspector API) | all PASS |
+| Playwright `npm run test:e2e` (health 4, P5 demo 16, smoke demo 7, inspector 15, MVP screenshots 5, landing 7, release screenshots 5) | **59 passed** |
+Confirmed end to end: P5 demo works (RUN LOOMING DEMO → ESCAPE), P6 inspector works, NO_ACTION (LOW preset) and ESCAPE (MEDIUM / HIGH presets) decode as recorded, RESET returns to idle, provenance panel and API report the source / canonical / loaded counts and the verified hash, and no endpoint or page requests the canonical graph (only `/circuits/escape_v1/*`, 286 / 932).
+
+### K. Screenshots (`docs/screenshots/`, 1440×900)
+`release-main.png` (landing), `release-looming.png` (MEDIUM run at step 3: disc grown, LC4 / LPLC2 firing), `release-escape.png` (decoded ESCAPE), `release-inspector.png` (DNp01 selected, upstream highlighted), `release-provenance.png` (full-width provenance panel). Plus the P6 `mvp-A…E` set.
+
+### L. Remaining release blockers
+1. **Project code license** — not chosen; add `LICENSE` (human decision).
+2. **Tag / release** — `v0.1.0` tag and GitHub Release not created (awaiting explicit authorization).
+3. **CI status** — *resolved*: GitHub Actions run #2 on commit `a0b4acc` (branch `claude/project-docs-p0-implementation-coml8f`) completed **success** for all four jobs (backend python 3.11, backend python 3.12, frontend node 22, playwright): https://github.com/hoyoboy0726123/Fly-Brain-Agent/actions/runs/35133837949. Run #1 had failed only because a workflow-level `FLYBRAIN_ENVIRONMENT=test` override broke the P0 default-settings test; the override was removed.

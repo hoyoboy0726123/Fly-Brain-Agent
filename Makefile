@@ -9,9 +9,11 @@ VENV_PY      := $(VENV)/bin/python
 .PHONY: help install install-backend install-frontend backend frontend \
         test test-backend typecheck-frontend lint smoke smoke-backend smoke-frontend smoke-data \
         smoke-circuit smoke-simulation smoke-escape smoke-web normalize normalize-fixture inspect \
-        extract simulate build-escape-config clean
+        extract simulate build-escape-config demo demo-check demo-smoke screenshots build-frontend clean
 
 help:
+	@echo "make demo               ONE-COMMAND DEMO: validate, start backend + frontend, print URLs (Ctrl+C stops)"
+	@echo "make demo-check         validate the installation and the escape_v1 artifact only"
 	@echo "make install            install backend (.venv) and frontend (node_modules) dependencies"
 	@echo "make backend            run FastAPI on http://127.0.0.1:8000"
 	@echo "make frontend           run Vite dev server on http://127.0.0.1:5173"
@@ -27,7 +29,10 @@ help:
 	@echo "make simulate ARGS=...  run scripts/run_simulation.py with ARGS"
 	@echo "make build-escape-config  rebuild escape_v1 config + circuit artifact from the canonical graph"
 	@echo "make smoke-escape       TECHNICAL CONNECTOME-GROUNDED ESCAPE DEMO (escape_v1)"
-	@echo "make smoke-web          WEB DEMO SMOKE: escape API over REST + WebSocket (P5)"
+	@echo "make smoke-web          WEB DEMO SMOKE: escape API over REST + WebSocket + inspector API"
+	@echo "make demo-smoke         start both servers, verify they answer, stop (release/CI check)"
+	@echo "make screenshots        refresh docs/screenshots/release-*.png with Playwright"
+	@echo "make build-frontend     production build of the frontend (frontend/dist)"
 
 install: install-backend install-frontend
 
@@ -54,7 +59,10 @@ typecheck-frontend:
 	cd $(FRONTEND_DIR) && npm run typecheck
 
 lint:
-	cd $(BACKEND_DIR) && .venv/bin/ruff check .
+	cd $(BACKEND_DIR) && .venv/bin/ruff check . ../scripts && .venv/bin/ruff format --check . ../scripts
+
+build-frontend:
+	cd $(FRONTEND_DIR) && npm run build
 
 smoke: smoke-backend smoke-data smoke-circuit smoke-simulation smoke-escape smoke-web smoke-frontend
 
@@ -88,6 +96,18 @@ smoke-escape:
 
 smoke-web:
 	$(VENV_PY) scripts/smoke_web_demo.py
+
+demo:
+	$(VENV_PY) scripts/run_demo.py
+
+demo-check:
+	$(VENV_PY) scripts/run_demo.py --check
+
+demo-smoke:
+	$(VENV_PY) scripts/run_demo.py --smoke
+
+screenshots:
+	cd $(FRONTEND_DIR) && FLYBRAIN_SCREENSHOT_DIR=../docs/screenshots npx playwright test tests/release-screenshots.spec.ts tests/smoke-inspector.spec.ts
 
 normalize:
 	$(VENV_PY) scripts/normalize_dataset.py --adapter malecns

@@ -127,7 +127,6 @@ export function InspectorView({ demo, paceMs }: InspectorViewProps) {
         <aside className="inspector__side">
           <SearchBar cellTypes={index.cellTypes} cellTypeFilter={cellTypeFilter} message={searchMessage} onSearchId={onSearchId} onCellTypeFilter={onCellTypeFilter} />
           <Legend cellTypes={index.cellTypes} counts={counts} />
-          {state.status === 'ready' && <ProvenancePanel provenance={state.provenance} />}
         </aside>
 
         <div className="inspector__center">
@@ -182,6 +181,8 @@ export function InspectorView({ demo, paceMs }: InspectorViewProps) {
           </section>
         </aside>
       </div>
+
+      {state.status === 'ready' && <ProvenancePanel provenance={state.provenance} />}
     </section>
   )
 }

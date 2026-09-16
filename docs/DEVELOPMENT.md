@@ -39,7 +39,21 @@ cd frontend && npx playwright install chromium
 
 ## 2. Run
 
-Two terminals:
+One command (validates first, starts both servers, prints the URLs, Ctrl+C stops both):
+
+```bash
+make demo                        # = backend/.venv/bin/python scripts/run_demo.py
+python scripts/run_demo.py       # any interpreter with the backend installed (macOS / Linux / Windows)
+make demo-check                  # validation only: config, committed artifact + hash, node_modules, npm
+make demo-smoke                  # start, verify /health, the Vite page and the /api proxy, stop
+```
+
+Startup validation never falls back to synthetic data: a missing or tampered `escape_v1`
+artifact, a hash that differs from `expected_circuit_hash`, missing backend or frontend
+dependencies each stop the launcher with a message naming the fix (`git checkout -- …`,
+`make build-escape-config`, `make install-frontend`, …).
+
+Two terminals, if you prefer:
 
 ```bash
 make backend    # FastAPI on http://127.0.0.1:8000  (docs at /docs, health at /health)
@@ -58,6 +72,20 @@ backend badge, three panels (Environment / Fly Brain / Action) and the "How this
 section. In development the UI calls `/api/*`, which Vite proxies to the backend with the
 `/api` prefix stripped (`/api/health` -> `/health`); WebSocket upgrades are proxied the same
 way (`/api/ws/escape` -> `/ws/escape`).
+
+## 2b. Continuous integration
+
+`.github/workflows/ci.yml` runs on push and pull_request:
+
+| Job | Steps | Data |
+|---|---|---|
+| backend (Python 3.11, 3.12) | `pip install -e backend[dev]`, `ruff check` + `ruff format --check` (backend + scripts), `pytest`, smoke scripts (health, fixture inspection, fixture circuit / simulation, escape demo, web demo API) | synthetic fixture + committed `escape_v1` artifact |
+| frontend (Node 22) | `npm ci`, `npm run typecheck`, `npm run build` | — |
+| e2e | backend + frontend install, `npx playwright install --with-deps chromium`, `scripts/run_demo.py --check`, `--smoke`, `npm run test:e2e` (all specs, live backend) | committed `escape_v1` artifact |
+
+Not covered by CI (needs the raw MaleCNS files, local only): `make normalize`, the technical
+extraction / simulation smokes on the canonical graph (they print "skipped" in CI),
+`make build-escape-config`. CI never downloads the dataset.
 
 ## 3. Tests
 
@@ -81,10 +109,12 @@ The Playwright run starts **both** servers itself (backend via `backend/.venv` P
 `FLYBRAIN_PYTHON`, else `python3`; frontend via `npm run dev`) and runs three spec files:
 `tests/smoke.spec.ts` (backend health card, unreachable/recovery states),
 `tests/escape-demo.spec.ts` (the P5 demo: controls, live runs, error states, disclaimer) and
-`tests/smoke-demo.spec.ts` (the three documented scenarios with screenshots written to
-`docs/screenshots/`), `tests/inspector.spec.ts` (P6 brain inspector) and
-`tests/smoke-inspector.spec.ts` (MVP screenshots A–E). Happy paths always hit the live backend;
-only error states are mocked.
+`tests/smoke-demo.spec.ts` (the three documented scenarios), `tests/inspector.spec.ts` (P6 brain
+inspector), `tests/landing.spec.ts` (P6.1 landing, story, presets), `tests/smoke-inspector.spec.ts`
+(MVP screenshots A–E) and `tests/release-screenshots.spec.ts` (release screenshots). Screenshot
+specs write to `frontend/test-results/screenshots/` (git-ignored); `make screenshots` sets
+`FLYBRAIN_SCREENSHOT_DIR=../docs/screenshots` to refresh the curated set. Happy paths always hit
+the live backend; only error states are mocked.
 
 Run Playwright from `frontend/` via `npm run test:e2e` (or `make smoke-frontend` from the
 root). Invoked from another directory, `playwright test` does not find
