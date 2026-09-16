@@ -73,6 +73,11 @@ class Settings(BaseSettings):
     def malecns_raw_dir(self) -> Path:
         return self.raw_data_dir / self.malecns_raw_subdir
 
+    @property
+    def graph_cache_dir(self) -> Path:
+        """Memory-mappable ``.npy`` cache of the canonical graph adjacency (git-ignored)."""
+        return self.processed_data_dir / "graph_cache"
+
 
 @lru_cache(maxsize=1)
 def get_settings() -> Settings:

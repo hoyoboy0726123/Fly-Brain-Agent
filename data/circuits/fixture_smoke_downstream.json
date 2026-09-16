@@ -1,0 +1,185 @@
+{
+  "circuit_id": "fixture_smoke_downstream",
+  "dataset": "synthetic_tiny_connectome",
+  "dataset_version": "fixture-v1",
+  "canonical_graph": {
+    "selection_rule": "all fixture neurons (synthetic; no status filter)",
+    "neuron_count": 8,
+    "connection_count": 11,
+    "fingerprint": "3d172226b49db4f6ed4c8f8690952b48c772c5be0a6a417c29547855f0b22dd4"
+  },
+  "extractor_config": {
+    "seed_neuron_ids": [
+      "syn_001"
+    ],
+    "target_neuron_ids": [
+      "syn_002",
+      "syn_007"
+    ],
+    "max_hops": 2,
+    "min_synapses": 1,
+    "max_neurons": 50,
+    "direction": "downstream",
+    "restrict_to_target_paths": false
+  },
+  "seed_neurons": [
+    "syn_001"
+  ],
+  "target_neurons": [
+    {
+      "neuron_id": "syn_002",
+      "reachable": false,
+      "minimum_path_length": null
+    },
+    {
+      "neuron_id": "syn_007",
+      "reachable": true,
+      "minimum_path_length": 2
+    }
+  ],
+  "nodes": [
+    {
+      "neuron_id": "syn_001",
+      "minimum_hop_from_seed": 0,
+      "is_seed": true,
+      "is_target": false,
+      "cell_type": "SYN_input_A",
+      "cell_class": "synthetic_input",
+      "neurotransmitter": null
+    },
+    {
+      "neuron_id": "syn_003",
+      "minimum_hop_from_seed": 1,
+      "is_seed": false,
+      "is_target": false,
+      "cell_type": "SYN_relay_A",
+      "cell_class": "synthetic_relay",
+      "neurotransmitter": null
+    },
+    {
+      "neuron_id": "syn_004",
+      "minimum_hop_from_seed": 1,
+      "is_seed": false,
+      "is_target": false,
+      "cell_type": "SYN_relay_B",
+      "cell_class": "synthetic_relay",
+      "neurotransmitter": null
+    },
+    {
+      "neuron_id": "syn_005",
+      "minimum_hop_from_seed": 2,
+      "is_seed": false,
+      "is_target": false,
+      "cell_type": "SYN_relay_C",
+      "cell_class": "synthetic_relay",
+      "neurotransmitter": null
+    },
+    {
+      "neuron_id": "syn_006",
+      "minimum_hop_from_seed": 2,
+      "is_seed": false,
+      "is_target": false,
+      "cell_type": "SYN_output_L",
+      "cell_class": "synthetic_output",
+      "neurotransmitter": null
+    },
+    {
+      "neuron_id": "syn_007",
+      "minimum_hop_from_seed": 2,
+      "is_seed": false,
+      "is_target": true,
+      "cell_type": "SYN_output_R",
+      "cell_class": "synthetic_output",
+      "neurotransmitter": null
+    }
+  ],
+  "edges": [
+    {
+      "pre_neuron_id": "syn_001",
+      "post_neuron_id": "syn_003",
+      "synapse_count": 12,
+      "dataset": "synthetic_tiny_connectome",
+      "dataset_version": "fixture-v1"
+    },
+    {
+      "pre_neuron_id": "syn_001",
+      "post_neuron_id": "syn_004",
+      "synapse_count": 3,
+      "dataset": "synthetic_tiny_connectome",
+      "dataset_version": "fixture-v1"
+    },
+    {
+      "pre_neuron_id": "syn_003",
+      "post_neuron_id": "syn_005",
+      "synapse_count": 2,
+      "dataset": "synthetic_tiny_connectome",
+      "dataset_version": "fixture-v1"
+    },
+    {
+      "pre_neuron_id": "syn_003",
+      "post_neuron_id": "syn_006",
+      "synapse_count": 20,
+      "dataset": "synthetic_tiny_connectome",
+      "dataset_version": "fixture-v1"
+    },
+    {
+      "pre_neuron_id": "syn_004",
+      "post_neuron_id": "syn_006",
+      "synapse_count": 7,
+      "dataset": "synthetic_tiny_connectome",
+      "dataset_version": "fixture-v1"
+    },
+    {
+      "pre_neuron_id": "syn_004",
+      "post_neuron_id": "syn_007",
+      "synapse_count": 15,
+      "dataset": "synthetic_tiny_connectome",
+      "dataset_version": "fixture-v1"
+    },
+    {
+      "pre_neuron_id": "syn_005",
+      "post_neuron_id": "syn_007",
+      "synapse_count": 5,
+      "dataset": "synthetic_tiny_connectome",
+      "dataset_version": "fixture-v1"
+    },
+    {
+      "pre_neuron_id": "syn_006",
+      "post_neuron_id": "syn_003",
+      "synapse_count": 1,
+      "dataset": "synthetic_tiny_connectome",
+      "dataset_version": "fixture-v1"
+    },
+    {
+      "pre_neuron_id": "syn_007",
+      "post_neuron_id": "syn_007",
+      "synapse_count": 1,
+      "dataset": "synthetic_tiny_connectome",
+      "dataset_version": "fixture-v1"
+    }
+  ],
+  "stats": {
+    "visited_neurons": 6,
+    "returned_neurons": 6,
+    "returned_edges": 9,
+    "examined_edges": 6,
+    "extraction_seconds": 0.008533,
+    "graph_load_seconds": null,
+    "graph_cache_hit": null,
+    "graph_memory_bytes": 544,
+    "process_max_rss_bytes": 105029632,
+    "graph_strategy": "in-memory tables"
+  },
+  "provenance": {
+    "extracted_at": "2026-09-16T14:03:00+00:00",
+    "extractor_version": "0.0.1",
+    "graph_fingerprint": "3d172226b49db4f6ed4c8f8690952b48c772c5be0a6a417c29547855f0b22dd4",
+    "graph_source": {},
+    "source_provenance": {
+      "available": false
+    },
+    "circuit_hash": "bef535c2adaef88b048f4987c9d95d645b1ece7f614455305c12f9e07be95ca6",
+    "notes": "synthetic fixture smoke test",
+    "biological_interpretation": "NONE. This artifact is a structural subgraph of the canonical simulation graph selected purely by the extractor configuration. It carries no behavioral or functional claim."
+  }
+}

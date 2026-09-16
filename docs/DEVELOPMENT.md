@@ -108,6 +108,34 @@ Parquet outputs are git-ignored; `provenance.json` and the inspection report are
 165,122 neurons / 25,563,197 connections). See `DATA.md` §8; tests in
 `backend/tests/test_canonical_graph.py` guard the distinction.
 
+## 4c. Circuit extraction (P2)
+
+The canonical graph (`neurons.parquet` + `connections.parquet`) is loaded into a compact
+CSR adjacency (out-edges by presynaptic neuron, in-edges by postsynaptic neuron, numpy
+int32) — about 400 MB for 25.5 M edges, no NetworkX. The first load builds a memory-mappable
+`.npy` cache in `data/processed/graph_cache/` (git-ignored); later loads take well under a
+second.
+
+```bash
+make extract ARGS="--circuit-id demo --seeds 10001 --targets 12345 --max-hops 2 \
+                   --min-synapses 10 --max-neurons 2000 --direction downstream"
+make smoke-circuit          # fixture extraction with a known result (+ technical MaleCNS run when data present)
+scripts/extract_circuit.py --fixture --circuit-id fx --seeds syn_001 --max-hops 2 --min-synapses 1 --max-neurons 50
+```
+
+Semantics: multi-source BFS from the seeds following out-edges (`downstream`) or in-edges
+(`upstream`) whose `synapse_count >= min_synapses`, at most `max_hops` levels. `max_neurons`
+is a **hard limit**: the run aborts before adding a hop level that would exceed it. Missing
+seed or target ids fail loudly. The artifact is the subgraph induced by the discovered
+neurons (every canonical edge between them above the threshold), written to
+`data/circuits/<circuit_id>.json` (full artifact) and `.parquet` (edges with the five
+provenance columns). Every node carries `minimum_hop_from_seed`; every target reports
+`reachable` and `minimum_path_length` (never fabricated). `--restrict-to-target-paths`
+optionally keeps only neurons on a seed→target path of length ≤ max_hops.
+
+Artifacts produced by `smoke_circuit.py` on MaleCNS are labelled
+"TECHNICAL EXTRACTION SMOKE TEST — NOT A BIOLOGICALLY INTERPRETED CIRCUIT".
+
 ## 5. Configuration
 
 Backend (`FLYBRAIN_` prefix, optional `backend/.env`, see `backend/.env.example`):
@@ -144,7 +172,7 @@ backend/app/api          HTTP routers (GET /health)
 backend/app/config       Settings (pydantic-settings)
 backend/app/models       API schemas
 backend/app/connectome   BIOLOGICAL STRUCTURE  (P1): schema, normalize, adapter, malecns, fixture, provenance, inspect
-backend/app/circuits     BIOLOGICAL STRUCTURE  (P2, empty)
+backend/app/circuits     BIOLOGICAL STRUCTURE  (P2): graph (CSR), extractor, artifact, errors
 backend/app/simulation   COMPUTATIONAL DYNAMICS (P3, empty)
 backend/app/sensors      APPLICATION DECODING  (P4, empty)
 backend/app/motor        APPLICATION DECODING  (P4, empty)
@@ -157,6 +185,8 @@ data/{raw,processed,circuits}  gitkept; raw data is never committed
 scripts/smoke_test.py    backend smoke test
 scripts/normalize_dataset.py  raw -> normalized parquet + provenance.json
 scripts/inspect_dataset.py    DATA.md §7 validation report
+scripts/extract_circuit.py    bounded circuit extraction -> data/circuits/<id>.{json,parquet}
+scripts/smoke_circuit.py      P2 smoke (fixture + technical MaleCNS extraction)
 docs/dataset_research.md      dataset verification record (P1 gate)
 ```
 

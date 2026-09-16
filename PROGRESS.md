@@ -3,8 +3,8 @@
 | Phase | Status | Exit Gate |
 |---|---|---|
 | P0 Bootstrap | ✅ Done (reviewer approved, merged PR #1) | backend/frontend/tests runnable |
-| P1 Data ingestion | ✅ Done (reviewer approved, merged PR #2); P1.1 canonical graph definition ✅ Done (awaiting confirmation) | normalized data + provenance |
-| P2 Circuit extraction | ⬜ Not started | deterministic bounded circuit |
+| P1 Data ingestion | ✅ Done (reviewer approved, PR #2); P1.1 canonical graph definition ✅ Done (reviewer approved, PR #3) | normalized data + provenance |
+| P2 Circuit extraction | ✅ Done (awaiting human confirmation) | deterministic bounded circuit |
 | P3 Simulation | ⬜ Not started | tested simplified dynamics |
 | P4 Escape | ⬜ Not started | stimulus → action |
 | P5 Web UI | ⬜ Not started | interactive end-to-end demo |
@@ -14,7 +14,7 @@
 | P9 Robot | ⬜ Future | safe physical adapter |
 
 ## Current Phase
-P1.1 (Canonical Graph Definition) complete. Stopped before P2, waiting for human confirmation.
+P2 (Graph & Circuit Extractor) complete. Stopped before P3, waiting for human confirmation.
 
 ## Blockers
 None recorded.
@@ -38,6 +38,10 @@ None recorded.
 - (P1) Raw files are hashed (sha256 + md5) and md5 is compared with the bucket listing; normalization refuses to run on a mismatch. Parquet outputs are git-ignored; `provenance.json` and `inspection_report.{json,md}` are committed.
 - (P1) Tests never download: the synthetic fixture `backend/tests/fixtures/tiny_connectome.json` and synthetic Feather files with the verified MaleCNS schema (`tests/synthetic_malecns.py`) cover the fixture adapter and the production adapter offline.
 - (P1) New runtime dependency: `pyarrow` only (Feather/Parquet/compute). No pandas/polars yet.
+- (P2) Graph representation: numpy CSR out-adjacency + CSR in-adjacency (int32 indices/weights, int64 indptr) built from the canonical parquet tables with pyarrow `index_in` + `lexsort`; ~418 MB for 25.56 M edges; no NetworkX for the full graph. A memory-mappable `.npy` cache (`data/processed/graph_cache/`, git-ignored, keyed on table size/mtime) makes reloads ~0.2 s.
+- (P2) Extraction = multi-source BFS by hop level (downstream = out-edges, upstream = in-edges), `synapse_count >= min_synapses`, `max_neurons` checked *before* a hop level is added (hard abort, nothing truncated). The artifact is the induced subgraph: every canonical edge between included neurons above the threshold, stored pre→post regardless of traversal direction. Ids in configs are deduplicated and sorted, so output is independent of input order.
+- (P2) Targets only report reachability (`reachable`, `minimum_path_length` = BFS hop); no path is fabricated. Optional `restrict_to_target_paths` keeps neurons with `hop_from_seed + hop_to_target <= max_hops` (off by default).
+- (P2) Artifacts: `data/circuits/<id>.json` (full) + `<id>.parquet` (edges with the five provenance columns + schema metadata) sealed with a sha256 `circuit_hash`; `Circuit.load` verifies it. Large technical smoke circuits with real ids are git-ignored; the perf report and the fixture circuit are committed. New runtime dependency: `numpy`.
 - (P1.1) **Source dataset ≠ canonical simulation graph** (DATA.md §8). SOURCE DATASET = MaleCNS v1.0, ≈166,700 neurons (project figure; equals the 166,700 bodies with a `superclass`; paper 166,691). CANONICAL SIMULATION GRAPH = `status == "Traced"`, 165,122 neurons, 25,563,197 connections. The canonical count is never presented as the dataset census. Both blocks are mandatory in `provenance.json` for biological data (`Provenance` validator), reported by `inspect_dataset.py`, written into the parquet schema metadata, and guarded by `tests/test_canonical_graph.py`. Traced filtering behaviour is unchanged.
 
 ---
@@ -229,3 +233,70 @@ extraction.
 ### Known limitations
 - The "≈166,700" figure is the project-level description supplied at review; it matches the `superclass` count empirically but the official pages remain unreachable from this environment, so its wording is recorded as a basis string rather than a verbatim quote.
 - The canonical rule is still a project decision; changing it (e.g. Traced+Assign) regenerates a different canonical graph and is recorded automatically.
+
+---
+
+## P2 Report (2026-09-16) — Graph & Circuit Extractor
+
+### A. Architecture (`backend/app/circuits/`, BIOLOGICAL STRUCTURE layer)
+- `graph.py` — `ConnectivityGraph`: canonical graph as CSR out/in adjacency; `from_tables()`, `load(processed_dir, use_cache)`, `resolve()` (fail-loud id mapping), `successors/predecessors/neighbors(min_synapses)`, `node_metadata()`, `fingerprint()`; `.npy` cache with validity stamp.
+- `extractor.py` — `CircuitExtractor.traverse()` (bounded multi-source BFS) and `.extract(config, circuit_id)` → `Circuit`; `_induced_edges()`; stats (visited/returned/examined, timings, RSS).
+- `artifact.py` — pydantic `ExtractorConfig`, `Circuit`, `CircuitNode` (`minimum_hop_from_seed`, `is_seed`, `is_target`, nullable `cell_type`/`cell_class`/`neurotransmitter`), `CircuitEdge` (pre, post, synapse_count, dataset, dataset_version), `TargetReport`, `CanonicalGraphRef`, `ExtractionStats`, `CircuitProvenance`; `save()/load()/edges_table()`, integrity hash.
+- `errors.py` — `GraphBuildError`, `MissingNeuronError`, `MaxNeuronsExceededError`, `ArtifactIntegrityError`.
+- Scripts: `scripts/extract_circuit.py` (CLI), `scripts/smoke_circuit.py` (fixture expectation + technical MaleCNS run + perf report). Makefile: `extract`, `smoke-circuit` (part of `smoke`). Settings: `graph_cache_dir`.
+
+### B. Graph representation
+CSR arrays: `out_indptr[N+1]`, `out_indices[E]` (int32 post index), `out_weights[E]` (int32), and the mirror `in_*` grouped by postsynaptic neuron; `neuron_ids[N]` maps index → id, a dict maps id → index. Build: pyarrow `index_in` (string ids → indices), numpy `lexsort`, `bincount`/`cumsum`. Duplicate edges, dangling endpoints, mixed datasets and non-unique ids fail loudly. Production: N = 165,122, E = 25,563,197, arrays 418.3 MB.
+
+### C. Tests
+`pytest`: **134 passed** (88 previous + 46 new in `test_circuit_graph.py` 12, `test_circuit_extractor.py` 24, `test_circuit_artifact.py` 7, `test_circuit_scripts.py` 3). Coverage of the required list: directionality (down vs up on the same seed), max_hops (0/1/2, target beyond hops), min_synapses (traversal + induced edges), upstream, downstream, determinism (seed order), missing seed, missing target, max_neurons abort (hop 0/1/2, exactly-at-limit allowed), unreachable target, provenance preservation (every edge verbatim from the fixture edge list, nothing invented), export/import round trip (JSON + Parquet + metadata), tamper detection, cache build/reuse/invalidation, CSR vs brute force and BFS vs naive reference on a seeded random graph. `ruff check`: clean. Frontend typecheck unchanged.
+
+### D. Smoke test
+- Fixture: downstream from `syn_001`, 2 hops, min 1 → exactly the expected 6 nodes / 9 edges; targets `syn_007` reachable (2), `syn_002` unreachable; JSON round trip and parquet row count verified.
+- Production (**TECHNICAL EXTRACTION SMOKE TEST — NOT A BIOLOGICALLY INTERPRETED CIRCUIT**; seed = lowest-index neuron with ≥ 3 downstream partners at min_synapses 10, target = its lowest-index hop-2 successor; chosen mechanically, no biological meaning):
+  - `smoke_technical_downstream_min10_hops2`: seed 10001, target 10010 → reachable, minimum_path_length 2.
+  - `smoke_technical_upstream_min10_hops2`: aborted as designed (hop 2 would reach 11,741 neurons > 2,000) — demonstrates the hard limit on real data.
+  - `smoke_technical_upstream_min10_hops1`: succeeded.
+- `make smoke` (health, data, circuit, Playwright): passed.
+
+### E. Performance (this container, 15 GB RAM; graph 165,122 / 25,563,197)
+| Measure | Value |
+|---|---|
+| Graph load, cold (parquet → CSR + cache write) | 26.4 s |
+| Graph load, warm (memory-mapped `.npy` cache) | 0.20–0.26 s |
+| Adjacency arrays | 418.3 MB |
+| Process max RSS (warm run incl. Python/pyarrow) | ≈ 576 MB |
+| Downstream 2 hops, min 10: visited / returned / edges / examined / time | 1,992 / 1,992 / 36,755 / 15,060 / 0.15–0.34 s |
+| Upstream 1 hop, min 10: visited / returned / edges / examined / time | 330 / 330 / 3,129 / 695 / 0.012 s |
+| Upstream 2 hops, min 10 | aborted before hop 2 (11,741 > 2,000) |
+Report file: `data/circuits/smoke_technical_extraction.perf.json`.
+
+### F. Sample extracted circuit size
+1,992 neurons / 36,755 directed edges (downstream, 2 hops, min_synapses 10, max_neurons 2000) — JSON 6.6 MB, Parquet 108 KB; upstream 1 hop: 330 neurons / 3,129 edges.
+
+### Acceptance Criteria (P2)
+| Criterion | Result | Evidence |
+|---|---|---|
+| deterministic bounded extraction works | ✅ | fixture expectation reproduced; seed-order determinism test; sorted ids/nodes/edges |
+| directionality works | ✅ | downstream vs upstream tests; edges always pre→post |
+| thresholds work | ✅ | min_synapses filters traversal and induced edges |
+| max_neurons hard abort works | ✅ | `MaxNeuronsExceededError` tests; production upstream run aborted before hop 2 |
+| missing IDs fail loudly | ✅ | `MissingNeuronError` for seeds and targets, listing the ids |
+| biological edge provenance preserved | ✅ | every edge = verbatim canonical edge with dataset/version; artifact `verify()` |
+| exported artifact can be loaded again | ✅ | JSON/Parquet round trip, hash verified, tamper rejected |
+| synthetic tests pass | ✅ | 46 new tests |
+| production smoke passes if data available | ✅ | technical extraction on MaleCNS v1.0 |
+| TASKS.md: no exported edge without source provenance | ✅ | `CircuitEdge` requires the five columns; `verify()` rejects foreign dataset |
+
+### G. Known limitations
+- Induced-subgraph semantics: the artifact contains *all* canonical edges among included neurons above the threshold (including edges into earlier hops and self-loops); it does not restrict to traversal-tree edges. Documented; `restrict_to_target_paths` narrows to seed→target paths.
+- `minimum_hop_from_seed` is the BFS hop count under the `min_synapses` filter; it is not weighted by synapse count.
+- Node metadata in artifacts is limited to `cell_type`, `cell_class`, `neurotransmitter` (nullable, from the canonical table); regions are unavailable (P1 limitation).
+- The `.npy` cache is validated by file size/mtime of the parquet tables, not by content hash; deleting `data/processed/graph_cache/` forces a rebuild.
+- The technical smoke circuits use mechanically chosen real ids and carry no biological meaning; no looming/escape neuron selection has been attempted (that is P4's research gate).
+- Extraction runs in-process; no API endpoint (`POST /circuits/extract`) yet (later phase).
+
+### Next phase suggestions (P3 — do not start without confirmation)
+1. `SimulationConfig` + weight normalization function from `synapse_count` (documented, config-driven).
+2. Discrete-time LIF-like engine over a `Circuit` artifact (vectorized numpy over the induced edge list), deterministic seed, stimulate/step/run/reset, activity snapshots; clearly labelled modeled, not measured.
+3. Tests: decay without input, firing with sufficient input, propagation across a fixture edge, deterministic reset; no inhibition unless a documented sign source exists (the canonical table has NT *predictions* only).

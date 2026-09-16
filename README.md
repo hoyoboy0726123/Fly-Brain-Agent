@@ -75,6 +75,8 @@ make test        # pytest + frontend typecheck
 make smoke       # backend /health smoke + data smoke (fixture) + Playwright frontend smoke
 make normalize   # MaleCNS v1.0 raw files (data/raw) -> data/processed parquet + provenance.json
 make inspect     # DATA.md §7 validation report
+make extract ARGS="--circuit-id demo --seeds <id> --max-hops 2 --min-synapses 10 --max-neurons 2000"
+make smoke-circuit  # P2 extractor smoke (fixture + technical MaleCNS run when data present)
 ```
 
 測試與 smoke test 不需要下載任何 connectome 資料集；`data/raw/` 已被 git 忽略。真實資料的取得方式、schema 與授權（CC-BY）驗證紀錄見 [docs/dataset_research.md](docs/dataset_research.md)。
