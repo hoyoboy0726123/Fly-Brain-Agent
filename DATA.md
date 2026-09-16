@@ -101,3 +101,22 @@ Rules:
   the source dataset.
 - `neurons.parquet` / `connections.parquet` ARE the canonical graph. Circuits extracted in
   later phases are subsets of the canonical graph and inherit this provenance.
+
+## 9. Attribution and Licenses
+
+**Source dataset.** MaleCNS v1.0 — the male *Drosophila melanogaster* central nervous system
+connectome released by HHMI Janelia (FlyEM) with the University of Cambridge, MRC LMB and Google
+Research. License: **Creative Commons Attribution 4.0 (CC-BY 4.0)**; official statement on
+https://male-cns.janelia.org/download/: "The Male CNS is licensed under CC-BY." Bulk files:
+`gs://flyem-male-cns/v1.0/connectome-data/flat-connectome/`. Verification record:
+`docs/dataset_research.md`.
+
+Attribution required by CC-BY is carried by every derived artifact in this repository:
+`data/processed/provenance.json` (`license`, `source_page`, `download_url`, raw file digests),
+`data/circuits/escape_v1.json` (`provenance.source_provenance`) and the UI / API provenance
+views. FlyBrain Agent does **not** own, modify or redistribute the dataset; raw files are never
+committed (`data/raw/` is git-ignored).
+
+**Project code.** The license of FlyBrain Agent's own code is a separate decision from the
+dataset license and has not been made yet (no `LICENSE` file). It must be chosen by the project
+owner before a public release; nothing in this document implies a code license.

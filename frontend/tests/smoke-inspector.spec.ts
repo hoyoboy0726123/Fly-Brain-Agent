@@ -1,17 +1,8 @@
-import { mkdirSync } from 'node:fs'
-import path from 'node:path'
-
 import { expect, test, type Page } from '@playwright/test'
 
+import { RELEASE_VIEWPORT, shoot } from './helpers/screenshots'
+
 /** MVP v0.1 screenshots A–E (live backend, no mocking). */
-
-const SCREENSHOT_DIR = path.resolve(import.meta.dirname, '..', '..', 'docs', 'screenshots')
-mkdirSync(SCREENSHOT_DIR, { recursive: true })
-
-async function shoot(page: Page, name: string): Promise<void> {
-  await page.evaluate(() => window.scrollTo(0, 0))
-  await page.screenshot({ path: path.join(SCREENSHOT_DIR, `${name}.png`), fullPage: false })
-}
 
 async function openInspector(page: Page, query = 'pace=30'): Promise<void> {
   await page.goto(`/?${query}#inspector`)
@@ -19,7 +10,7 @@ async function openInspector(page: Page, query = 'pace=30'): Promise<void> {
 }
 
 test.describe('MVP v0.1 screenshots', () => {
-  test.use({ viewport: { width: 1440, height: 900 } })
+  test.use({ viewport: RELEASE_VIEWPORT })
 
   test('A. P5 main demo', async ({ page }) => {
     await page.goto('/?pace=30')
