@@ -83,6 +83,26 @@ root). Invoked from another directory, `playwright test` does not find
 `frontend/playwright.config.ts`, falls back to defaults, and may load the spec files with a
 different Playwright copy (error: "did not expect test.describe() to be called here").
 
+## 4b. Connectome data (P1)
+
+Nothing in the test suite needs a download. To work with the real dataset:
+
+1. Read `docs/dataset_research.md` (what the files are, how they were verified, license CC-BY).
+2. Download the MaleCNS v1.0 flat-connectome files (≈1.1 GB weights + 14 MB annotations +
+   43 MB neurotransmitters) into
+   `data/raw/male-cns/v1.0/connectome-data/flat-connectome/` (commands in the research doc §8).
+3. `make normalize` → `data/processed/neurons.parquet`, `connections.parquet`,
+   `provenance.json`, `inspection_report.{json,md}`. Raw files are never modified; their
+   sha256/md5 are recorded and compared with the bucket listing (mismatch aborts).
+4. `make inspect` prints the DATA.md §7 report.
+
+Options (see `scripts/normalize_dataset.py --help`): `--status Traced Assign`,
+`--all-statuses`, `--keep-dangling`, `--weights-file <name>`, `--no-neurotransmitters`,
+`--no-hash`, `--out-dir`. The synthetic fixture path is `make normalize-fixture` /
+`scripts/inspect_dataset.py --fixture`.
+
+Parquet outputs are git-ignored; `provenance.json` and the inspection report are committed.
+
 ## 5. Configuration
 
 Backend (`FLYBRAIN_` prefix, optional `backend/.env`, see `backend/.env.example`):
@@ -95,6 +115,7 @@ Backend (`FLYBRAIN_` prefix, optional `backend/.env`, see `backend/.env.example`
 | `FLYBRAIN_LOG_LEVEL` | `INFO` | uvicorn log level |
 | `FLYBRAIN_CORS_ORIGINS` | `http://localhost:5173,http://127.0.0.1:5173` | comma-separated allowed origins |
 | `FLYBRAIN_DATA_DIR` | `<repo>/data` | parent of `raw/`, `processed/`, `circuits/` |
+| `FLYBRAIN_MALECNS_RAW_SUBDIR` | `male-cns/v1.0/connectome-data/flat-connectome` | MaleCNS files under `raw/` (mirrors the bucket prefix) |
 
 Frontend (`frontend/.env.local`, see `frontend/.env.example`):
 
@@ -117,21 +138,25 @@ Dev-server / test ports:
 backend/app/api          HTTP routers (GET /health)
 backend/app/config       Settings (pydantic-settings)
 backend/app/models       API schemas
-backend/app/connectome   BIOLOGICAL STRUCTURE  (P1, empty)
+backend/app/connectome   BIOLOGICAL STRUCTURE  (P1): schema, normalize, adapter, malecns, fixture, provenance, inspect
 backend/app/circuits     BIOLOGICAL STRUCTURE  (P2, empty)
 backend/app/simulation   COMPUTATIONAL DYNAMICS (P3, empty)
 backend/app/sensors      APPLICATION DECODING  (P4, empty)
 backend/app/motor        APPLICATION DECODING  (P4, empty)
-backend/tests            pytest suite
+backend/tests            pytest suite (+ fixtures/tiny_connectome.json, SYNTHETIC)
 frontend/src/api         typed API client + hooks
 frontend/src/components  UI components
 frontend/src/{environment,brain,dashboard}  reserved for P5/P6
 frontend/tests           Playwright smoke tests
 data/{raw,processed,circuits}  gitkept; raw data is never committed
 scripts/smoke_test.py    backend smoke test
+scripts/normalize_dataset.py  raw -> normalized parquet + provenance.json
+scripts/inspect_dataset.py    DATA.md §7 validation report
+docs/dataset_research.md      dataset verification record (P1 gate)
 ```
 
 ## 7. Data policy reminder
 
-`data/raw/` is git-ignored and must stay that way (see `DATA.md`). Nothing in P0 reads,
-downloads or fabricates connectome data.
+`data/raw/` is git-ignored and must stay that way (see `DATA.md`). Tests never download data.
+The normalization never invents biological fields: unknown optional columns are null, and
+every dataset-specific column is carried through verbatim under the `mcns_` prefix.

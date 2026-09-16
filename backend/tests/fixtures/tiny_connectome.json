@@ -1,0 +1,33 @@
+{
+  "dataset": "synthetic_tiny_connectome",
+  "dataset_version": "fixture-v1",
+  "display_name": "SYNTHETIC tiny connectome fixture",
+  "synthetic": true,
+  "license": "Synthetic test fixture containing NO biological data; covered by the FlyBrain Agent repository license.",
+  "notes": "SYNTHETIC DATA FOR TESTS ONLY. Every neuron ID, type, class and edge here is invented to exercise the ingestion pipeline. Nothing corresponds to a real neuron, cell type, brain region or synapse, and these edges must never be shown as connectome evidence. Two edges deliberately reference unknown IDs (syn_unknown_1, syn_unknown_2) so dangling-edge reporting can be tested.",
+  "neurons": [
+    {"neuron_id": "syn_001", "cell_type": "SYN_input_A", "cell_class": "synthetic_input", "region": null, "neurotransmitter": null, "sex": null},
+    {"neuron_id": "syn_002", "cell_type": "SYN_input_B", "cell_class": "synthetic_input", "region": null, "neurotransmitter": null, "sex": null},
+    {"neuron_id": "syn_003", "cell_type": "SYN_relay_A", "cell_class": "synthetic_relay", "region": null, "neurotransmitter": null, "sex": null},
+    {"neuron_id": "syn_004", "cell_type": "SYN_relay_B", "cell_class": "synthetic_relay", "region": null, "neurotransmitter": null, "sex": null},
+    {"neuron_id": "syn_005", "cell_type": "SYN_relay_C", "cell_class": "synthetic_relay", "region": null, "neurotransmitter": null, "sex": null},
+    {"neuron_id": "syn_006", "cell_type": "SYN_output_L", "cell_class": "synthetic_output", "region": null, "neurotransmitter": null, "sex": null},
+    {"neuron_id": "syn_007", "cell_type": "SYN_output_R", "cell_class": "synthetic_output", "region": null, "neurotransmitter": null, "sex": null},
+    {"neuron_id": "syn_008", "cell_type": null, "cell_class": null, "region": null, "neurotransmitter": null, "sex": null}
+  ],
+  "connections": [
+    {"pre_neuron_id": "syn_001", "post_neuron_id": "syn_003", "synapse_count": 12},
+    {"pre_neuron_id": "syn_001", "post_neuron_id": "syn_004", "synapse_count": 3},
+    {"pre_neuron_id": "syn_002", "post_neuron_id": "syn_004", "synapse_count": 9},
+    {"pre_neuron_id": "syn_002", "post_neuron_id": "syn_005", "synapse_count": 1},
+    {"pre_neuron_id": "syn_003", "post_neuron_id": "syn_006", "synapse_count": 20},
+    {"pre_neuron_id": "syn_003", "post_neuron_id": "syn_005", "synapse_count": 2},
+    {"pre_neuron_id": "syn_004", "post_neuron_id": "syn_006", "synapse_count": 7},
+    {"pre_neuron_id": "syn_004", "post_neuron_id": "syn_007", "synapse_count": 15},
+    {"pre_neuron_id": "syn_005", "post_neuron_id": "syn_007", "synapse_count": 5},
+    {"pre_neuron_id": "syn_006", "post_neuron_id": "syn_003", "synapse_count": 1},
+    {"pre_neuron_id": "syn_007", "post_neuron_id": "syn_007", "synapse_count": 1},
+    {"pre_neuron_id": "syn_005", "post_neuron_id": "syn_unknown_1", "synapse_count": 4},
+    {"pre_neuron_id": "syn_unknown_2", "post_neuron_id": "syn_006", "synapse_count": 6}
+  ]
+}
