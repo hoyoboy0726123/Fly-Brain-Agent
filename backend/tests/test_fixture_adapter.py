@@ -21,7 +21,10 @@ def test_adapter_info_and_inspection() -> None:
     inspection = adapter.inspect()
     assert inspection.raw_files[0].role == "fixture"
     assert len(inspection.raw_files[0].sha256) == 64
-    assert inspection.details == {"neurons": 8, "connections": 13, "synthetic_marker": "SYNTHETIC"}
+    assert inspection.details["neurons"] == 8 and inspection.details["connections"] == 13
+    assert inspection.details["synthetic_marker"] == "SYNTHETIC"
+    assert inspection.details["annotated_bodies_total"] == 8
+    assert "synthetic" in inspection.details["selection_rule"]
 
 
 def test_load_neurons_marks_every_row_synthetic() -> None:

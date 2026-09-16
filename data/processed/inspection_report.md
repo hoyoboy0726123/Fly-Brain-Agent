@@ -6,7 +6,23 @@
 - license: CC-BY 4.0 (https://creativecommons.org/licenses/by/4.0/). Official statement on male-cns.janelia.org/download: 'The Male CNS is licensed under CC-BY.'
 - synthetic fixture: False
 
-- neurons: 165,122
+## Source dataset
+- name / version: MaleCNS v1.0
+- official neuron count (approx.): 166,700
+  - basis: MaleCNS v1.0 is described as approximately 166,700 neurons (project figure supplied at review); it equals the 166,700 bodies with a non-null 'superclass' in body-annotations v1.0 (empirical). The Cell paper reports 166,691 (search-only). Not the canonical graph count.
+- annotated bodies in release table: 211,577
+- raw connection rows: 151,856,684
+- status counts: Traced 165,122 · Orphan 15,925 · Glia 11,864 · Unimportant 10,751 · null 5,472 · Assign 1,832 · Anchor 611
+
+## Canonical simulation graph
+- selection rule: `status == "Traced"`
+- neurons: 165,122 (subset of the source dataset, NOT its complete neuron census)
+- directed connections: 25,563,197
+- dropped dangling edges: 126,293,487
+- consistent with the normalized tables: True
+
+## Normalized tables
+- canonical graph neurons: 165,122
 - directed connections: 25,563,197 (self-loops: 101)
 - synapse_count min/max/median: 1 / 2591 / 2.0 (total 124,025,046)
 - missing IDs (dangling edges): pre 0, post 0, either 0

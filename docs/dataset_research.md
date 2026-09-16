@@ -184,6 +184,17 @@ counted per category and reported (`--keep-dangling` retains them).
 | raw checksums | all three md5 match the bucket listing |
 | runtime | 67 s (hashing 1.1 GB + streaming 2,318 record batches) |
 
+### 6.2 Source dataset vs canonical simulation graph (P1.1)
+
+Per `DATA.md` §8 the two are recorded separately in `provenance.json`:
+`source_dataset` = MaleCNS v1.0, official neuron count ≈ 166,700 (project figure; equals the
+166,700 bodies with a non-null `superclass` [empirical]; paper 166,691 [search-only]),
+211,577 annotated bodies, 151,856,684 raw connection rows, per-status counts;
+`canonical_graph` = `status == "Traced"`, 165,122 neurons, 25,563,197 connections,
+126,293,487 dropped dangling edges. The canonical graph is the simulation input and is never
+presented as the dataset census. `inspect_dataset.py` prints both and checks that the
+canonical counts match the parquet tables.
+
 ## 7. Raw data policy compliance
 
 - `data/raw/` is git-ignored; raw files are read-only inputs; sha256 + md5 are recorded and md5

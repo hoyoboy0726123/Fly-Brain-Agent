@@ -78,3 +78,15 @@ make inspect     # DATA.md §7 validation report
 ```
 
 測試與 smoke test 不需要下載任何 connectome 資料集；`data/raw/` 已被 git 忽略。真實資料的取得方式、schema 與授權（CC-BY）驗證紀錄見 [docs/dataset_research.md](docs/dataset_research.md)。
+
+## 來源資料集 vs Canonical 模擬圖（重要區分）
+
+| | 來源資料集（Source Dataset） | Canonical 模擬圖（Canonical Simulation Graph） |
+|---|---|---|
+| 是什麼 | MaleCNS v1.0 官方發布的完整資料集 | 本專案實際用來模擬的子集 |
+| 神經元 | 約 166,700（論文報告 166,691） | 165,122（canonical 子集，非完整總數） |
+| 選取規則 | 無（就是資料集本身） | `status == "Traced"` |
+| 連結 | 151,856,684 筆原始 body→body 列 | 25,563,197 條有向邊 |
+
+**165,122 是 canonical 模擬圖的神經元數，不是 MaleCNS 的完整神經元總數。** 兩者都記錄在
+`data/processed/provenance.json`（`source_dataset` / `canonical_graph`）並由 `make inspect` 同時列出；規則見 [DATA.md](DATA.md) §8。

@@ -96,10 +96,10 @@
   "notes": "Release date 2026-06-08. Structural connectivity from the published flat-connectome tables; synapse_count is the published 'weight' column (number of synaptic connections between the body pair in the minconf-0.5 tables).",
   "synthetic": false,
   "citation": "MaleCNS paper, Cell, published 2026-09-03: https://www.cell.com/cell/fulltext/S0092-8674(26)00942-6 ; preprint: https://www.biorxiv.org/content/10.1101/2025.10.09.680999v2",
-  "generated_at": "2026-09-16T12:27:48+00:00",
+  "generated_at": "2026-09-16T13:09:45+00:00",
   "generator": {
     "code_version": "0.0.1",
-    "git_commit": "a7e35c35da2eed5c52b3cd70a4690780b0350a31",
+    "git_commit": "0cb006e44883c0cb56833d7710546fff4970d353",
     "pyarrow_version": "25.0.1",
     "python_version": "3.11.15",
     "argv": [
@@ -140,5 +140,31 @@
   "outputs": {
     "neurons": "data/processed/neurons.parquet",
     "connections": "data/processed/connections.parquet"
+  },
+  "source_dataset": {
+    "name": "MaleCNS",
+    "version": "v1.0",
+    "official_neuron_count": 166700,
+    "official_neuron_count_source": "MaleCNS v1.0 is described as approximately 166,700 neurons (project figure supplied at review); it equals the 166,700 bodies with a non-null 'superclass' in body-annotations v1.0 (empirical). The Cell paper reports 166,691 (search-only). Not the canonical graph count.",
+    "annotated_bodies_total": 211577,
+    "raw_connection_rows": 151856684,
+    "status_counts": {
+      "Traced": 165122,
+      "Orphan": 15925,
+      "Glia": 11864,
+      "Unimportant": 10751,
+      "null": 5472,
+      "Assign": 1832,
+      "Anchor": 611
+    },
+    "description": "The source dataset as published. The canonical simulation graph is a selected subset of it; its counts must never be presented as the dataset's neuron census."
+  },
+  "canonical_graph": {
+    "selection_rule": "status == \"Traced\"",
+    "neuron_count": 165122,
+    "connection_count": 25563197,
+    "dropped_dangling_edges": 126293487,
+    "includes_dangling_edges": false,
+    "description": "Canonical simulation graph: neurons selected by selection_rule and the directed connections between them. NOT the complete neuron census of the source dataset."
   }
 }

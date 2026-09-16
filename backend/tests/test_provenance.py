@@ -1,6 +1,6 @@
 import pytest
 
-from app.connectome import Provenance, RawFileEntry
+from app.connectome import CanonicalGraph, Provenance, RawFileEntry, SourceDataset
 
 
 def test_biological_dataset_requires_license() -> None:
@@ -17,6 +17,10 @@ def test_round_trip_through_json(tmp_path) -> None:
     provenance = Provenance(
         dataset_name="male-cns",
         dataset_version="v1.0",
+        source_dataset=SourceDataset(name="MaleCNS", version="v1.0", official_neuron_count=166_700),
+        canonical_graph=CanonicalGraph(
+            selection_rule='status == "Traced"', neuron_count=165_122, connection_count=25_563_197
+        ),
         source_page="https://male-cns.janelia.org/download/",
         download_url="gs://flyem-male-cns/v1.0/connectome-data/flat-connectome/",
         retrieved_at="2026-09-16T12:00:00+00:00",

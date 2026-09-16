@@ -103,6 +103,11 @@ Options (see `scripts/normalize_dataset.py --help`): `--status Traced Assign`,
 
 Parquet outputs are git-ignored; `provenance.json` and the inspection report are committed.
 
+`provenance.json` and the inspection report always distinguish the **source dataset**
+(MaleCNS v1.0, ≈166,700 neurons) from the **canonical simulation graph** (`status == "Traced"`,
+165,122 neurons / 25,563,197 connections). See `DATA.md` §8; tests in
+`backend/tests/test_canonical_graph.py` guard the distinction.
+
 ## 5. Configuration
 
 Backend (`FLYBRAIN_` prefix, optional `backend/.env`, see `backend/.env.example`):

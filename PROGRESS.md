@@ -3,7 +3,7 @@
 | Phase | Status | Exit Gate |
 |---|---|---|
 | P0 Bootstrap | ✅ Done (reviewer approved, merged PR #1) | backend/frontend/tests runnable |
-| P1 Data ingestion | ✅ Done (awaiting human confirmation) | normalized data + provenance |
+| P1 Data ingestion | ✅ Done (reviewer approved, merged PR #2); P1.1 canonical graph definition ✅ Done (awaiting confirmation) | normalized data + provenance |
 | P2 Circuit extraction | ⬜ Not started | deterministic bounded circuit |
 | P3 Simulation | ⬜ Not started | tested simplified dynamics |
 | P4 Escape | ⬜ Not started | stimulus → action |
@@ -14,7 +14,7 @@
 | P9 Robot | ⬜ Future | safe physical adapter |
 
 ## Current Phase
-P1 complete. Stopped before P2, waiting for human confirmation (see START_HERE.md).
+P1.1 (Canonical Graph Definition) complete. Stopped before P2, waiting for human confirmation.
 
 ## Blockers
 None recorded.
@@ -38,6 +38,7 @@ None recorded.
 - (P1) Raw files are hashed (sha256 + md5) and md5 is compared with the bucket listing; normalization refuses to run on a mismatch. Parquet outputs are git-ignored; `provenance.json` and `inspection_report.{json,md}` are committed.
 - (P1) Tests never download: the synthetic fixture `backend/tests/fixtures/tiny_connectome.json` and synthetic Feather files with the verified MaleCNS schema (`tests/synthetic_malecns.py`) cover the fixture adapter and the production adapter offline.
 - (P1) New runtime dependency: `pyarrow` only (Feather/Parquet/compute). No pandas/polars yet.
+- (P1.1) **Source dataset ≠ canonical simulation graph** (DATA.md §8). SOURCE DATASET = MaleCNS v1.0, ≈166,700 neurons (project figure; equals the 166,700 bodies with a `superclass`; paper 166,691). CANONICAL SIMULATION GRAPH = `status == "Traced"`, 165,122 neurons, 25,563,197 connections. The canonical count is never presented as the dataset census. Both blocks are mandatory in `provenance.json` for biological data (`Provenance` validator), reported by `inspect_dataset.py`, written into the parquet schema metadata, and guarded by `tests/test_canonical_graph.py`. Traced filtering behaviour is unchanged.
 
 ---
 
@@ -188,3 +189,43 @@ Data (generated, not committed unless small): `data/processed/neurons.parquet` (
 2. Bounded directed traversal with `max_hops`, `min_synapses`, hard `max_neurons` abort; deterministic ordering; export circuit artifact (SDD §4) carrying `dataset`, `dataset_version`, extractor config and every edge's provenance (source ids + synapse_count).
 3. Tests on the synthetic fixture (hop limit, threshold, directionality, determinism, abort, missing seed); smoke on the fixture and, when present, on the production tables.
 4. Decide the neuron-set question (Traced vs paper count) before extraction results are presented as biological.
+
+---
+
+## P1.1 Report (2026-09-16) — Canonical Graph Definition
+
+Scope: make the distinction between the published SOURCE DATASET and the CANONICAL SIMULATION
+GRAPH explicit everywhere. No change to the `status == "Traced"` selection, no circuit
+extraction.
+
+### Modified files
+- `DATA.md` — new §8 "Source Dataset vs Canonical Simulation Graph" (definitions, counts, rules).
+- `README.md` — new section "來源資料集 vs Canonical 模擬圖"; 165,122 is always labelled as the canonical subset.
+- `docs/dataset_research.md` §6.2, `docs/DEVELOPMENT.md` — pointers to the distinction.
+- `backend/app/connectome/adapter.py` — `DatasetInfo.source_name`, `official_neuron_count`, `official_neuron_count_source`.
+- `backend/app/connectome/provenance.py` — `SourceDataset`, `CanonicalGraph` models; `Provenance.source_dataset` / `canonical_graph`, required for non-synthetic data.
+- `backend/app/connectome/inspect.py` — report carries both blocks plus `canonical_graph_consistent`; markdown prints "## Source dataset" and "## Canonical simulation graph".
+- `backend/app/connectome/malecns.py` — `SOURCE_NAME`, `OFFICIAL_NEURON_COUNT = 166_700` with its basis, `MaleCnsConfig.selection_rule`, `inspect()` now summarises the source (annotated bodies, status counts, bodies with superclass, raw connection rows).
+- `backend/app/connectome/fixture.py` — fixture selection rule and source counts.
+- `backend/app/connectome/__init__.py` — exports.
+- `scripts/normalize_dataset.py` — writes `source_dataset` / `canonical_graph`, prints both, stores them in the parquet schema metadata.
+- `scripts/inspect_dataset.py` — fixture path reports both blocks.
+- `backend/tests/test_canonical_graph.py` (new, 13 tests), `test_provenance.py`, `test_fixture_adapter.py` (updated).
+- `data/processed/provenance.json`, `inspection_report.{json,md}` — regenerated from the real v1.0 files (checksums OK, 79 s).
+
+### Test results
+- `ruff check`: all checks passed.
+- `pytest`: **88 passed** (75 previous + 13 new). Guards include: default rule still `("Traced",)`; biological provenance rejected without both blocks; committed `provenance.json` holds source 166,700 / canonical 165,122 / 25,563,197 with `status == "Traced"`; committed report consistent; normalize/inspect scripts emit both blocks; parquet metadata carries the rule; DATA.md documents the distinction; every README line mentioning 165,122 says "canonical".
+
+### Smoke results
+- `make smoke`: backend `/health` PASS; data smoke (fixture + production inspect) prints both sections, `consistent with the normalized tables: True`; Playwright 4 passed.
+
+### Final counts
+| | Neurons | Connections |
+|---|---:|---:|
+| SOURCE DATASET — MaleCNS v1.0 | ≈166,700 official (211,577 annotated bodies; 166,700 with `superclass`; paper 166,691) | 151,856,684 raw body→body rows |
+| CANONICAL SIMULATION GRAPH — `status == "Traced"` | **165,122** | **25,563,197** |
+
+### Known limitations
+- The "≈166,700" figure is the project-level description supplied at review; it matches the `superclass` count empirically but the official pages remain unreachable from this environment, so its wording is recorded as a basis string rather than a verbatim quote.
+- The canonical rule is still a project decision; changing it (e.g. Traced+Assign) regenerates a different canonical graph and is recorded automatically.
