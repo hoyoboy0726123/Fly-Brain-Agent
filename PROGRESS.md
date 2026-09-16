@@ -5,8 +5,8 @@
 | P0 Bootstrap | ✅ Done (reviewer approved, merged PR #1) | backend/frontend/tests runnable |
 | P1 Data ingestion | ✅ Done (reviewer approved, PR #2); P1.1 canonical graph definition ✅ Done (reviewer approved, PR #3) | normalized data + provenance |
 | P2 Circuit extraction | ✅ Done (reviewer approved, PR #4) | deterministic bounded circuit |
-| P3 Simulation | ✅ Done (awaiting human confirmation) | tested simplified dynamics |
-| P4 Escape | ⬜ Not started | stimulus → action |
+| P3 Simulation | ✅ Done (reviewer approved, PR #5) | tested simplified dynamics |
+| P4 Escape | ✅ Done (awaiting human confirmation) — biological status PARTIALLY SUPPORTED | stimulus → action |
 | P5 Web UI | ⬜ Not started | interactive end-to-end demo |
 | P6 Brain inspector | ⬜ Not started | inspectable provenance |
 | P7 Food | ⬜ Future | second behavior |
@@ -14,7 +14,7 @@
 | P9 Robot | ⬜ Future | safe physical adapter |
 
 ## Current Phase
-P3 (Neural Simulation Engine) complete. Stopped before P4, waiting for human confirmation.
+P4 (Looming / Escape Behavior) complete. Stopped before P5, waiting for human confirmation.
 
 ## Blockers
 None recorded.
@@ -48,6 +48,11 @@ None recorded.
 - (P3) Stimulus is generic input injection (`stimulate(neuron_ids, intensity, duration_steps)`); no sensory/behavioural naming. One-step synaptic delay; refractory neurons hold the reset potential and ignore input.
 - (P3) Snapshots reference the circuit by `circuit_id` + `circuit_hash` only; biological provenance is never copied into simulation artifacts. Large snapshots are git-ignored; run reports are committed.
 - (P3) Stability is a model property: on the dense 1,992-neuron technical subgraph the default parameters reverberate (period 3); `weight_scale ≈ 0.2` propagates then decays; ≤ 0.15 does not propagate. Recorded in NEUROSCIENCE.md §8; parameters must be recorded with every experiment.
+- (P4) Research gate first (`docs/circuits/escape_v1.md`): sensory = LC4 + LPLC2, output = DNp01 (giant fiber), all identified by exact MaleCNS `cell_type` (GF corroborated by instance `DNp01(GF)` and hemibrainType "Giant Fiber"); all 311 LC4/LPLC2 synapse directly onto the ipsilateral GF (0 contralateral edges). Literature (Klapoetke 2017, von Reyn 2017, Ache 2019, Wu 2016, Namiki 2018, Jang 2023, Dombrovski 2023) verified via search metadata only — journal sites are blocked here. **BIOLOGICAL CIRCUIT STATUS: PARTIALLY SUPPORTED.**
+- (P4) Negative results recorded, nothing substituted: LC6, LC16, LPLC1 have no usable direct edge to the GF; two-hop circuits exceed the 2,000-neuron limit; the contralateral GF pathway is unidentified.
+- (P4) escape_v1 = monosynaptic LC4/LPLC2 → GF circuit extracted with P2 (max_hops 1, min_synapses 10, restrict_to_target_paths): 286 neurons / 932 edges, hash `db7c46e6…`. The config records the full sensory population (311), the stimulated subset in the circuit (284) and the 27 excluded LPLC2 with the reason.
+- (P4) Stimulus schema `looming / left|center|right / intensity 0..1` is APPLICATION INPUT; mapping = `current = intensity × gain` into the ipsilateral group (left → L, right → R, center → both). Decoder exposes only `NO_ACTION` / `ESCAPE` (GF azimuth-invariant); the firing GF side is metadata. Every result carries the disclaimer "STRUCTURAL CONNECTIVITY IS BIOLOGICAL DATA. NEURAL ACTIVITY IS SIMULATED. STIMULUS MAPPING AND MOTOR DECODING ARE COMPUTATIONAL INTERPRETATIONS."
+- (P4) No parameter was tuned toward an outcome: the demo runs on P3 defaults; `simulation_config_overrides` in the config is empty and any future change must be recorded in escape_v1.md.
 - (P1.1) **Source dataset ≠ canonical simulation graph** (DATA.md §8). SOURCE DATASET = MaleCNS v1.0, ≈166,700 neurons (project figure; equals the 166,700 bodies with a `superclass`; paper 166,691). CANONICAL SIMULATION GRAPH = `status == "Traced"`, 165,122 neurons, 25,563,197 connections. The canonical count is never presented as the dataset census. Both blocks are mandatory in `provenance.json` for biological data (`Provenance` validator), reported by `inspect_dataset.py`, written into the parquet schema metadata, and guarded by `tests/test_canonical_graph.py`. Traced filtering behaviour is unchanged.
 
 ---
@@ -388,3 +393,62 @@ The MVP target (≈ 2,000 neurons, tens of thousands of edges, interactive runs)
 1. Research gate first: `docs/circuits/escape_v1.md` with defensible visual/looming input and descending output populations from authoritative MaleCNS annotations/literature; stop and document if the mapping cannot be verified (NEUROSCIENCE.md §5).
 2. Only then: `LoomingStimulus` → generic `stimulate()` mapping, selected circuit config, `MotorDecoder` (activity → IDLE/FORWARD/LEFT/RIGHT/ESCAPE_LEFT/ESCAPE_RIGHT), action enum, end-to-end experiment runner recording dataset/version, circuit hash, config, seed, stimulus, output (NEUROSCIENCE.md §6).
 3. If the biological mapping is uncertain, build the pipeline on the synthetic fixture and label it as such.
+
+---
+
+## P4 Report (2026-09-16) — Looming / Escape Behavior
+
+### A. Research findings (`docs/circuits/escape_v1.md`)
+- Looming-responsive visual projection types documented in the literature: LPLC2 (Klapoetke 2017), LC4 (von Reyn 2017, Ache 2019), LC6/LC16/LPLC1 (Wu 2016). All exist in MaleCNS v1.0 as `visual_projection` types: LC4 126, LPLC2 185, LC6 124, LPLC1 134, LC16 182.
+- Escape descending neurons: DNp01 = giant fiber (Namiki 2018; Ache 2019), azimuth-invariant, drives takeoff (Jang 2023); DNp02/DNp04/DNp11 receive LC4 gradients and set forward/backward takeoff (Dombrovski 2023). All present as pairs in MaleCNS with sides.
+- Structural verification in the canonical graph: LC4 → DNp01 6,362 synapses over all 126 LC4 (per pair min 21, median 51); LPLC2 → DNp01 4,862 over all 185 LPLC2 (median 27); every edge ipsilateral; LC4 and LPLC2 are the two largest input types of both GFs. LC4 → DNp02/DNp04/DNp11 also direct (reference only).
+- Negative results: LC6 → GF none; LC16 → GF none; LPLC1 → GF 1 synapse; 2-hop expansion aborts at every threshold.
+- Environment limitation: every journal site is egress-blocked; citations are metadata-verified (title, venue, year, authors, DOI/URL, indexed summary).
+
+### B. Biological circuit status
+**PARTIALLY SUPPORTED** — sensory mapping SUPPORTED, output mapping SUPPORTED, identifiers SUPPORTED, structural path SUPPORTED, citations PARTIALLY (metadata only), directional decoding UNSUPPORTED (excluded), signed dynamics UNSUPPORTED (excluded). Results are described as "an action decoded from simulated activity on a biologically grounded structural circuit"; no behaviour is claimed as reproduced.
+
+### C. Sensory neurons
+LC4 + LPLC2, 311 neurons (L 165 / R 146), grouped by `mcns_somaSide`; 284 are in the circuit and receive stimulus current (126 LC4 + 158 LPLC2); 27 LPLC2 with < 10 synapses onto a GF are excluded and listed in the config with the reason.
+
+### D. Output neurons
+DNp01 (giant fiber): `10010` (L, `DNp01(GF)_L`) and `10001` (R, `DNp01(GF)_R`).
+
+### E. Structural paths
+Monosynaptic, ipsilateral: L sensory → GF L only; R sensory → GF R only (verified with P2). Hop-1 path-restricted extraction at min_synapses 10 keeps all 311 → 284 seeds; both targets reachable with `minimum_path_length = 1`.
+
+### F. Extracted circuit
+`data/circuits/escape_v1.json` (+ `.parquet`): 286 neurons / 932 edges (LC4→DNp01 126, LPLC2→DNp01 158, LC4→LC4 204, LPLC2→LPLC2 435, LPLC2→LC4 9); hash `db7c46e6a165354d7aed499525e303131bd8d6367e492b2e4fc31117cdc2c78d`, recorded as `expected_circuit_hash` in `backend/app/behavior/configs/escape_v1.json` and verified by tests and by the runner.
+
+### G. Simulation result (P3 defaults, unchanged; 30 steps; stimulus 5 steps)
+| direction | intensity | sensory first spike | GF spikes R/L | first GF spike | action |
+|---|---|---|---|---|---|
+| left | 0.2 | – | 0/0 | – | NO_ACTION |
+| left | 0.5 | step 3 (155) | 0/1 | 4 | ESCAPE |
+| left | 1.0 | step 1 (155) | 0/2 | 2 | ESCAPE |
+| center | 0.2 | – | 0/0 | – | NO_ACTION |
+| center | 0.5 | step 3 (284) | 1/1 | 4 | ESCAPE |
+| center | 1.0 | step 1 (284) | 2/2 | 2 | ESCAPE |
+| right | 0.2 | – | 0/0 | – | NO_ACTION |
+| right | 0.5 | step 3 (129) | 1/0 | 4 | ESCAPE |
+| right | 1.0 | step 1 (129) | 2/0 | 2 | ESCAPE |
+Activity stops when the stimulus ends (no reverberation in this circuit). Each run ≈ 1.5 ms. Timeline events t0–t4 recorded per run (t2 = "no intermediate neuron fired (monosynaptic)"). Report: `data/simulations/escape_v1_demo.report.json`.
+
+### H. Decoded action
+`ESCAPE` for intensity ≥ 0.5 in every direction, `NO_ACTION` for 0.2; the firing GF side follows the stimulated side and is reported as metadata only.
+
+### I. Tests
+`pytest`: **234 passed** (205 + 29 new: sensors 5, motor 4, escape config 5, runner 10, biological 5). Synthetic: stimulus validation, mapper, direction handling, intensity bounds, simulation integration (fixture circuit), motor threshold, NO_ACTION, determinism, event timeline, provenance references, config-mismatch rejection. Biological: every configured MaleCNS id exists (skips without data), every artifact edge from `male-cns v1.0` with ≥ 10 synapses, artifact hash = configured hash, citations present, no synthetic ids, roles match cell types, configured population = all canonical LC4/LPLC2. `ruff check` clean; frontend typecheck unchanged.
+
+### J. Limitations
+- Citations verified by metadata only; a human should spot-check the cited passages.
+- Monosynaptic LC4/LPLC2 → GF only: no contralateral pathway, no inhibitory size-encoding inputs, no LC6/LC16/LPLC1 routes, no DNp02/DNp04/DNp11 forward/backward decoding (candidate `escape_v2`).
+- Unsigned excitatory-only dynamics with computational defaults; intensity→latency behaviour is a model property.
+- Left/right selects the ipsilateral sensory group only; no directional action is decoded.
+- The stimulus is a normalized application input; no visual-scene geometry (angular size/velocity) is modelled.
+- No API/UI yet (P5/P6).
+
+### Next phase suggestions (P5 — do not start without confirmation)
+1. FastAPI endpoints per SDD §7 (`/circuits`, `/simulation/*`, `/neurons/{id}`) wrapping the P2–P4 modules, with `escape_v1` as the default circuit and the disclaimer in every payload.
+2. WebSocket streaming of per-step SIMULATED activity from `SimulationEngine.step()`.
+3. Three-column UI (Environment / Circuit / Action): Danger button → `LoomingStimulus` → timeline → decoded action, with NEUROSCIENCE.md §3 wording.

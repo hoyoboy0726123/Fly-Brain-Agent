@@ -125,7 +125,7 @@
   "seed_neurons": [
     "10001"
   ],
-  "peak_rss_bytes": 183377920,
+  "peak_rss_bytes": 183402496,
   "runs": {
     "default": {
       "simulation_config": {
@@ -212,12 +212,12 @@
       ],
       "activity_stopped_in_last_10_steps": false,
       "settled_to_rest": true,
-      "engine_build_seconds": 0.008867,
-      "runtime_seconds": 0.010683,
-      "mean_step_seconds": 0.00021366,
+      "engine_build_seconds": 0.008725,
+      "runtime_seconds": 0.010697,
+      "mean_step_seconds": 0.00021394,
       "benchmark_1000_steps": {
-        "runtime_seconds": 0.190244,
-        "mean_step_seconds": 0.00019024,
+        "runtime_seconds": 0.200656,
+        "mean_step_seconds": 0.00020066,
         "firing_events": 663337
       },
       "snapshot": "data/simulations/smoke_technical_simulation_default.snapshot.json"
@@ -307,12 +307,12 @@
       ],
       "activity_stopped_in_last_10_steps": true,
       "settled_to_rest": false,
-      "engine_build_seconds": 0.008759,
-      "runtime_seconds": 0.005473,
-      "mean_step_seconds": 0.00010945,
+      "engine_build_seconds": 0.008721,
+      "runtime_seconds": 0.00573,
+      "mean_step_seconds": 0.0001146,
       "benchmark_1000_steps": {
-        "runtime_seconds": 0.106282,
-        "mean_step_seconds": 0.00010628,
+        "runtime_seconds": 0.107995,
+        "mean_step_seconds": 0.00010799,
         "firing_events": 2
       },
       "snapshot": "data/simulations/smoke_technical_simulation_damped_weight_scale_0.05.snapshot.json"

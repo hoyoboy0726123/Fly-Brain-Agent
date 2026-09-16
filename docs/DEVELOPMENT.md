@@ -151,6 +151,21 @@ Outputs go to `data/simulations/`: `<id>.report.json` (run summary + spike raste
 and `<id>.snapshot.json` (full state, git-ignored). `--config-json '{"threshold": 1.5}'`
 overrides `SimulationConfig` fields.
 
+## 4e. Escape behaviour pipeline (P4)
+
+APPLICATION DECODING layer: `backend/app/sensors/` (LoomingStimulus, StimulusMapper),
+`backend/app/motor/` (MotorDecoder: `NO_ACTION` / `ESCAPE`), `backend/app/behavior/`
+(versioned config `configs/escape_v1.json` + `EscapeExperiment` runner). The biological
+mapping (LC4 + LPLC2 → DNp01/GF) and its evidence live in `docs/circuits/escape_v1.md`.
+
+```bash
+make build-escape-config   # regenerate escape_v1.json + data/circuits/escape_v1.{json,parquet} from the canonical graph
+make smoke-escape          # TECHNICAL CONNECTOME-GROUNDED ESCAPE DEMO -> data/simulations/escape_v1_demo.report.json
+```
+
+Disclaimer carried by every result: STRUCTURAL CONNECTIVITY IS BIOLOGICAL DATA. NEURAL
+ACTIVITY IS SIMULATED. STIMULUS MAPPING AND MOTOR DECODING ARE COMPUTATIONAL INTERPRETATIONS.
+
 ## 5. Configuration
 
 Backend (`FLYBRAIN_` prefix, optional `backend/.env`, see `backend/.env.example`):
@@ -189,8 +204,9 @@ backend/app/models       API schemas
 backend/app/connectome   BIOLOGICAL STRUCTURE  (P1): schema, normalize, adapter, malecns, fixture, provenance, inspect
 backend/app/circuits     BIOLOGICAL STRUCTURE  (P2): graph (CSR), extractor, artifact, errors
 backend/app/simulation   COMPUTATIONAL DYNAMICS (P3): config, weights, engine, state, errors
-backend/app/sensors      APPLICATION DECODING  (P4, empty)
-backend/app/motor        APPLICATION DECODING  (P4, empty)
+backend/app/sensors      APPLICATION DECODING  (P4): LoomingStimulus, StimulusMapper, sensor adapter
+backend/app/motor        APPLICATION DECODING  (P4): MotorDecoder, Action
+backend/app/behavior     APPLICATION DECODING  (P4): escape_v1 config + EscapeExperiment runner
 backend/tests            pytest suite (+ fixtures/tiny_connectome.json, SYNTHETIC)
 frontend/src/api         typed API client + hooks
 frontend/src/components  UI components
@@ -204,6 +220,9 @@ scripts/extract_circuit.py    bounded circuit extraction -> data/circuits/<id>.{
 scripts/smoke_circuit.py      P2 smoke (fixture + technical MaleCNS extraction)
 scripts/run_simulation.py     run the LIF-like model on a circuit artifact
 scripts/smoke_simulation.py   P3 smoke (fixture propagation + technical MaleCNS simulation)
+scripts/build_escape_config.py escape_v1 config + circuit artifact builder (Phase B)
+scripts/smoke_escape.py       TECHNICAL CONNECTOME-GROUNDED ESCAPE DEMO (Phase G)
+docs/circuits/escape_v1.md    P4 research gate and circuit definition
 docs/dataset_research.md      dataset verification record (P1 gate)
 ```
 

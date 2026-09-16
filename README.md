@@ -79,6 +79,7 @@ make extract ARGS="--circuit-id demo --seeds <id> --max-hops 2 --min-synapses 10
 make smoke-circuit  # P2 extractor smoke (fixture + technical MaleCNS run when data present)
 make simulate ARGS="--fixture --stimulate syn_001 --intensity 2.0 --duration 3 --steps 30"
 make smoke-simulation  # P3 simulated-activity smoke (模擬活動，非量測資料)
+make smoke-escape      # P4 TECHNICAL CONNECTOME-GROUNDED ESCAPE DEMO（結構為生物資料、活動為模擬、解碼為計算詮釋）
 ```
 
 測試與 smoke test 不需要下載任何 connectome 資料集；`data/raw/` 已被 git 忽略。真實資料的取得方式、schema 與授權（CC-BY）驗證紀錄見 [docs/dataset_research.md](docs/dataset_research.md)。

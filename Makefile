@@ -8,7 +8,8 @@ VENV_PY      := $(VENV)/bin/python
 
 .PHONY: help install install-backend install-frontend backend frontend \
         test test-backend typecheck-frontend lint smoke smoke-backend smoke-frontend smoke-data \
-        smoke-circuit smoke-simulation normalize normalize-fixture inspect extract simulate clean
+        smoke-circuit smoke-simulation smoke-escape normalize normalize-fixture inspect extract \
+        simulate build-escape-config clean
 
 help:
 	@echo "make install            install backend (.venv) and frontend (node_modules) dependencies"
@@ -24,6 +25,8 @@ help:
 	@echo "make extract ARGS=...   run scripts/extract_circuit.py with ARGS"
 	@echo "make smoke-simulation   fixture propagation demo (+ technical MaleCNS simulation when circuit present)"
 	@echo "make simulate ARGS=...  run scripts/run_simulation.py with ARGS"
+	@echo "make build-escape-config  rebuild escape_v1 config + circuit artifact from the canonical graph"
+	@echo "make smoke-escape       TECHNICAL CONNECTOME-GROUNDED ESCAPE DEMO (escape_v1)"
 
 install: install-backend install-frontend
 
@@ -52,7 +55,7 @@ typecheck-frontend:
 lint:
 	cd $(BACKEND_DIR) && .venv/bin/ruff check .
 
-smoke: smoke-backend smoke-data smoke-circuit smoke-simulation smoke-frontend
+smoke: smoke-backend smoke-data smoke-circuit smoke-simulation smoke-escape smoke-frontend
 
 smoke-backend:
 	$(VENV_PY) scripts/smoke_test.py
@@ -75,6 +78,12 @@ smoke-simulation:
 
 simulate:
 	$(VENV_PY) scripts/run_simulation.py $(ARGS)
+
+build-escape-config:
+	$(VENV_PY) scripts/build_escape_config.py
+
+smoke-escape:
+	$(VENV_PY) scripts/smoke_escape.py
 
 normalize:
 	$(VENV_PY) scripts/normalize_dataset.py --adapter malecns
