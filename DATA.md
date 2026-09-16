@@ -117,6 +117,14 @@ Attribution required by CC-BY is carried by every derived artifact in this repos
 views. FlyBrain Agent does **not** own, modify or redistribute the dataset; raw files are never
 committed (`data/raw/` is git-ignored).
 
-**Project code.** The license of FlyBrain Agent's own code is a separate decision from the
-dataset license and has not been made yet (no `LICENSE` file). It must be chosen by the project
-owner before a public release; nothing in this document implies a code license.
+**Two separate licensing domains.**
+
+- **FlyBrain Agent project code** (backend, frontend, scripts, tests, project docs):
+  **Apache License 2.0** — root `LICENSE`, SPDX `Apache-2.0`, selected by the project owner.
+- **MaleCNS dataset** and everything derived from it (neuron ids, cell types, synapse counts,
+  `data/processed/provenance.json`, `data/circuits/escape_v1.json`): **CC-BY 4.0**, the
+  dataset's own license, attribution required as above.
+
+Apache-2.0 applies to the project code only; it does not replace, override or relicense the
+MaleCNS dataset or the data-derived artifacts. Nothing in this repository claims ownership of
+MaleCNS data.

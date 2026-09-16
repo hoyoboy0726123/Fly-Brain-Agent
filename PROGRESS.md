@@ -15,10 +15,11 @@
 | P9 Robot | ⬜ Future | safe physical adapter |
 
 ## Current Phase
-P6.1 (MVP Release Polish) complete — v0.1.0 release candidate. No tag or GitHub Release created (not authorized). Stopped before P7, waiting for human confirmation. Open decision: project code license.
+P6.1 (MVP Release Polish) complete, including the final license fix — v0.1.0 release candidate. Project code license: Apache-2.0 (owner decision, root `LICENSE`); MaleCNS dataset stays CC-BY 4.0. No tag or GitHub Release created (not authorized). Stopped before P7, waiting for human confirmation.
 
 ## Blockers
-- **Release blocker (human decision):** the repository has no project-code `LICENSE`; the dataset license (CC-BY 4.0) is documented separately. Choose a license before tagging v0.1.0.
+- ~~Release blocker (human decision): the repository has no project-code `LICENSE`.~~ **Resolved 2026-09-16:** the owner selected the Apache License 2.0; root `LICENSE` added, README / DATA.md / CHANGELOG / package metadata updated. The dataset license (CC-BY 4.0) remains a separate domain.
+- Remaining (needs explicit authorization): create the `v0.1.0` tag and GitHub Release.
 
 ## Decision Log
 - MVP is P0-P6.
@@ -647,7 +648,7 @@ LOW CENTER / 0.2 → NO ACTION · MEDIUM CENTER / 0.5 → ESCAPE · HIGH CENTER 
 Version 0.1.0 (backend `__version__`, frontend `package.json`); `CURRENT_PHASE = "P6.1"`; `CHANGELOG.md` with the v0.1.0 entry (MaleCNS ingestion, canonical graph, circuit extraction, LIF-like simulation, escape_v1, interactive demo, brain inspector, provenance explorer, release polish). **No Git tag and no GitHub Release were created** (not authorized).
 
 ### H. License / attribution
-Dataset: MaleCNS v1.0, CC-BY 4.0, attribution and official URLs in README → Data Provenance, DATA.md §9 and every provenance artifact; the project never implies ownership of the data. **Project code license: none in the repository — decision for the human (release blocker).** Nothing was invented.
+Dataset: MaleCNS v1.0, CC-BY 4.0, attribution and official URLs in README → Data Provenance, DATA.md §9 and every provenance artifact; the project never implies ownership of the data. **Project code license: none in the repository — decision for the human (release blocker).** Nothing was invented. *(Resolved afterwards: Apache-2.0, see the P6.1 license fix record below.)*
 
 ### I. Cleanup
 Checked: no tracked temporary / editor / Claude / Codex files, no absolute developer paths, no secrets or keys (grep over tracked files), no large generated artifacts beyond the provenance-bearing reports (largest tracked data file 228 KB); `.ruff_cache` / `node_modules` / `.venv` / `test-results` ignored. Removed the eight superseded `p5-*` screenshots (≈3 MB); kept `mvp-*` and added `release-*` (curated, refreshed by `make screenshots`). Stale phase references fixed (`CURRENT_PHASE`, package descriptions, README). Scientific provenance artifacts untouched.
@@ -668,6 +669,20 @@ Confirmed end to end: P5 demo works (RUN LOOMING DEMO → ESCAPE), P6 inspector 
 `release-main.png` (landing), `release-looming.png` (MEDIUM run at step 3: disc grown, LC4 / LPLC2 firing), `release-escape.png` (decoded ESCAPE), `release-inspector.png` (DNp01 selected, upstream highlighted), `release-provenance.png` (full-width provenance panel). Plus the P6 `mvp-A…E` set.
 
 ### L. Remaining release blockers
-1. **Project code license** — not chosen; add `LICENSE` (human decision).
+1. **Project code license** — not chosen; add `LICENSE` (human decision). *Resolved afterwards in the P6.1 license fix: Apache License 2.0 selected by the owner (see the record below).*
 2. **Tag / release** — `v0.1.0` tag and GitHub Release not created (awaiting explicit authorization).
 3. **CI status** — *resolved*: GitHub Actions run #2 on commit `a0b4acc` (branch `claude/project-docs-p0-implementation-coml8f`) completed **success** for all four jobs (backend python 3.11, backend python 3.12, frontend node 22, playwright): https://github.com/hoyoboy0726123/Fly-Brain-Agent/actions/runs/35133837949. Run #1 had failed only because a workflow-level `FLYBRAIN_ENVIRONMENT=test` override broke the P0 default-settings test; the override was removed.
+
+---
+
+## P6.1 License Fix (2026-09-16) — project code license selected: Apache License 2.0
+
+Owner decision: **Apache License 2.0** for FlyBrain Agent project code. Documentation / metadata change only; no application behaviour touched.
+
+- **A. LICENSE** — root `LICENSE` = the official Apache License, Version 2.0 text, fetched verbatim from https://www.apache.org/licenses/LICENSE-2.0.txt (11,358 bytes, unmodified, including the appendix).
+- **B. README** — code-license badge; Data Provenance paragraph now states the code license and that Apache-2.0 does not relicense MaleCNS; new **License** section with a two-row table (PROJECT CODE → Apache-2.0 / SOURCE DATASET → CC-BY 4.0) and the explicit "does not replace, override or relicense" statement; roadmap blocker line updated.
+- **C. DATA.md §9** — "not chosen" paragraph replaced by the two licensing domains (project code Apache-2.0; MaleCNS and data-derived artifacts CC-BY 4.0).
+- **D. Package metadata** — `backend/pyproject.toml`: `license = "Apache-2.0"` (PEP 639 SPDX expression; build requires `setuptools>=77`), with a comment that the identifier does not cover the dataset; `frontend/package.json`: `"license": "Apache-2.0"`.
+- **E. Stale references** — README (2), DATA.md (1), CHANGELOG (1) rewritten; PROGRESS current-state lines updated and the historical P6.1 report annotated (not rewritten).
+- **F/G. Tests / CI** — recorded in the conversation report after the validation run.
+- **H. Remaining blockers** — only the `v0.1.0` tag / GitHub Release, which need explicit authorization.

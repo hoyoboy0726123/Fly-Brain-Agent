@@ -6,6 +6,7 @@
 ![version](https://img.shields.io/badge/version-0.1.0-blue)
 ![dataset](https://img.shields.io/badge/data-MaleCNS%20v1.0%20(CC--BY%204.0)-brightgreen)
 ![status](https://img.shields.io/badge/biological%20circuit%20status-PARTIALLY%20SUPPORTED-orange)
+![code license](https://img.shields.io/badge/code%20license-Apache--2.0-blue)
 
 ![FlyBrain Agent — landing](docs/screenshots/release-main.png)
 
@@ -136,7 +137,7 @@ Every derived artifact carries its provenance: `data/processed/provenance.json` 
 
 **Dataset attribution.** MaleCNS v1.0 is the male *Drosophila melanogaster* central nervous system connectome released by HHMI Janelia (FlyEM) with the University of Cambridge, MRC LMB and Google Research. It is licensed under **Creative Commons Attribution 4.0 (CC-BY 4.0)** — official statement: *"The Male CNS is licensed under CC-BY."* (https://male-cns.janelia.org/download/); bulk files: `gs://flyem-male-cns/v1.0/connectome-data/flat-connectome/`. FlyBrain Agent does not own, modify or redistribute the dataset: raw files are never committed (`data/raw/` is git-ignored), and the derived artifacts committed here cite the dataset, version, license and file digests. Verification record: [docs/dataset_research.md](docs/dataset_research.md); policy: [DATA.md](DATA.md).
 
-**Project code license.** Separate from the dataset license. *Not yet chosen* — the repository currently has no `LICENSE` file, which is an open decision for the project owner before a public release (see [Roadmap](#roadmap)).
+**Project code license.** Separate from the dataset license: FlyBrain Agent's source code is released under the **Apache License 2.0** (see [License](#license)). Apache-2.0 applies to the project code only; it does not replace, override or relicense the MaleCNS dataset, which stays under CC-BY 4.0.
 
 ## Testing
 
@@ -158,13 +159,24 @@ make demo-smoke     # start both servers via the launcher, verify, stop
 
 ## Roadmap
 
-- **Decision pending (release blocker):** choose and add a project code license (`LICENSE`).
+- **Release:** v0.1.0 tag and GitHub Release — pending explicit authorization by the project owner (license decision resolved: Apache-2.0).
 - P7 — second behaviour (food seeking): research gate first, same config + runner pattern.
 - P8 — webcam stimulus adapter; P9 — safe robot / physical adapter.
 - Candidate `escape_v2`: DNp02 / DNp04 / DNp11 (forward / backward takeoff) once directional decoding is evidence-backed; contralateral giant-fiber inputs.
 - Inspector: per-neuron voltage traces, snapshot export / import.
 
 See [CHANGELOG.md](CHANGELOG.md) for the v0.1.0 entry and [PROGRESS.md](PROGRESS.md) for the phase-by-phase reports.
+
+## License
+
+Two separate licensing domains — they must not be confused:
+
+| | Applies to | License |
+|---|---|---|
+| **PROJECT CODE** | FlyBrain Agent source code in this repository: `backend/`, `frontend/`, `scripts/`, tests, tooling and project documentation written for this project | **Apache License 2.0** — see [`LICENSE`](LICENSE) (SPDX: `Apache-2.0`) |
+| **SOURCE DATASET** | MaleCNS v1.0 (HHMI Janelia FlyEM and collaborators) and every value derived from it — neuron ids, cell types, synapse counts, the `escape_v1` circuit artifact, `provenance.json` | **CC-BY 4.0** — the dataset's own license; attribution required (see [Data Provenance](#data-provenance)) |
+
+The Apache-2.0 license covers FlyBrain Agent's code only. It does **not** replace, override or relicense the MaleCNS dataset or the data-derived artifacts; those remain under CC-BY 4.0 with the attribution above. FlyBrain Agent does not own MaleCNS data.
 
 ## Project documents
 

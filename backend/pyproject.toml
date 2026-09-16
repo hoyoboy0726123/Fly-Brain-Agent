@@ -1,11 +1,14 @@
 [build-system]
-requires = ["setuptools>=68", "wheel"]
+requires = ["setuptools>=77", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "flybrain-agent-backend"
 description = "FlyBrain Agent backend: connectome-grounded simulation API (MVP v0.1, P0–P6)"
 requires-python = ">=3.11"
+# Project code license (SPDX). The MaleCNS dataset used by the project is NOT covered by this
+# identifier: it stays under its own CC-BY 4.0 license (see DATA.md §9).
+license = "Apache-2.0"
 dynamic = ["version"]
 dependencies = [
   "fastapi>=0.115,<1.0",

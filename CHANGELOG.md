@@ -6,7 +6,11 @@ All notable changes to FlyBrain Agent are documented here. The format follows
 ## [0.1.0] — 2026-09-16 — FlyBrain Agent v0.1.0 (MVP)
 
 Release candidate prepared in P6.1. No Git tag or GitHub Release has been created yet
-(pending explicit authorization); the project code license is still to be chosen.
+(pending explicit authorization).
+
+Project code license: **Apache License 2.0** (root `LICENSE`, SPDX `Apache-2.0`), selected by
+the project owner. The MaleCNS v1.0 source dataset remains under its own **CC-BY 4.0** license;
+the two licensing domains are kept separate (README → License, DATA.md §9).
 
 ### Added
 - **MaleCNS ingestion (P1)** — `DatasetAdapter` for the official MaleCNS v1.0 flat-connectome
@@ -42,7 +46,8 @@ Release candidate prepared in P6.1. No Git tag or GitHub Release has been create
   download), one-command `make demo` / `scripts/run_demo.py` with startup validation, landing
   hero with RUN LOOMING DEMO / EXPLORE THE BRAIN, four-step demo story, LOW / MEDIUM / HIGH
   presets ("expected current model result"), presentation-ready README with architecture
-  diagrams and scientific boundaries, this changelog, release screenshots.
+  diagrams and scientific boundaries, this changelog, release screenshots; root `LICENSE`
+  (Apache-2.0) and license metadata in the backend and frontend packages.
 
 ### Known limitations
 See `PROGRESS.md` (per-phase "Known limitations") and `README.md` → Scientific Boundaries.
