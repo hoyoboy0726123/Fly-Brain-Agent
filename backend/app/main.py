@@ -2,11 +2,15 @@
 
 from __future__ import annotations
 
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app import __version__
 from app.api import api_router
+from app.api.escape import EscapeServiceHolder
 from app.config import Settings, get_settings
 
 DESCRIPTION = (
@@ -23,11 +27,20 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     """
     resolved = settings if settings is not None else get_settings()
 
+    @asynccontextmanager
+    async def lifespan(application: FastAPI) -> AsyncIterator[None]:
+        # Load the escape demo (config + hash-verified circuit) once at startup; a failure
+        # is logged and reported by the escape endpoints as 503, never hidden.
+        application.state.escape.warm_up()
+        yield
+
     application = FastAPI(
         title=resolved.app_name,
         version=__version__,
         description=DESCRIPTION,
+        lifespan=lifespan,
     )
+    application.state.escape = EscapeServiceHolder(resolved)
     application.add_middleware(
         CORSMiddleware,
         allow_origins=resolved.cors_origin_list,

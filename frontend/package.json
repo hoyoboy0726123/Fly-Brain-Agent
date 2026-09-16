@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.0.1",
   "type": "module",
-  "description": "FlyBrain Agent web UI (P0 bootstrap skeleton)",
+  "description": "FlyBrain Agent web UI: connectome-grounded escape demo (P5)",
   "engines": {
     "node": "^20.19.0 || >=22.12.0"
   },

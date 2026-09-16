@@ -53,9 +53,11 @@ cd backend && .venv/bin/python -m app          # honours FLYBRAIN_* env vars, re
 cd frontend && npm run dev
 ```
 
-Open http://127.0.0.1:5173. The page shows the backend health card (status, service,
-version, environment, phase). In development the UI calls `/api/*`, which Vite proxies to
-the backend with the `/api` prefix stripped (`/api/health` -> `/health`).
+Open http://127.0.0.1:5173. The page is the P5 interactive demo (see §4f): header with the
+backend badge, three panels (Environment / Fly Brain / Action) and the "How this works"
+section. In development the UI calls `/api/*`, which Vite proxies to the backend with the
+`/api` prefix stripped (`/api/health` -> `/health`); WebSocket upgrades are proxied the same
+way (`/api/ws/escape` -> `/ws/escape`).
 
 ## 3. Tests
 
@@ -69,14 +71,18 @@ make lint               # ruff check on backend
 ## 4. Smoke tests
 
 ```bash
-make smoke              # both of the following
+make smoke              # all of the following (+ data / circuit / simulation / escape smokes)
 make smoke-backend      # scripts/smoke_test.py: boots uvicorn on a free port, asserts GET /health
+make smoke-web          # scripts/smoke_web_demo.py: escape API over REST + WebSocket (P5)
 make smoke-frontend     # cd frontend && npm run test:e2e (Playwright)
 ```
 
 The Playwright run starts **both** servers itself (backend via `backend/.venv` Python, or
-`FLYBRAIN_PYTHON`, else `python3`; frontend via `npm run dev`) and verifies that the page
-loads and displays live backend health, plus the unreachable/recovery states.
+`FLYBRAIN_PYTHON`, else `python3`; frontend via `npm run dev`) and runs three spec files:
+`tests/smoke.spec.ts` (backend health card, unreachable/recovery states),
+`tests/escape-demo.spec.ts` (the P5 demo: controls, live runs, error states, disclaimer) and
+`tests/smoke-demo.spec.ts` (the three documented scenarios with screenshots written to
+`docs/screenshots/`). Happy paths always hit the live backend; only error states are mocked.
 
 Run Playwright from `frontend/` via `npm run test:e2e` (or `make smoke-frontend` from the
 root). Invoked from another directory, `playwright test` does not find
@@ -165,6 +171,33 @@ make smoke-escape          # TECHNICAL CONNECTOME-GROUNDED ESCAPE DEMO -> data/s
 
 Disclaimer carried by every result: STRUCTURAL CONNECTIVITY IS BIOLOGICAL DATA. NEURAL
 ACTIVITY IS SIMULATED. STIMULUS MAPPING AND MOTOR DECODING ARE COMPUTATIONAL INTERPRETATIONS.
+
+## 4f. Interactive web demo (P5)
+
+Backend (`backend/app/api/escape.py`, thin layer over the P4 `EscapeExperiment`; no
+simulation logic of its own):
+
+| Endpoint | Purpose |
+|---|---|
+| `GET /escape/config` | circuit id/hash (verified against the configured hash), biological status, groups (`LC4_L`, …, `DNp01_R`) and aggregated group edges from the artifact, mapping/decoder rules, simulation parameters, layers, limitations, citations, disclaimer |
+| `POST /escape/run` | body `{"stimulus":"looming","direction":"left|center|right","intensity":0..1,"steps"?:n}`; returns `experiment_id`, `stimulus`, `circuit_id`, `circuit_hash`, `timeline`, `sensory_activity`, `group_activity` (per-step SIMULATED spike counts per group), `output_activity`, `gf_activity` (Left/Right/Both/None, metadata), `action` (`NO_ACTION`/`ESCAPE`), `decision`, `disclaimer` |
+| `WS /ws/escape` | send the same body (optionally `pace_ms`); receive `stimulus_started` → `neural_activity` (per step) → `sensory_activation` → `output_activation` → `action_decoded` → `experiment_finished` (full result); `error` events carry the same codes as HTTP |
+
+Error contract (`detail: {error, message}`): `invalid_request` 422, `config_unavailable` /
+`circuit_unavailable` / `circuit_mismatch` 503, `simulation_error` 500, `timeout` 504.
+Settings: `FLYBRAIN_ESCAPE_CONFIG` (name or path), `FLYBRAIN_ESCAPE_MAX_STEPS`,
+`FLYBRAIN_ESCAPE_RUN_TIMEOUT_SECONDS`.
+
+Frontend (`frontend/src`): `demo/useEscapeDemo.ts` (state machine: idle → requesting →
+replaying → finished | error; WebSocket first, REST fallback only when the socket cannot be
+opened), `environment/EnvironmentPanel.tsx` (virtual fly, looming disc, direction, intensity,
+TRIGGER LOOMING / RESET), `brain/BrainPanel.tsx` (group nodes + artifact edges, glow = fraction
+of the group firing at the replayed step, "SIMULATED ACTIVITY"), `dashboard/ActionPanel.tsx`
+(NO ACTION / ESCAPE, GF activity metadata, timeline, error states),
+`dashboard/HowItWorks.tsx` (three layers, BIOLOGICAL CIRCUIT STATUS). The replay advances one
+backend step per tick (`?pace=<ms>`, default 140 ms; `?transport=rest` forces REST). Nothing is
+animated from a client-side clock alone: every glow, disc size and label comes from the
+backend result's per-step data.
 
 ## 5. Configuration
 

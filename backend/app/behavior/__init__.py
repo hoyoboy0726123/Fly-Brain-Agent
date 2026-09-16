@@ -14,8 +14,11 @@ from app.behavior.escape_config import (
 )
 from app.behavior.runner import (
     DISCLAIMER,
+    ActivityGroup,
     EscapeExperiment,
     EscapeResult,
+    GroupActivity,
+    GroupEdge,
     TimelineEvent,
     load_escape_circuit,
 )
@@ -23,10 +26,13 @@ from app.behavior.runner import (
 __all__ = [
     "CONFIG_DIR",
     "DISCLAIMER",
+    "ActivityGroup",
     "Citation",
     "EscapeCircuitConfig",
     "EscapeExperiment",
     "EscapeResult",
+    "GroupActivity",
+    "GroupEdge",
     "TimelineEvent",
     "load_escape_circuit",
     "load_escape_config",

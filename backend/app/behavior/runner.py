@@ -64,6 +64,43 @@ class OutputActivity(BaseModel):
     label: str = ACTIVITY_LABEL
 
 
+GroupRole = Literal["sensory", "output", "other"]
+
+
+class ActivityGroup(BaseModel):
+    """Circuit neurons sharing a cell type and a side (the unit the web demo animates).
+
+    ``neuron_count`` is the number of circuit neurons in the group (STRUCTURE); which of
+    them fire at a step is SIMULATED (see ``GroupActivity``).
+    """
+
+    key: str
+    cell_type: str
+    side: str
+    role: GroupRole
+    neuron_count: int = Field(ge=0)
+    stimulable_count: int = Field(default=0, ge=0)
+
+
+class GroupEdge(BaseModel):
+    """Circuit edges aggregated between two groups (STRUCTURE, from the artifact)."""
+
+    pre_key: str
+    post_key: str
+    edge_count: int = Field(ge=1)
+    synapse_total: int = Field(ge=1)
+    dataset: str
+    dataset_version: str
+
+
+class GroupActivity(BaseModel):
+    """Per-step SIMULATED spike counts aggregated by group; index 0 is step 1."""
+
+    label: str = ACTIVITY_LABEL
+    groups: list[ActivityGroup]
+    fired_counts: dict[str, list[int]]
+
+
 class EscapeResult(BaseModel):
     disclaimer: Literal[
         "STRUCTURAL CONNECTIVITY IS BIOLOGICAL DATA. NEURAL ACTIVITY IS SIMULATED. "
@@ -82,6 +119,7 @@ class EscapeResult(BaseModel):
     neurons_activated: int
     per_step_fired_counts: list[int]
     activity_label: str = ACTIVITY_LABEL
+    group_activity: GroupActivity
     output_activity: list[OutputActivity]
     decision: MotorDecision
     timeline: list[TimelineEvent]
@@ -130,6 +168,62 @@ class EscapeExperiment:
         )
         self.sensory_ids = set(config.all_sensory_ids())
         self.output_side = {nid: side for side, ids in config.output_groups.items() for nid in ids}
+        self.groups, self.group_of = self._build_groups()
+        self.group_edges = self._build_group_edges()
+
+    def _build_group_edges(self) -> list[GroupEdge]:
+        """Aggregate the artifact's edges by (pre group, post group); nothing is added."""
+        totals: dict[tuple[str, str], list[int]] = {}
+        for edge in self.circuit.edges:
+            pre = self.group_of.get(edge.pre_neuron_id)
+            post = self.group_of.get(edge.post_neuron_id)
+            if pre is None or post is None:
+                continue
+            bucket = totals.setdefault((pre, post), [0, 0])
+            bucket[0] += 1
+            bucket[1] += edge.synapse_count
+        return [
+            GroupEdge(
+                pre_key=pre,
+                post_key=post,
+                edge_count=count,
+                synapse_total=synapses,
+                dataset=self.circuit.dataset,
+                dataset_version=self.circuit.dataset_version,
+            )
+            for (pre, post), (count, synapses) in sorted(totals.items())
+        ]
+
+    def _build_groups(self) -> tuple[list[ActivityGroup], dict[str, str]]:
+        """Group circuit neurons by (cell type, side); sides come from the config only."""
+        population = self.config.sensory_population or self.config.sensory_groups
+        side_of = {nid: side for side, ids in population.items() for nid in ids}
+        side_of.update(self.output_side)
+        population_ids = set(self.config.all_population_ids())
+        role_rank = {"sensory": 0, "output": 1, "other": 2}
+        groups: dict[str, ActivityGroup] = {}
+        group_of: dict[str, str] = {}
+        for node in self.circuit.nodes:
+            nid = node.neuron_id
+            role: GroupRole = "other"
+            if nid in population_ids:
+                role = "sensory"
+            elif nid in self.output_side:
+                role = "output"
+            side = side_of.get(nid, "NA")
+            cell_type = node.cell_type or "unknown"
+            key = f"{cell_type}_{side}"
+            group = groups.get(key)
+            if group is None:
+                group = groups[key] = ActivityGroup(
+                    key=key, cell_type=cell_type, side=side, role=role, neuron_count=0
+                )
+            group.neuron_count += 1
+            if nid in self.sensory_ids:
+                group.stimulable_count += 1
+            group_of[nid] = key
+        ordered = sorted(groups.values(), key=lambda g: (role_rank[g.role], g.cell_type, g.side))
+        return ordered, group_of
 
     def run(self, stimulus: LoomingStimulus, steps: int | None = None) -> EscapeResult:
         started = time.perf_counter()
@@ -205,6 +299,12 @@ class EscapeExperiment:
                 count=decision.output_spike_count,
             ),
         ]
+        fired_counts = {group.key: [0] * len(spikes_per_step) for group in self.groups}
+        for index, fired in enumerate(spikes_per_step):
+            for nid in fired:
+                key = self.group_of.get(nid)
+                if key is not None:
+                    fired_counts[key][index] += 1
         output_activity = [
             OutputActivity(
                 neuron_id=nid,
@@ -237,6 +337,7 @@ class EscapeExperiment:
             firing_events=summary.firing_events,
             neurons_activated=summary.neurons_activated,
             per_step_fired_counts=summary.per_step_fired_counts,
+            group_activity=GroupActivity(groups=self.groups, fired_counts=fired_counts),
             output_activity=output_activity,
             decision=decision,
             timeline=timeline,
