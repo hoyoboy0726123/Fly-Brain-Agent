@@ -5,7 +5,8 @@ Connectome-grounded simulation API. See ../../SDD.md for the architecture.
 Layering (a core product requirement, see NEUROSCIENCE.md section 7):
 - BIOLOGICAL STRUCTURE   -> app.connectome, app.circuits
 - COMPUTATIONAL DYNAMICS -> app.simulation
-- APPLICATION DECODING   -> app.sensors, app.motor
+- APPLICATION DECODING   -> app.sensors, app.motor, app.behavior
+- API / WEB DEMO          -> app.api (serves the layers above; every payload carries the disclaimer)
 """
 
 __version__ = "0.0.1"
@@ -14,6 +15,6 @@ __version__ = "0.0.1"
 SERVICE_NAME = "flybrain-agent-backend"
 
 #: Most recent phase of TASKS.md delivered in this codebase.
-CURRENT_PHASE = "P0"
+CURRENT_PHASE = "P5"
 
 __all__ = ["CURRENT_PHASE", "SERVICE_NAME", "__version__"]

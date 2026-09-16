@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test'
 
-test.describe('P0 smoke', () => {
+test.describe('backend health smoke (P0, phase updated per delivered phase)', () => {
   test('frontend loads', async ({ page }) => {
     await page.goto('/')
     await expect(page).toHaveTitle(/FlyBrain Agent/)
@@ -12,7 +12,7 @@ test.describe('P0 smoke', () => {
     const card = page.getByTestId('backend-health')
     await expect(card.getByTestId('backend-health-status')).toHaveText('ok')
     await expect(card.getByTestId('backend-health-service')).toHaveText('flybrain-agent-backend')
-    await expect(card.getByTestId('backend-health-phase')).toHaveText('P0')
+    await expect(card.getByTestId('backend-health-phase')).toHaveText('P5')
     await expect(card.getByTestId('backend-health-version')).not.toBeEmpty()
   })
 
@@ -37,6 +37,6 @@ test.describe('P0 smoke', () => {
     backendDown = false
     await page.getByRole('button', { name: 'Re-check' }).click()
     await expect(status).toHaveText('ok')
-    await expect(page.getByTestId('backend-health-phase')).toHaveText('P0')
+    await expect(page.getByTestId('backend-health-phase')).toHaveText('P5')
   })
 })

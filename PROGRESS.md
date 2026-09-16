@@ -6,15 +6,15 @@
 | P1 Data ingestion | ✅ Done (reviewer approved, PR #2); P1.1 canonical graph definition ✅ Done (reviewer approved, PR #3) | normalized data + provenance |
 | P2 Circuit extraction | ✅ Done (reviewer approved, PR #4) | deterministic bounded circuit |
 | P3 Simulation | ✅ Done (reviewer approved, PR #5) | tested simplified dynamics |
-| P4 Escape | ✅ Done (awaiting human confirmation) — biological status PARTIALLY SUPPORTED | stimulus → action |
-| P5 Web UI | ⬜ Not started | interactive end-to-end demo |
+| P4 Escape | ✅ Done (reviewer approved, PR #6) — biological status PARTIALLY SUPPORTED | stimulus → action |
+| P5 Web UI | ✅ Done (awaiting human confirmation) | interactive end-to-end demo |
 | P6 Brain inspector | ⬜ Not started | inspectable provenance |
 | P7 Food | ⬜ Future | second behavior |
 | P8 Webcam | ⬜ Future | camera stimulus adapter |
 | P9 Robot | ⬜ Future | safe physical adapter |
 
 ## Current Phase
-P4 (Looming / Escape Behavior) complete. Stopped before P5, waiting for human confirmation.
+P5 (Interactive Web Demo) complete. Stopped before P6, waiting for human confirmation.
 
 ## Blockers
 None recorded.
@@ -53,6 +53,13 @@ None recorded.
 - (P4) escape_v1 = monosynaptic LC4/LPLC2 → GF circuit extracted with P2 (max_hops 1, min_synapses 10, restrict_to_target_paths): 286 neurons / 932 edges, hash `db7c46e6…`. The config records the full sensory population (311), the stimulated subset in the circuit (284) and the 27 excluded LPLC2 with the reason.
 - (P4) Stimulus schema `looming / left|center|right / intensity 0..1` is APPLICATION INPUT; mapping = `current = intensity × gain` into the ipsilateral group (left → L, right → R, center → both). Decoder exposes only `NO_ACTION` / `ESCAPE` (GF azimuth-invariant); the firing GF side is metadata. Every result carries the disclaimer "STRUCTURAL CONNECTIVITY IS BIOLOGICAL DATA. NEURAL ACTIVITY IS SIMULATED. STIMULUS MAPPING AND MOTOR DECODING ARE COMPUTATIONAL INTERPRETATIONS."
 - (P4) No parameter was tuned toward an outcome: the demo runs on P3 defaults; `simulation_config_overrides` in the config is empty and any future change must be recorded in escape_v1.md.
+- (P5) The web API is a *behaviour-level* API over the P4 runner (`GET /escape/config`, `POST /escape/run`, `WS /ws/escape` in `backend/app/api/escape.py`); it contains no simulation, mapping or decoding logic. The generic SDD §7 endpoints (`/circuits`, `/simulation/*`, `/neurons/{id}`, `/ws/simulation`) are deferred to the brain inspector (P6+). The frontend keeps the `/api` prefix (Vite proxy, now also for WebSocket upgrades).
+- (P5) Per-group activity (`EscapeResult.group_activity`: per-step SIMULATED spike counts per `cell_type × side` group, plus `group_edges` aggregated from the artifact) is computed once in the P4 runner from the engine's `spikes_per_step`, the circuit node metadata and the configured sides — so the API and the UI never re-derive activity or invent structure. Sides come only from the escape config; edges only from the artifact.
+- (P5) The UI replays the backend result step by step (one backend step per tick, `?pace=` ms, default 140 ms): looming-disc size, node glow, active edges, timeline highlights and the final action all read the backend per-step data. No client-side timer generates activity, and the action is shown only after the last backend step has been replayed. Over WebSocket the backend streams `stimulus_started → neural_activity × steps → sensory_activation → output_activation → action_decoded → experiment_finished` (derived from the same result); REST is used only when the socket cannot be opened.
+- (P5) Error contract shared by HTTP and WebSocket: `invalid_request` 422, `config_unavailable` / `circuit_unavailable` / `circuit_mismatch` 503, `simulation_error` 500, `timeout` 504. The escape service is loaded at startup (`lifespan`) and re-attempted per request after a failure; `/health` stays up when the circuit is missing. The UI shows `NO RESULT` for any failed run — ESCAPE is never displayed without a successful backend result.
+- (P5) Only `NO ACTION` / `ESCAPE` are rendered (the decoder's action set); the firing giant-fiber side is displayed as metadata `GF activity: Left / Right / Both / None`. The fly's takeoff animation is direction-less and labelled as such.
+- (P5) `CURRENT_PHASE` in `backend/app/__init__.py` is now updated per delivered phase (`P5`); the Playwright health smoke asserts it.
+- (P5) Playwright happy paths run against the live backend; only error states intercept requests (`page.route` / `page.routeWebSocket`, installed before navigation). Smoke screenshots are written to `docs/screenshots/` by `tests/smoke-demo.spec.ts` and committed.
 - (P1.1) **Source dataset ≠ canonical simulation graph** (DATA.md §8). SOURCE DATASET = MaleCNS v1.0, ≈166,700 neurons (project figure; equals the 166,700 bodies with a `superclass`; paper 166,691). CANONICAL SIMULATION GRAPH = `status == "Traced"`, 165,122 neurons, 25,563,197 connections. The canonical count is never presented as the dataset census. Both blocks are mandatory in `provenance.json` for biological data (`Provenance` validator), reported by `inspect_dataset.py`, written into the parquet schema metadata, and guarded by `tests/test_canonical_graph.py`. Traced filtering behaviour is unchanged.
 
 ---
@@ -452,3 +459,82 @@ Activity stops when the stimulus ends (no reverberation in this circuit). Each r
 1. FastAPI endpoints per SDD §7 (`/circuits`, `/simulation/*`, `/neurons/{id}`) wrapping the P2–P4 modules, with `escape_v1` as the default circuit and the disclaimer in every payload.
 2. WebSocket streaming of per-step SIMULATED activity from `SimulationEngine.step()`.
 3. Three-column UI (Environment / Circuit / Action): Danger button → `LoomingStimulus` → timeline → decoded action, with NEUROSCIENCE.md §3 wording.
+
+---
+
+## P5 Report (2026-09-16) — Interactive Web Demo
+
+### A. UI architecture (`frontend/src`)
+- **Header**: title `FlyBrain Agent`, subtitle `Connectome-grounded simulation using MaleCNS v1.0`, the three scientific labels (`Structural connectivity: biological data` / `Neural activity: simulated` / `Behavior decoding: computational interpretation`), compact backend badge (`components/BackendBadge.tsx`, `GET /health`, Re-check).
+- **Three columns** (`.grid`, desktop ≥ 1280 px; 2 columns on tablet with Action spanning; 1 column on phones):
+  - `environment/EnvironmentPanel.tsx` — SVG arena with the virtual fly, the looming disc (origin follows LEFT/CENTER/RIGHT, radius grows with the replayed stimulus steps and intensity, pulses while current is injected, dims when the stimulus ends), direction segmented control, intensity slider + numeric field (0–1, validated client-side), **TRIGGER LOOMING** / **RESET**. Fly takes off on ESCAPE (labelled "takeoff animation · direction not decoded"). No webcam.
+  - `brain/BrainPanel.tsx` — schematic node/cluster view built from `GET /escape/config`: groups `LC4 L/R`, `LPLC2 L/R`, `DNp01 (GF) L/R` with neuron counts, edges aggregated from the circuit artifact (width ∝ synapses; within-group edges listed, not drawn), badge **SIMULATED ACTIVITY**, step indicator, glow = fraction of the group with a simulated spike at the replayed step, edges animate while their source group fires.
+  - `dashboard/ActionPanel.tsx` — large **NO ACTION** / **ESCAPE** (idle `—`, `RUNNING…`, `DECODING…`, `NO RESULT` on error), metadata (GF activity Left/Right/Both/None, GF spikes, first GF / sensory step, stimulated neurons, transport + streamed events, experiment id, circuit hash, runtime), timeline t0–t4 highlighted as the replay reaches each backend step, error box with code + message.
+- **How this works** (`dashboard/HowItWorks.tsx`, `<details>`): the three layers from the backend, **BIOLOGICAL CIRCUIT STATUS: PARTIALLY SUPPORTED**, dataset / circuit / hash verification, populations, mapping & decoder rules, simulation parameters (with the "NOT MEASURED" label), limitations, 7 citations, research document path.
+- **Footer**: the P4 disclaimer verbatim + required wording ("Neural activity shown here is simulated", "Structural connectivity from a biological dataset").
+- **State** (`demo/useEscapeDemo.ts`): reducer `idle → requesting → replaying → finished | error`; config fetched on mount; WebSocket first (`api/escapeSocket.ts`), REST fallback (`api/client.ts`) only when the socket cannot be opened; 15 s client timeout; RESET aborts in-flight runs. `?pace=<ms>` (default 140) sets the replay speed, `?transport=rest` forces REST. Dark scientific theme in `styles.css` (glow/pulse keyframes, reduced-motion fallback).
+
+### B. API (`backend/app/api/escape.py`)
+| Endpoint | Notes |
+|---|---|
+| `GET /escape/config` | config version, `circuit_id` / `circuit_hash` (+ `expected_circuit_hash`, `circuit_verified`), `biological_status`, dataset/version/selection rule, 286 neurons / 932 edges, sensory population 311 (L 165 / R 146) vs stimulated 284 vs excluded 27 + reason, output groups, `groups` (6) and `group_edges` (10, from the artifact), actions `["NO_ACTION","ESCAPE"]`, mapping/decoder rules, simulation parameters, `layers`, limitations, citations, disclaimer, scientific labels |
+| `POST /escape/run` | body `{"stimulus":"looming","direction":"center","intensity":0.5}` (+ optional `steps`, bounded); returns `experiment_id`, `created_at`, `stimulus`, `circuit_id`, `circuit_hash`, `circuit`, `timeline` (t0–t4), `sensory_activity`, `group_activity`, `per_step_fired_counts`, `output_activity`, `gf_activity`, `action`, `decision`, `simulation_config`, `random_seed`, `runtime_seconds`, `disclaimer` |
+| `WS /ws/escape` | same body (+ `pace_ms` 0–2000); events `stimulus_started`, `neural_activity` (per step: `fired_total`, `fired_by_group`, `stimulus_active`), `sensory_activation`, `output_activation`, `action_decoded`, `experiment_finished` (full result); `error` events; connection stays open for further runs |
+Errors: `detail = {error, message}` with `invalid_request` 422, `config_unavailable` / `circuit_unavailable` / `circuit_mismatch` 503, `simulation_error` 500, `timeout` 504. `EscapeServiceHolder` loads config + hash-verified circuit at startup (`lifespan`), re-attempts after failure; `/health` is unaffected. New settings `FLYBRAIN_ESCAPE_CONFIG`, `FLYBRAIN_ESCAPE_MAX_STEPS` (500), `FLYBRAIN_ESCAPE_RUN_TIMEOUT_SECONDS` (10). Runner extension (P4 module): `ActivityGroup`, `GroupEdge`, `GroupActivity`, `EscapeResult.group_activity`. `CURRENT_PHASE = "P5"`.
+
+### C. Simulation → animation mapping
+| Backend fact (SIMULATED unless noted) | UI element |
+|---|---|
+| `stimulus_duration_steps` = 5, replayed step *s* | looming disc radius `6 + progress × (16 + 44 × intensity)` with `progress = min(s, 5) / 5`; pulses while `s ≤ 5`, dims after; origin x from direction (structure of the request, not biology) |
+| `group_activity.fired_counts[group][s-1] / neuron_count` | node glow opacity & colour mix; label `fired / count`; `data-active` |
+| `fired_counts[pre_group][s-1] > 0` | edge `pre → post` animates (dash flow) |
+| `timeline.t1.step`, `t3.step` | timeline items highlighted once `s ≥ step`; WebSocket `sensory_activation` / `output_activation` follow the `neural_activity` of that step |
+| `per_step_fired_counts[s-1]` | "N simulated spikes this step" |
+| `action` (after the last step) | large NO ACTION / ESCAPE; fly takeoff on ESCAPE |
+| `decision.fired_output_sides` → `gf_activity` | "GF activity: Left / Right / Both / None" (metadata) |
+Observed timelines: CENTER 0.5 → sensory step 3 (284 neurons), GF step 4 (both) → ESCAPE; CENTER 0.2 → no spikes → NO_ACTION; LEFT 1.0 → sensory step 1 (155), GF L step 2 → ESCAPE, GF activity Left. Runs take ~2 ms server-side; 35 WebSocket events for a 30-step run.
+
+### D. Tests
+- Backend `pytest`: **274 passed** (234 + 40 new in `tests/test_api_escape.py`): config endpoint (fields, verified hash, groups vs configured populations, ipsilateral group edges summing to 932 edges / artifact synapses, three layers), run endpoint (CENTER 0.5 ESCAPE/Both, CENTER 0.2 NO_ACTION/None, side metadata L/R/Both, required fields, only NO_ACTION/ESCAPE, exact disclaimer, hash = config = artifact, group activity consistent with per-step counts, determinism, `steps` override), validation (10 invalid bodies → 422, non-JSON, steps above limit), error states (missing circuit 503 + `/health` up, tampered hash 503 `circuit_mismatch`, missing config 503, simulation exception 500, slow run 504), WebSocket (event order/steps/counts equal REST, NO_ACTION stream, invalid input keeps the connection, unavailable circuit error event, events derived from the result), OpenAPI. `ruff check` / `ruff format --check` clean (backend + scripts).
+- Frontend `npm run typecheck` clean (strict TS). Playwright **27 passed** (`tests/smoke.spec.ts` 4, `tests/escape-demo.spec.ts` 16, `tests/smoke-demo.spec.ts` 7): page loads; backend connected + circuit loaded; change direction; change intensity (slider + field); invalid intensity blocked; trigger looming (WebSocket transport, hash, replay to 30/30); CENTER 0.2 → NO ACTION; CENTER 0.5 → ESCAPE + Both + fly jumps; LEFT 1.0 → ESCAPE + Left, no `ESCAPE_LEFT/RIGHT` anywhere; brain animation follows backend steps (sensory at step 1, GF at step 2, slow pace); reset; backend unavailable (socket closed + REST refused → error, `NO RESULT`, fly stays); error contract (`simulation_error`, `circuit_mismatch`); backend unavailable at load (banner, empty circuit, disclaimer still visible); REST fallback; disclaimer / SIMULATED ACTIVITY / PARTIALLY SUPPORTED visible; smoke scenarios + tablet 1024×768 + mid-replay captures.
+
+### E. Smoke demo (`make smoke-web` → `scripts/smoke_web_demo.py`; `make smoke` runs everything in 33 s)
+| Scenario | REST action | GF activity | sensory / GF first step | WebSocket |
+|---|---|---|---|---|
+| CENTER 0.2 | NO_ACTION | None | – / – | 33 events, same action |
+| CENTER 0.5 | ESCAPE | Both | 3 / 4 | 35 events, same action |
+| LEFT 1.0 | ESCAPE | Left | 1 / 2 | 35 events, same action |
+Invalid intensity 1.5 → HTTP 422. Report: `data/simulations/web_demo_smoke.report.json`. `make smoke` = backend health, data, circuit, simulation, escape, web, Playwright — all PASS.
+
+### F. Screenshots (`docs/screenshots/`, 1440×900 unless noted)
+`p5-idle-dashboard.png`, `p5-center-0.2-no-action.png`, `p5-center-0.5-escape.png`, `p5-left-1.0-escape.png`, `p5-replay-step1-sensory.png` (sensory groups glowing at backend step 1), `p5-replay-step2-giant-fiber.png` (both GF nodes glowing at step 2), `p5-how-it-works.png` (BIOLOGICAL CIRCUIT STATUS: PARTIALLY SUPPORTED), `p5-tablet-1024x768.png`. Regenerated by `tests/smoke-demo.spec.ts` on every Playwright run.
+
+### Acceptance Criteria (P5)
+| Criterion | Status |
+|---|---|
+| User can trigger looming and see stimulus → neural activity → action without a terminal | ✅ TRIGGER LOOMING → arena / brain / action panels |
+| Brain animation reflects backend simulation events | ✅ replay of `group_activity` per backend step; WebSocket events streamed; test "brain animation follows the backend steps" |
+| Backend reuses P4 pipeline without duplicating logic | ✅ `EscapeService` calls `EscapeExperiment.run`; API only reshapes |
+| Circuit hash visible/verifiable | ✅ config + run payloads + UI metadata; hash-mismatch → 503 |
+| Disclaimer visible | ✅ footer (exact P4 text), config/run payloads |
+| Scientific labels visible | ✅ header chips + SIMULATED ACTIVITY badge + APPLICATION INPUT / DECODING tags |
+| Only NO ACTION / ESCAPE shown; GF side as metadata | ✅ |
+| Error states | ✅ backend unavailable, simulation error, invalid intensity, circuit mismatch, timeout (client 15 s / server 10 s) — no ESCAPE on failure |
+| Backend + Playwright tests, smoke demo | ✅ 274 / 27 / PASS |
+| Documentation updated | ✅ `docs/DEVELOPMENT.md` §2, §4, §4f; README; SDD §7 note; PROGRESS |
+
+### G. Known limitations
+- The circuit is monosynaptic, so the t2 intermediate event is always "no intermediate neuron fired" and the brain view has only two rows; per-neuron inspection (positions, ids, synapse counts per edge) is P6.
+- Nodes are `cell_type × side` groups, not individual neurons; the schematic layout (L/R columns, sensory above output) is a presentation choice, not anatomy.
+- The looming disc's size/position and the fly's takeoff are schematic visual mappings of dimensionless backend steps (`dt = 1`), not physical geometry or kinematics.
+- Replay pacing (`?pace=`, default 140 ms per step) is a presentation parameter; the backend timeline is what is replayed, but the wall-clock speed is the UI's.
+- WebSocket needs a proxy that forwards upgrades (Vite dev server does; a production reverse proxy must too); otherwise the UI falls back to REST and shows `transport: rest`.
+- A server-side timeout (504) does not cancel the worker thread already running (runs take ~2 ms, so this is theoretical).
+- No authentication, rate limiting or multi-user isolation; one process-wide experiment object (each run builds a fresh engine, so runs are independent).
+- Playwright's `routeWebSocket` must be installed before navigation; the screenshot spec rewrites `docs/screenshots/*.png` on every run (≈3 MB tracked binaries).
+- UI copy is English only; `frontend` still has no lint/format toolchain (typecheck only).
+
+### Next phase suggestions (P6 — do not start without confirmation)
+1. Brain inspector: `GET /circuits/{id}`, `GET /neurons/{id}` (P2 artifact metadata, MaleCNS ids, cell types, synapse counts, provenance) and a per-neuron view of the escape circuit.
+2. Activity inspector: per-neuron spike raster from `spikes_per_step` and `SimulationSnapshot` download, all labelled SIMULATED.
+3. Provenance panel linking each displayed number to `provenance.json` / `docs/circuits/escape_v1.md`.

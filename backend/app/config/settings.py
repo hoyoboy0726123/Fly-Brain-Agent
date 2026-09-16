@@ -52,6 +52,16 @@ class Settings(BaseSettings):
     #: Mirrors the object prefix in the official bucket ``gs://flyem-male-cns``.
     malecns_raw_subdir: str = "male-cns/v1.0/connectome-data/flat-connectome"
 
+    #: Behaviour configuration served by the escape API (P5): a name under
+    #: ``backend/app/behavior/configs`` or a path to a config JSON file.
+    escape_config: str = "escape_v1"
+
+    #: Upper bound on ``steps`` accepted by ``POST /escape/run`` (guards the request path).
+    escape_max_steps: int = Field(default=500, ge=1)
+
+    #: Wall-clock budget for one escape run before the API answers 504 (seconds).
+    escape_run_timeout_seconds: float = Field(default=10.0, gt=0)
+
     @property
     def cors_origin_list(self) -> list[str]:
         """``cors_origins`` split into a clean list, ignoring blanks."""

@@ -194,6 +194,11 @@ Important: structural connectivity is biological data; simulated voltage/spiking
 - GET /neurons/{id}
 - WS /ws/simulation
 
+Implemented so far (P5): `GET /health`, `GET /escape/config`, `POST /escape/run`,
+`WS /ws/escape` — a behaviour-level API over the P4 runner (`backend/app/api/escape.py`);
+the generic `/circuits`, `/simulation/*`, `/neurons/{id}` and `/ws/simulation` endpoints
+belong to the brain inspector (P6+). The frontend reaches the backend via the `/api` prefix.
+
 ## 8. Frontend
 Main layout:
 - left: virtual environment

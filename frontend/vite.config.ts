@@ -6,6 +6,7 @@ import { defineConfig } from 'vite'
  *
  * The UI calls the backend through the `/api` prefix; in development Vite proxies
  * `/api/*` to the FastAPI server (strip the prefix, so `/api/health` -> `/health`).
+ * WebSocket upgrades are proxied too (`/api/ws/escape` -> `ws://backend/ws/escape`).
  * Override the target with FLYBRAIN_BACKEND_URL and the port with FLYBRAIN_FRONTEND_PORT.
  */
 const backendUrl = process.env['FLYBRAIN_BACKEND_URL'] ?? 'http://127.0.0.1:8000'
@@ -21,6 +22,7 @@ export default defineConfig({
       '/api': {
         target: backendUrl,
         changeOrigin: true,
+        ws: true,
         rewrite: (path) => path.replace(/^\/api/, ''),
       },
     },
