@@ -21,8 +21,10 @@ sys.path.insert(0, str(PROJECT_ROOT / "backend"))
 
 from app.config import get_settings  # noqa: E402
 from app.connectome import (  # noqa: E402
+    CanonicalGraph,
     InspectionReport,
     Provenance,
+    SourceDataset,
     SyntheticFixtureAdapter,
     inspect_tables,
     read_parquet,
@@ -35,6 +37,8 @@ def report_fixture(path: Path, keep_dangling: bool) -> InspectionReport:
     adapter.validate_schema()
     neurons = adapter.load_neurons()
     result = adapter.load_connections(neurons["neuron_id"], keep_dangling=keep_dangling)
+    details = adapter.inspect().details
+    dangling = result.dangling
     provenance = {
         "dataset_name": adapter.info.dataset,
         "dataset_version": adapter.info.dataset_version,
@@ -42,6 +46,23 @@ def report_fixture(path: Path, keep_dangling: bool) -> InspectionReport:
         "synthetic": True,
         "source_page": None,
         "download_url": None,
+        "source_dataset": SourceDataset(
+            name=adapter.info.source_name or adapter.info.dataset,
+            version=adapter.info.dataset_version,
+            official_neuron_count=adapter.info.official_neuron_count,
+            official_neuron_count_source=adapter.info.official_neuron_count_source,
+            annotated_bodies_total=details.get("annotated_bodies_total"),
+            raw_connection_rows=dangling.total_edges_raw if dangling else None,
+        ).model_dump(mode="json"),
+        "canonical_graph": CanonicalGraph(
+            selection_rule=details.get("selection_rule", "all rows"),
+            neuron_count=neurons.num_rows,
+            connection_count=result.table.num_rows,
+            dropped_dangling_edges=(0 if keep_dangling else dangling.dangling_edges)
+            if dangling
+            else None,
+            includes_dangling_edges=keep_dangling,
+        ).model_dump(mode="json"),
     }
     return inspect_tables(neurons, result.table, provenance=provenance)
 

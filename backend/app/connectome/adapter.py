@@ -25,6 +25,12 @@ class DatasetInfo:
     license: str | None = None
     citation: str | None = None
     notes: str = ""
+    #: Human-readable name of the SOURCE DATASET (e.g. "MaleCNS"); defaults to ``dataset``.
+    source_name: str | None = None
+    #: Neuron count of the SOURCE DATASET as published/reported. This is never the count of
+    #: the canonical simulation graph, which is a selected subset (DATA.md §8).
+    official_neuron_count: int | None = None
+    official_neuron_count_source: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -37,6 +43,9 @@ class DatasetInfo:
             "license": self.license,
             "citation": self.citation,
             "notes": self.notes,
+            "source_name": self.source_name,
+            "official_neuron_count": self.official_neuron_count,
+            "official_neuron_count_source": self.official_neuron_count_source,
         }
 
 

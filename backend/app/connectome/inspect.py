@@ -8,6 +8,7 @@ import pyarrow as pa
 import pyarrow.compute as pc
 from pydantic import BaseModel, Field
 
+from app.connectome.provenance import CanonicalGraph, SourceDataset
 from app.connectome.schema import NEURON_REQUIRED_COLUMNS
 
 SAMPLE_LIMIT = 10
@@ -47,6 +48,11 @@ class InspectionReport(BaseModel):
     download_url: str | None = None
     license: str | None = None
     synthetic: bool | None = None
+    #: DATA.md §8 distinction, taken from provenance when available.
+    source_dataset: SourceDataset | None = None
+    canonical_graph: CanonicalGraph | None = None
+    #: True when the recorded canonical counts equal the normalized tables inspected here.
+    canonical_graph_consistent: bool | None = None
     neurons: int
     directed_connections: int
     self_loops: int
@@ -54,6 +60,41 @@ class InspectionReport(BaseModel):
     missing_ids: DanglingSummary
     duplicates: DuplicateSummary
     annotation_columns: list[AnnotationColumn]
+
+    def _source_dataset_lines(self) -> list[str]:
+        source = self.source_dataset
+        if source is None:
+            return ["- not recorded (no provenance available)"]
+        lines = [f"- name / version: {source.name} {source.version}"]
+        if source.official_neuron_count is not None:
+            lines.append(f"- official neuron count (approx.): {source.official_neuron_count:,}")
+            if source.official_neuron_count_source:
+                lines.append(f"  - basis: {source.official_neuron_count_source}")
+        if source.annotated_bodies_total is not None:
+            lines.append(f"- annotated bodies in release table: {source.annotated_bodies_total:,}")
+        if source.raw_connection_rows is not None:
+            lines.append(f"- raw connection rows: {source.raw_connection_rows:,}")
+        if source.status_counts:
+            counts = " · ".join(f"{k} {v:,}" for k, v in source.status_counts.items())
+            lines.append(f"- status counts: {counts}")
+        return lines
+
+    def _canonical_graph_lines(self) -> list[str]:
+        graph = self.canonical_graph
+        if graph is None:
+            return ["- not recorded (no provenance available)"]
+        lines = [
+            f"- selection rule: `{graph.selection_rule}`",
+            f"- neurons: {graph.neuron_count:,} (subset of the source dataset, "
+            "NOT its complete neuron census)",
+            f"- directed connections: {graph.connection_count:,}",
+        ]
+        if graph.dropped_dangling_edges is not None:
+            lines.append(f"- dropped dangling edges: {graph.dropped_dangling_edges:,}")
+        if graph.includes_dangling_edges:
+            lines.append("- includes dangling edges: yes")
+        lines.append(f"- consistent with the normalized tables: {self.canonical_graph_consistent}")
+        return lines
 
     def to_markdown(self) -> str:
         lines = [
@@ -65,7 +106,14 @@ class InspectionReport(BaseModel):
             f"- license: {self.license or 'n/a'}",
             f"- synthetic fixture: {self.synthetic}",
             "",
-            f"- neurons: {self.neurons:,}",
+            "## Source dataset",
+            *self._source_dataset_lines(),
+            "",
+            "## Canonical simulation graph",
+            *self._canonical_graph_lines(),
+            "",
+            "## Normalized tables",
+            f"- canonical graph neurons: {self.neurons:,}",
             f"- directed connections: {self.directed_connections:,} "
             f"(self-loops: {self.self_loops:,})",
             f"- synapse_count min/max/median: {self.synapse_count.min} / "
@@ -170,6 +218,23 @@ def inspect_tables(
         if name not in NEURON_REQUIRED_COLUMNS
     ]
 
+    source_raw = provenance.get("source_dataset")
+    canonical_raw = provenance.get("canonical_graph")
+    source_dataset = (
+        SourceDataset.model_validate(source_raw) if isinstance(source_raw, dict) else source_raw
+    )
+    canonical_graph = (
+        CanonicalGraph.model_validate(canonical_raw)
+        if isinstance(canonical_raw, dict)
+        else canonical_raw
+    )
+    consistent = None
+    if canonical_graph is not None:
+        consistent = (
+            canonical_graph.neuron_count == neurons.num_rows
+            and canonical_graph.connection_count == connections.num_rows
+        )
+
     return InspectionReport(
         dataset=provenance.get("dataset_name") or _first_or_none(neurons, "dataset"),
         dataset_version=provenance.get("dataset_version")
@@ -178,6 +243,9 @@ def inspect_tables(
         download_url=provenance.get("download_url"),
         license=provenance.get("license"),
         synthetic=provenance.get("synthetic"),
+        source_dataset=source_dataset,
+        canonical_graph=canonical_graph,
+        canonical_graph_consistent=consistent,
         neurons=neurons.num_rows,
         directed_connections=connections.num_rows,
         self_loops=self_loops,

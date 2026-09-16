@@ -22,6 +22,36 @@ class RawFileEntry(BaseModel):
     columns: list[str] = Field(default_factory=list)
 
 
+class SourceDataset(BaseModel):
+    """The published dataset as released (DATA.md §8). Counts here describe the SOURCE."""
+
+    name: str
+    version: str
+    official_neuron_count: int | None = None
+    official_neuron_count_source: str | None = None
+    annotated_bodies_total: int | None = None
+    raw_connection_rows: int | None = None
+    status_counts: dict[str, int] = Field(default_factory=dict)
+    description: str = (
+        "The source dataset as published. The canonical simulation graph is a selected subset "
+        "of it; its counts must never be presented as the dataset's neuron census."
+    )
+
+
+class CanonicalGraph(BaseModel):
+    """The subset of the source dataset used as the simulation graph (DATA.md §8)."""
+
+    selection_rule: str = Field(min_length=1)
+    neuron_count: int = Field(ge=0)
+    connection_count: int = Field(ge=0)
+    dropped_dangling_edges: int | None = None
+    includes_dangling_edges: bool = False
+    description: str = (
+        "Canonical simulation graph: neurons selected by selection_rule and the directed "
+        "connections between them. NOT the complete neuron census of the source dataset."
+    )
+
+
 class Provenance(BaseModel):
     """Contents of ``provenance.json``. Field names follow the DATA.md example."""
 
@@ -46,10 +76,21 @@ class Provenance(BaseModel):
     counts: dict[str, Any] = Field(default_factory=dict)
     outputs: dict[str, str] = Field(default_factory=dict)
 
+    # DATA.md §8: the source dataset and the canonical simulation graph are distinct things.
+    source_dataset: SourceDataset | None = None
+    canonical_graph: CanonicalGraph | None = None
+
     @model_validator(mode="after")
-    def _license_required_for_biological_data(self) -> Provenance:
-        if not self.synthetic and not (self.license or "").strip():
+    def _requirements_for_biological_data(self) -> Provenance:
+        if self.synthetic:
+            return self
+        if not (self.license or "").strip():
             raise ValueError("license must not be blank for a non-synthetic dataset (DATA.md §3)")
+        if self.source_dataset is None or self.canonical_graph is None:
+            raise ValueError(
+                "source_dataset and canonical_graph are required for a non-synthetic dataset "
+                "(DATA.md §8: the canonical graph is a subset, not the dataset census)"
+            )
         return self
 
     def write(self, path: Path) -> Path:

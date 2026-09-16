@@ -76,3 +76,28 @@ Synthetic fixture edges must be clearly labeled synthetic and must never appear 
 - dangling edges
 - available annotation columns
 - dataset/version/source
+
+## 8. Source Dataset vs Canonical Simulation Graph
+Two different things must never be conflated:
+
+| | SOURCE DATASET | CANONICAL SIMULATION GRAPH |
+|---|---|---|
+| What | MaleCNS v1.0 as published (Janelia FlyEM et al.) | The subset this project simulates on |
+| Neurons | approximately **166,700** (release figure; the Cell paper reports 166,691) | **165,122** |
+| Selection | none (the dataset) | `status == "Traced"` in `body-annotations-male-cns-v1.0` |
+| Connections | 151,856,684 raw body→body rows in `connectome-weights` | **25,563,197** directed edges with both endpoints in the neuron set |
+
+Rules:
+- The canonical graph count (165,122) is **not** the MaleCNS neuron census and must not be
+  presented as such in code, docs, UI or reports.
+- `data/processed/provenance.json` must carry both a `source_dataset` block (name, version,
+  official neuron count and its basis, annotated bodies, raw connection rows, status counts)
+  and a `canonical_graph` block (selection rule, neuron count, connection count, dropped
+  dangling edges). Provenance for biological data is invalid without both.
+- `scripts/inspect_dataset.py` reports both blocks and whether the canonical counts match
+  the normalized tables.
+- The selection rule is configuration (`scripts/normalize_dataset.py --status …`), recorded in
+  provenance and in the parquet schema metadata; changing it changes the canonical graph, not
+  the source dataset.
+- `neurons.parquet` / `connections.parquet` ARE the canonical graph. Circuits extracted in
+  later phases are subsets of the canonical graph and inherit this provenance.

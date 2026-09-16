@@ -29,11 +29,13 @@ import pyarrow as pa  # noqa: E402
 from app import __version__  # noqa: E402
 from app.config import get_settings  # noqa: E402
 from app.connectome import (  # noqa: E402
+    CanonicalGraph,
     DatasetAdapter,
     MaleCnsConfig,
     MaleCnsV1Adapter,
     Provenance,
     RawFileEntry,
+    SourceDataset,
     SyntheticFixtureAdapter,
     inspect_tables,
     write_parquet,
@@ -151,6 +153,49 @@ def main(argv: list[str] | None = None) -> int:
             f"both {d.both_unknown:,}); {'kept' if d.kept_dangling else 'dropped'}"
         )
 
+    # DATA.md §8: SOURCE DATASET (as published) vs CANONICAL SIMULATION GRAPH (selected subset)
+    details = inspection.details
+    dangling = result.dangling
+    source_dataset = SourceDataset(
+        name=adapter.info.source_name or adapter.info.dataset,
+        version=adapter.info.dataset_version,
+        official_neuron_count=adapter.info.official_neuron_count,
+        official_neuron_count_source=adapter.info.official_neuron_count_source,
+        annotated_bodies_total=details.get("annotated_bodies_total"),
+        raw_connection_rows=dangling.total_edges_raw
+        if dangling
+        else details.get("raw_connection_rows"),
+        status_counts=details.get("status_counts", {}),
+    )
+    canonical_graph = CanonicalGraph(
+        selection_rule=details.get("selection_rule", "all rows"),
+        neuron_count=neurons.num_rows,
+        connection_count=connections.num_rows,
+        dropped_dangling_edges=(0 if dangling.kept_dangling else dangling.dangling_edges)
+        if dangling
+        else None,
+        includes_dangling_edges=bool(dangling and dangling.kept_dangling),
+    )
+    print(
+        f"[normalize] SOURCE DATASET {source_dataset.name} {source_dataset.version}: "
+        f"official neuron count ~{source_dataset.official_neuron_count:,} ; "
+        f"CANONICAL GRAPH ({canonical_graph.selection_rule}): "
+        f"{canonical_graph.neuron_count:,} neurons, "
+        f"{canonical_graph.connection_count:,} connections"
+    )
+    table_metadata = {
+        b"flybrain.source_dataset": f"{source_dataset.name} {source_dataset.version}".encode(),
+        b"flybrain.canonical_graph.selection_rule": canonical_graph.selection_rule.encode(),
+        b"flybrain.note": (
+            b"canonical simulation graph = selected subset of the source dataset; "
+            b"not the dataset's complete neuron census (DATA.md \xc2\xa78)"
+        ),
+    }
+    neurons = neurons.replace_schema_metadata({**(neurons.schema.metadata or {}), **table_metadata})
+    connections = connections.replace_schema_metadata(
+        {**(connections.schema.metadata or {}), **table_metadata}
+    )
+
     neurons_path = write_parquet(neurons, out_dir / "neurons.parquet")
     connections_path = write_parquet(connections, out_dir / "connections.parquet")
 
@@ -203,6 +248,8 @@ def main(argv: list[str] | None = None) -> int:
             "connections": connections.num_rows,
             "dangling": result.dangling.to_dict() if result.dangling else None,
         },
+        source_dataset=source_dataset,
+        canonical_graph=canonical_graph,
         outputs={
             "neurons": str(neurons_path.relative_to(PROJECT_ROOT))
             if neurons_path.is_relative_to(PROJECT_ROOT)

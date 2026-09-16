@@ -28,6 +28,7 @@ from app.connectome.normalize import (
 from app.connectome.schema import SchemaValidationError
 
 SYNTHETIC_MARKER = "SYNTHETIC"
+FIXTURE_SELECTION_RULE = "all fixture neurons (synthetic; no status filter)"
 FIXTURE_REQUIRED_TOP_LEVEL = ("dataset", "dataset_version", "synthetic", "neurons", "connections")
 FIXTURE_NEURON_REQUIRED = ("neuron_id",)
 FIXTURE_CONNECTION_REQUIRED = ("pre_neuron_id", "post_neuron_id", "synapse_count")
@@ -56,6 +57,9 @@ class SyntheticFixtureAdapter(DatasetAdapter):
             ),
             citation=None,
             notes=str(data.get("notes", "")),
+            source_name=str(data["dataset"]),
+            official_neuron_count=len(data["neurons"]),
+            official_neuron_count_source="number of neurons listed in the synthetic fixture file",
         )
 
     def _load(self) -> dict[str, Any]:
@@ -81,6 +85,9 @@ class SyntheticFixtureAdapter(DatasetAdapter):
                 "neurons": len(data["neurons"]),
                 "connections": len(data["connections"]),
                 "synthetic_marker": SYNTHETIC_MARKER,
+                "selection_rule": FIXTURE_SELECTION_RULE,
+                "annotated_bodies_total": len(data["neurons"]),
+                "raw_connection_rows": len(data["connections"]),
             },
         )
 

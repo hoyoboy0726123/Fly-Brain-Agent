@@ -20,7 +20,7 @@ from app.connectome.fixture import SyntheticFixtureAdapter
 from app.connectome.inspect import InspectionReport, inspect_tables
 from app.connectome.malecns import MaleCnsConfig, MaleCnsV1Adapter
 from app.connectome.normalize import DanglingReport, filter_dangling, read_parquet, write_parquet
-from app.connectome.provenance import Provenance, RawFileEntry
+from app.connectome.provenance import CanonicalGraph, Provenance, RawFileEntry, SourceDataset
 from app.connectome.schema import (
     SchemaValidationError,
     validate_connections_table,
@@ -28,6 +28,7 @@ from app.connectome.schema import (
 )
 
 __all__ = [
+    "CanonicalGraph",
     "ConnectionsResult",
     "DanglingReport",
     "DatasetAdapter",
@@ -40,6 +41,7 @@ __all__ = [
     "RawFileEntry",
     "RawFileRecord",
     "SchemaValidationError",
+    "SourceDataset",
     "SyntheticFixtureAdapter",
     "filter_dangling",
     "inspect_tables",

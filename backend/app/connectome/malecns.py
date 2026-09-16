@@ -10,6 +10,7 @@ BIOLOGICAL STRUCTURE layer: this module only reads and reshapes published data.
 from __future__ import annotations
 
 import base64
+import json
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
@@ -56,6 +57,17 @@ CITATION = (
     "preprint: https://www.biorxiv.org/content/10.1101/2025.10.09.680999v2"
 )
 RELEASE_DATE = "2026-06-08"
+SOURCE_NAME = "MaleCNS"
+
+#: Neuron count of the SOURCE DATASET (MaleCNS v1.0) as reported, approximate. This is a
+#: property of the published dataset and is NOT the size of the canonical simulation graph.
+OFFICIAL_NEURON_COUNT = 166_700
+OFFICIAL_NEURON_COUNT_SOURCE = (
+    "MaleCNS v1.0 is described as approximately 166,700 neurons (project figure supplied "
+    "at review); it equals the 166,700 bodies with a non-null 'superclass' in "
+    "body-annotations v1.0 (empirical). The Cell paper reports 166,691 (search-only). "
+    "Not the canonical graph count."
+)
 
 ANNOTATIONS_FILE = "body-annotations-male-cns-v1.0-minconf-0.5.feather"
 NEUROTRANSMITTERS_FILE = "body-neurotransmitters-male-cns-v1.0.feather"
@@ -132,6 +144,16 @@ class MaleCnsConfig:
     def path(self, file_name: str) -> Path:
         return Path(self.raw_dir) / file_name
 
+    @property
+    def selection_rule(self) -> str:
+        """Human-readable rule that defines the canonical simulation graph's neuron set."""
+        if not self.neuron_status_filter:
+            return "all annotated bodies (no status filter)"
+        if len(self.neuron_status_filter) == 1:
+            return f'status == "{self.neuron_status_filter[0]}"'
+        quoted = ", ".join(f'"{status}"' for status in self.neuron_status_filter)
+        return f"status in [{quoted}]"
+
 
 class MaleCnsV1Adapter(DatasetAdapter):
     """Reads the published v1.0 body annotations, connection weights and NT predictions."""
@@ -147,6 +169,9 @@ class MaleCnsV1Adapter(DatasetAdapter):
             download_url=DOWNLOAD_URL,
             license=LICENSE,
             citation=CITATION,
+            source_name=SOURCE_NAME,
+            official_neuron_count=OFFICIAL_NEURON_COUNT,
+            official_neuron_count_source=OFFICIAL_NEURON_COUNT_SOURCE,
             notes=(
                 f"Release date {RELEASE_DATE}. Structural connectivity from the published "
                 "flat-connectome tables; synapse_count is the published 'weight' column "
@@ -218,7 +243,56 @@ class MaleCnsV1Adapter(DatasetAdapter):
             else None
         )
         details["neuron_status_filter"] = list(self.config.neuron_status_filter)
+        details["selection_rule"] = self.config.selection_rule
+        details.update(self._source_summary())
         return InspectionResult(info=self.info, raw_files=records, details=details)
+
+    @staticmethod
+    def _row_count_from_footer(schema: pa.Schema) -> int | None:
+        """Row count stored by pandas as a RangeIndex in the Arrow footer, if present."""
+        metadata = schema.metadata or {}
+        raw = metadata.get(b"pandas")
+        if not raw:
+            return None
+        try:
+            index_columns = json.loads(raw.decode())["index_columns"]
+        except (ValueError, KeyError, TypeError):
+            return None
+        for entry in index_columns:
+            if isinstance(entry, dict) and entry.get("kind") == "range":
+                return int(entry["stop"]) - int(entry["start"])
+        return None
+
+    def _source_summary(self) -> dict[str, Any]:
+        """SOURCE DATASET facts read from the release files (DATA.md §8)."""
+        summary: dict[str, Any] = {}
+        ann_path = self.config.path(self.config.annotations_file)
+        if ann_path.is_file():
+            names = self._schema_of(ann_path).names
+            wanted = [c for c in ("bodyId", "status", "superclass") if c in names]
+            annotations = feather.read_table(ann_path, columns=wanted)
+            summary["annotated_bodies_total"] = annotations.num_rows
+            if "status" in wanted:
+                counts = pc.value_counts(annotations["status"]).to_pylist()
+                ordered = sorted(counts, key=lambda row: -row["counts"])
+                summary["status_counts"] = {
+                    ("null" if row["values"] is None else str(row["values"])): row["counts"]
+                    for row in ordered
+                }
+            if "superclass" in wanted:
+                column = annotations["superclass"]
+                summary["bodies_with_superclass"] = annotations.num_rows - column.null_count
+        weights_path = self.config.path(self.config.weights_file)
+        if weights_path.is_file():
+            rows = self._row_count_from_footer(self._schema_of(weights_path))
+            if rows is None:  # no pandas RangeIndex in the footer: count record batches
+                with pa.memory_map(str(weights_path), "r") as source:
+                    reader = ipc.open_file(source)
+                    rows = sum(
+                        reader.get_batch(i).num_rows for i in range(reader.num_record_batches)
+                    )
+            summary["raw_connection_rows"] = rows
+        return summary
 
     def validate_schema(self) -> None:
         self._require(
