@@ -8,7 +8,7 @@ VENV_PY      := $(VENV)/bin/python
 
 .PHONY: help install install-backend install-frontend backend frontend \
         test test-backend typecheck-frontend lint smoke smoke-backend smoke-frontend smoke-data \
-        normalize normalize-fixture inspect clean
+        smoke-circuit normalize normalize-fixture inspect extract clean
 
 help:
 	@echo "make install            install backend (.venv) and frontend (node_modules) dependencies"
@@ -20,6 +20,8 @@ help:
 	@echo "make normalize          raw MaleCNS v1.0 files (data/raw) -> data/processed (parquet + provenance)"
 	@echo "make inspect            DATA.md §7 report for data/processed"
 	@echo "make smoke-data         inspect the synthetic fixture (+ production data when present)"
+	@echo "make smoke-circuit      fixture circuit extraction (+ technical MaleCNS extraction when data present)"
+	@echo "make extract ARGS=...   run scripts/extract_circuit.py with ARGS"
 
 install: install-backend install-frontend
 
@@ -48,7 +50,7 @@ typecheck-frontend:
 lint:
 	cd $(BACKEND_DIR) && .venv/bin/ruff check .
 
-smoke: smoke-backend smoke-data smoke-frontend
+smoke: smoke-backend smoke-data smoke-circuit smoke-frontend
 
 smoke-backend:
 	$(VENV_PY) scripts/smoke_test.py
@@ -59,6 +61,12 @@ smoke-frontend:
 smoke-data:
 	$(VENV_PY) scripts/inspect_dataset.py --fixture --keep-dangling
 	$(VENV_PY) scripts/inspect_dataset.py --allow-missing
+
+smoke-circuit:
+	$(VENV_PY) scripts/smoke_circuit.py
+
+extract:
+	$(VENV_PY) scripts/extract_circuit.py $(ARGS)
 
 normalize:
 	$(VENV_PY) scripts/normalize_dataset.py --adapter malecns

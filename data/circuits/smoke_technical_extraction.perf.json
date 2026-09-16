@@ -1,0 +1,95 @@
+{
+  "label": "TECHNICAL EXTRACTION SMOKE TEST \u2014 NOT A BIOLOGICALLY INTERPRETED CIRCUIT. Seeds/targets were chosen mechanically from the data to prove the extractor runs on MaleCNS v1.0; no behavior, function or circuit identity is claimed.",
+  "graph": {
+    "neurons": 165122,
+    "edges": 25563197,
+    "selection_rule": "status == \"Traced\"",
+    "load_seconds": 0.262,
+    "cache_hit": true,
+    "strategy": "neurons.parquet + memory-mapped .npy CSR cache",
+    "array_bytes": 418258000
+  },
+  "runs": [
+    {
+      "circuit_id": "smoke_technical_downstream_min10_hops2",
+      "config": {
+        "seed_neuron_ids": [
+          "10001"
+        ],
+        "target_neuron_ids": [
+          "10010"
+        ],
+        "max_hops": 2,
+        "min_synapses": 10,
+        "max_neurons": 2000,
+        "direction": "downstream",
+        "restrict_to_target_paths": false
+      },
+      "stats": {
+        "visited_neurons": 1992,
+        "returned_neurons": 1992,
+        "returned_edges": 36755,
+        "examined_edges": 15060,
+        "extraction_seconds": 0.347465,
+        "graph_load_seconds": 0.166595,
+        "graph_cache_hit": true,
+        "graph_memory_bytes": 418258000,
+        "process_max_rss_bytes": 584744960,
+        "graph_strategy": "neurons.parquet + memory-mapped .npy CSR cache"
+      },
+      "targets": [
+        {
+          "neuron_id": "10010",
+          "reachable": true,
+          "minimum_path_length": 2
+        }
+      ],
+      "circuit_hash": "c268e2b6ccfc8ee0261e9bd4cfc3693d27068fe09af3526fc82377d48862fef7",
+      "json": "data/circuits/smoke_technical_downstream_min10_hops2.json"
+    },
+    {
+      "circuit_id": "smoke_technical_upstream_min10_hops2",
+      "config": {
+        "seed_neuron_ids": [
+          "10001"
+        ],
+        "target_neuron_ids": [],
+        "max_hops": 2,
+        "min_synapses": 10,
+        "max_neurons": 2000,
+        "direction": "upstream",
+        "restrict_to_target_paths": false
+      },
+      "aborted": "extraction aborted: adding hop 2 would include 11,741 neurons, exceeding the hard limit max_neurons=2,000"
+    },
+    {
+      "circuit_id": "smoke_technical_upstream_min10_hops1",
+      "config": {
+        "seed_neuron_ids": [
+          "10001"
+        ],
+        "target_neuron_ids": [],
+        "max_hops": 1,
+        "min_synapses": 10,
+        "max_neurons": 2000,
+        "direction": "upstream",
+        "restrict_to_target_paths": false
+      },
+      "stats": {
+        "visited_neurons": 330,
+        "returned_neurons": 330,
+        "returned_edges": 3129,
+        "examined_edges": 695,
+        "extraction_seconds": 0.016995,
+        "graph_load_seconds": 0.166595,
+        "graph_cache_hit": true,
+        "graph_memory_bytes": 418258000,
+        "process_max_rss_bytes": 811069440,
+        "graph_strategy": "neurons.parquet + memory-mapped .npy CSR cache"
+      },
+      "targets": [],
+      "circuit_hash": "f6df948c60b2893c80a7185e3e8e1c92142c9e7426cc995f470bb200b062f467",
+      "json": "data/circuits/smoke_technical_upstream_min10_hops1.json"
+    }
+  ]
+}
