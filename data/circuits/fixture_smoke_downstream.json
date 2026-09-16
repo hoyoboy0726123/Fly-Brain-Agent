@@ -163,15 +163,15 @@
     "returned_neurons": 6,
     "returned_edges": 9,
     "examined_edges": 6,
-    "extraction_seconds": 0.008533,
+    "extraction_seconds": 0.007409,
     "graph_load_seconds": null,
     "graph_cache_hit": null,
     "graph_memory_bytes": 544,
-    "process_max_rss_bytes": 105029632,
+    "process_max_rss_bytes": 98074624,
     "graph_strategy": "in-memory tables"
   },
   "provenance": {
-    "extracted_at": "2026-09-16T14:03:00+00:00",
+    "extracted_at": "2026-09-16T14:32:24+00:00",
     "extractor_version": "0.0.1",
     "graph_fingerprint": "3d172226b49db4f6ed4c8f8690952b48c772c5be0a6a417c29547855f0b22dd4",
     "graph_source": {},

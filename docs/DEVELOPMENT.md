@@ -136,6 +136,21 @@ optionally keeps only neurons on a seed→target path of length ≤ max_hops.
 Artifacts produced by `smoke_circuit.py` on MaleCNS are labelled
 "TECHNICAL EXTRACTION SMOKE TEST — NOT A BIOLOGICALLY INTERPRETED CIRCUIT".
 
+## 4d. Simulation (P3)
+
+`backend/app/simulation/` runs a simplified LIF-like model on a P2 circuit artifact. All
+outputs are SIMULATED; parameters are computational, not measured (see NEUROSCIENCE.md §8).
+
+```bash
+make simulate ARGS="--fixture --stimulate syn_001 --intensity 2.0 --duration 3 --steps 30"
+make simulate ARGS="--circuit data/circuits/<id>.json --stimulate <neuron_id> --intensity 2.0 --duration 5 --steps 50 --simulation-id demo"
+make smoke-simulation      # fixture propagation demo (+ technical MaleCNS simulation when the P2 circuit exists)
+```
+
+Outputs go to `data/simulations/`: `<id>.report.json` (run summary + spike raster, tracked)
+and `<id>.snapshot.json` (full state, git-ignored). `--config-json '{"threshold": 1.5}'`
+overrides `SimulationConfig` fields.
+
 ## 5. Configuration
 
 Backend (`FLYBRAIN_` prefix, optional `backend/.env`, see `backend/.env.example`):
@@ -173,7 +188,7 @@ backend/app/config       Settings (pydantic-settings)
 backend/app/models       API schemas
 backend/app/connectome   BIOLOGICAL STRUCTURE  (P1): schema, normalize, adapter, malecns, fixture, provenance, inspect
 backend/app/circuits     BIOLOGICAL STRUCTURE  (P2): graph (CSR), extractor, artifact, errors
-backend/app/simulation   COMPUTATIONAL DYNAMICS (P3, empty)
+backend/app/simulation   COMPUTATIONAL DYNAMICS (P3): config, weights, engine, state, errors
 backend/app/sensors      APPLICATION DECODING  (P4, empty)
 backend/app/motor        APPLICATION DECODING  (P4, empty)
 backend/tests            pytest suite (+ fixtures/tiny_connectome.json, SYNTHETIC)
@@ -187,6 +202,8 @@ scripts/normalize_dataset.py  raw -> normalized parquet + provenance.json
 scripts/inspect_dataset.py    DATA.md §7 validation report
 scripts/extract_circuit.py    bounded circuit extraction -> data/circuits/<id>.{json,parquet}
 scripts/smoke_circuit.py      P2 smoke (fixture + technical MaleCNS extraction)
+scripts/run_simulation.py     run the LIF-like model on a circuit artifact
+scripts/smoke_simulation.py   P3 smoke (fixture propagation + technical MaleCNS simulation)
 docs/dataset_research.md      dataset verification record (P1 gate)
 ```
 

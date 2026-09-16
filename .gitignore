@@ -17,6 +17,8 @@ data/**/*.npy
 data/processed/graph_cache/
 # large technical smoke-test circuits (real ids, no biological claim); perf report stays tracked
 data/circuits/smoke_technical_*_min*.json
+# simulation snapshots can be large; reports stay tracked
+data/simulations/*.snapshot.json
 
 # ---- Python ----
 __pycache__/
