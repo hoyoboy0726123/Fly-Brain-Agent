@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "flybrain-agent-backend"
-description = "FlyBrain Agent backend: connectome-grounded simulation API (P0–P5)"
+description = "FlyBrain Agent backend: connectome-grounded simulation API (MVP v0.1, P0–P6)"
 requires-python = ">=3.11"
 dynamic = ["version"]
 dependencies = [

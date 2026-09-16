@@ -89,7 +89,9 @@ def main(argv: list[str] | None = None) -> int:
                 f"per-step={result.per_step_fired_counts[:10]}… "
                 f"runtime={result.runtime_seconds:.4f}s"
             )
-            runs.append(result.model_dump(mode="json"))
+            # per-neuron state history (P6 inspector replay) is ~65 KB per run; keep the
+            # committed report small — the API serves it on demand
+            runs.append(result.model_dump(mode="json", exclude={"neuron_activity"}))
     total = time.perf_counter() - started
 
     decoded = {

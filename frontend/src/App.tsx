@@ -1,12 +1,12 @@
-import { useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
 import { BackendBadge } from './components/BackendBadge.tsx'
-import { BrainPanel } from './brain/BrainPanel.tsx'
-import { APP_SUBTITLE, APP_TITLE, DISCLAIMER, SCIENTIFIC_LABELS } from './content.ts'
-import { ActionPanel } from './dashboard/ActionPanel.tsx'
-import { HowItWorks } from './dashboard/HowItWorks.tsx'
+import { APP_SUBTITLE, APP_TITLE, DEFAULT_PACE_MS, DISCLAIMER, SCIENTIFIC_LABELS } from './content.ts'
+import { DemoView } from './demo/DemoView.tsx'
 import { useEscapeDemo, type DemoOptions } from './demo/useEscapeDemo.ts'
-import { EnvironmentPanel } from './environment/EnvironmentPanel.tsx'
+import { InspectorView } from './inspector/InspectorView.tsx'
+
+type View = 'demo' | 'inspector'
 
 /** `?pace=<ms>` speeds replay up for tests; `?transport=rest` forces the REST path. */
 function optionsFromLocation(): DemoOptions {
@@ -18,13 +18,28 @@ function optionsFromLocation(): DemoOptions {
   return options
 }
 
+function viewFromHash(): View {
+  return window.location.hash === '#inspector' ? 'inspector' : 'demo'
+}
+
 export function App() {
   const options = useMemo(optionsFromLocation, [])
   const demo = useEscapeDemo(options)
-  const { state, view } = demo
-  const groups = state.result?.group_activity.groups ?? state.config?.groups ?? []
-  const edges = state.config?.group_edges ?? []
+  const { state } = demo
+  const [view, setView] = useState<View>(viewFromHash)
   const labels = state.config?.scientific_labels ?? SCIENTIFIC_LABELS
+
+  useEffect(() => {
+    const onHashChange = () => setView(viewFromHash())
+    window.addEventListener('hashchange', onHashChange)
+    return () => window.removeEventListener('hashchange', onHashChange)
+  }, [])
+
+  const switchView = (next: View) => {
+    setView(next)
+    const hash = next === 'inspector' ? '#inspector' : ''
+    window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}${hash}`)
+  }
 
   return (
     <div className="app">
@@ -42,7 +57,23 @@ export function App() {
             ))}
           </ul>
         </div>
-        <BackendBadge />
+        <div className="app__tools">
+          <BackendBadge />
+          <nav className="tabs" aria-label="Views">
+            <button type="button" className={`tabs__tab ${view === 'demo' ? 'tabs__tab--active' : ''}`} aria-pressed={view === 'demo'} onClick={() => switchView('demo')} data-testid="tab-demo">
+              Demo
+            </button>
+            <button
+              type="button"
+              className={`tabs__tab ${view === 'inspector' ? 'tabs__tab--active' : ''}`}
+              aria-pressed={view === 'inspector'}
+              onClick={() => switchView('inspector')}
+              data-testid="tab-inspector"
+            >
+              Brain Inspector
+            </button>
+          </nav>
+        </div>
       </header>
 
       {state.configError && (
@@ -55,30 +86,7 @@ export function App() {
         </div>
       )}
 
-      <main className="grid">
-        <EnvironmentPanel
-          direction={state.direction}
-          intensity={state.intensity}
-          intensityValid={demo.intensityValid}
-          phase={state.phase}
-          view={view}
-          onDirectionChange={demo.setDirection}
-          onIntensityChange={demo.setIntensity}
-          onTrigger={demo.trigger}
-          onReset={demo.reset}
-        />
-        <BrainPanel groups={groups} edges={edges} circuitId={state.config?.circuit_id ?? state.result?.circuit_id ?? null} phase={state.phase} view={view} />
-        <ActionPanel
-          phase={state.phase}
-          view={view}
-          result={state.result}
-          error={state.error}
-          transport={state.transport}
-          streamedEvents={state.streamedEvents}
-        />
-      </main>
-
-      <HowItWorks config={state.config} configError={state.configError} />
+      {view === 'demo' ? <DemoView demo={demo} /> : <InspectorView demo={demo} paceMs={options.paceMs ?? DEFAULT_PACE_MS} />}
 
       <footer className="app__footer">
         <p className="disclaimer" data-testid="disclaimer">

@@ -101,6 +101,30 @@ class GroupActivity(BaseModel):
     fired_counts: dict[str, list[int]]
 
 
+NEURON_STATE_LABEL = (
+    "SIMULATED STATE per neuron and step (membrane potential, fired, refractory) from the "
+    "simplified LIF-like model; not measured neural recordings"
+)
+
+
+class NeuronActivity(BaseModel):
+    """Per-neuron, per-step SIMULATED state for the inspector replay; index 0 is step 1.
+
+    ``membrane_potential_per_step[s][i]`` and ``refractory_per_step[s][i]`` refer to
+    ``neuron_ids[i]`` after step ``s + 1``; ``fired_ids_per_step[s]`` lists the ids that
+    fired at that step. Model parameters are repeated so the values can be interpreted.
+    """
+
+    label: str = NEURON_STATE_LABEL
+    neuron_ids: list[str]
+    fired_ids_per_step: list[list[str]]
+    membrane_potential_per_step: list[list[float]]
+    refractory_per_step: list[list[int]]
+    resting_potential: float
+    reset_potential: float
+    threshold: float
+
+
 class EscapeResult(BaseModel):
     disclaimer: Literal[
         "STRUCTURAL CONNECTIVITY IS BIOLOGICAL DATA. NEURAL ACTIVITY IS SIMULATED. "
@@ -120,6 +144,7 @@ class EscapeResult(BaseModel):
     per_step_fired_counts: list[int]
     activity_label: str = ACTIVITY_LABEL
     group_activity: GroupActivity
+    neuron_activity: NeuronActivity | None = None
     output_activity: list[OutputActivity]
     decision: MotorDecision
     timeline: list[TimelineEvent]
@@ -225,13 +250,26 @@ class EscapeExperiment:
         ordered = sorted(groups.values(), key=lambda g: (role_rank[g.role], g.cell_type, g.side))
         return ordered, group_of
 
-    def run(self, stimulus: LoomingStimulus, steps: int | None = None) -> EscapeResult:
+    def run(
+        self,
+        stimulus: LoomingStimulus,
+        steps: int | None = None,
+        *,
+        record_neuron_states: bool = True,
+    ) -> EscapeResult:
         started = time.perf_counter()
         steps = steps or self.config.simulation_steps
         drive = self.mapper.map(stimulus)
         engine = SimulationEngine(self.circuit, self.simulation_config)
         engine.stimulate(drive.neuron_ids, drive.injected_current, drive.duration_steps)
-        summary = engine.run(steps)
+        potentials: list[list[float]] = []
+        refractory: list[list[int]] = []
+
+        def record(_summary: object) -> None:
+            potentials.append([round(float(v), 6) for v in engine.membrane_potential.tolist()])
+            refractory.append([int(v) for v in engine.refractory_remaining.tolist()])
+
+        summary = engine.run(steps, on_step=record if record_neuron_states else None)
         activity = engine.get_activity()
         decision = self.decoder.decode(activity)
         spikes_per_step: list[list[str]] = activity["spikes_per_step"]
@@ -338,6 +376,17 @@ class EscapeExperiment:
             neurons_activated=summary.neurons_activated,
             per_step_fired_counts=summary.per_step_fired_counts,
             group_activity=GroupActivity(groups=self.groups, fired_counts=fired_counts),
+            neuron_activity=NeuronActivity(
+                neuron_ids=list(engine.neuron_ids),
+                fired_ids_per_step=spikes_per_step,
+                membrane_potential_per_step=potentials,
+                refractory_per_step=refractory,
+                resting_potential=self.simulation_config.resting_potential,
+                reset_potential=self.simulation_config.reset_potential,
+                threshold=self.simulation_config.threshold,
+            )
+            if record_neuron_states
+            else None,
             output_activity=output_activity,
             decision=decision,
             timeline=timeline,

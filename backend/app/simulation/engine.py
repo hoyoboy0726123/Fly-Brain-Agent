@@ -23,7 +23,7 @@ from __future__ import annotations
 import resource
 import sys
 import time
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from datetime import UTC, datetime
 from typing import Any
 
@@ -231,7 +231,8 @@ class SimulationEngine:
             external_input_neurons=touched,
         )
 
-    def run(self, steps: int) -> RunSummary:
+    def run(self, steps: int, on_step: Callable[[StepSummary], None] | None = None) -> RunSummary:
+        """Advance ``steps`` times; ``on_step`` (if given) sees every ``StepSummary`` in order."""
         if isinstance(steps, bool) or not isinstance(steps, int) or steps < 1:
             raise SimulationLimitError(f"steps must be a positive integer, got {steps!r}")
         if steps > self.config.max_steps_per_run:
@@ -248,6 +249,8 @@ class SimulationEngine:
             counts.append(summary.fired_count)
             for nid in summary.fired_neuron_ids:
                 activated.setdefault(nid, summary.step)
+            if on_step is not None:
+                on_step(summary)
         elapsed = time.perf_counter() - started
         return RunSummary(
             start_step=start_step,

@@ -31,7 +31,7 @@
 4. 訊號沿由真實 connectome 萃取出的 circuit 傳播。
 5. 簡化 neural dynamics 計算神經活動。
 6. Output / descending population 活化。
-7. Motor Decoder 產生 ESCAPE_LEFT / ESCAPE_RIGHT 等 action。
+7. Motor Decoder 產生 action（v0.1 的 escape_v1 只解碼 NO_ACTION / ESCAPE；GF 為方位不變，左右不解碼）。
 8. Virtual Fly 執行動作。
 9. 使用者可查看 neuron ID、type、connectivity、dataset provenance。
 
@@ -63,6 +63,75 @@ P9 Robot adapter
 
 **規則：前一階段 Acceptance Criteria 全部通過，才能進下一階段。**
 
+## FlyBrain Agent MVP v0.1（P0–P6 完成）
+
+**Architecture**
+
+```
+MaleCNS v1.0 (source dataset, ≈166,700 neurons, CC-BY 4.0)
+  ↓  P1  DatasetAdapter → neurons.parquet / connections.parquet / provenance.json
+Canonical Graph (status == "Traced": 165,122 neurons / 25,563,197 directed connections)
+  ↓  P2  CircuitExtractor (bounded BFS, hash-sealed artifact)
+Circuit artifact escape_v1 (286 neurons / 932 edges, LC4 + LPLC2 → DNp01/GF)
+  ↓  P3  SimulationEngine (simplified LIF-like model — SIMULATED activity)
+Simulated activity (spikes, membrane potentials per step)
+  ↓  P4  LoomingStimulus → StimulusMapper → MotorDecoder (NO_ACTION / ESCAPE)
+Behavior (computational interpretation; BIOLOGICAL CIRCUIT STATUS: PARTIALLY SUPPORTED)
+  ↓  P5  FastAPI (/escape/*, WS /ws/escape) + React dashboard
+Interactive Web Demo (Environment / Fly Brain / Action)
+  ↓  P6  read-only /circuits/* API + D3 graph
+Brain Inspector (neuron / edge / connectivity / provenance / activity replay)
+```
+
+Three layers stay visually and programmatically separate everywhere:
+**BIOLOGICAL STRUCTURE** (neuron identity + structural edges from the artifact) ·
+**SIMULATED ACTIVITY** (firing / membrane potential from the model) ·
+**COMPUTATIONAL INTERPRETATION** (looming mapping + ESCAPE decoder).
+
+**How to run**
+
+```bash
+make install            # backend/.venv + frontend/node_modules (Playwright: npx playwright install chromium)
+make backend            # FastAPI  http://127.0.0.1:8000  (OpenAPI at /docs)
+make frontend           # Vite     http://127.0.0.1:5173
+make test               # pytest (294) + frontend typecheck
+make smoke              # backend/data/circuit/simulation/escape/web smokes + Playwright (47 tests)
+```
+
+The committed `data/circuits/escape_v1.json` is enough for the demo and the inspector; the raw
+MaleCNS files are only needed to rebuild it (`make normalize`, `make build-escape-config`).
+
+**How to trigger looming** — open http://127.0.0.1:5173 (tab *Demo*): pick LEFT / CENTER /
+RIGHT, set the intensity (0–1) and press **TRIGGER LOOMING**. The looming disc grows in the
+Environment panel, the Fly Brain panel replays the backend's per-step SIMULATED activity
+(LC4 / LPLC2 → DNp01), and the Action panel shows **NO ACTION** or **ESCAPE** (GF side is
+metadata only). Reference outcomes: CENTER 0.2 → NO ACTION, CENTER 0.5 → ESCAPE, LEFT 1.0 → ESCAPE.
+
+**How to inspect a neuron** — tab *Brain Inspector*: the whole `escape_v1` circuit
+(286 neurons / 932 edges, never the canonical graph) is drawn with D3. Zoom/pan, hover, click a
+neuron or an edge, or type an exact neuron id (e.g. `10010`) in *Search neuron id*; filter by
+cell type (`LC4`, `LPLC2`, `DNp01`). The inspector separates **BIOLOGICAL METADATA**
+(neuron_id, cell_type, cell_class, neurotransmitter_prediction, dataset, dataset_version —
+"Not available" when the artifact has no value) from **CIRCUIT / SIMULATION METADATA**
+(minimum_hop_from_seed, is_seed, is_target, side/role from the escape config) and from
+**SIMULATED STATE** (membrane potential / fired / refractory at the replayed step). *Connections
+within loaded circuit* lists upstream and downstream partners with synapse counts; *Highlight
+upstream / downstream* marks them on the graph. Clicking an edge shows the **BIOLOGICAL
+STRUCTURAL CONNECTION** (FROM, TO, synapse_count = biological structural observation, dataset,
+circuit_id, circuit_hash) and, separately, the **computational simulation weight**. Press
+**RUN LOOMING** in the inspector and use PLAY / PAUSE / STEP / RESET or the timeline slider to
+replay the simulated activity on the graph.
+
+**How to inspect provenance** — the *Provenance* panel of the inspector (and
+`GET /api/circuits/escape_v1/provenance`) reports the dataset (MaleCNS v1.0),
+the canonical graph (`status == "Traced"`: 165,122 neurons / 25,563,197 connections — a canonical
+subset, not the complete census), the loaded circuit (escape_v1, 286 / 932), the circuit hash and its verification, the
+biological status (PARTIALLY SUPPORTED, `docs/circuits/escape_v1.md`), the license, the official
+source/download URLs, the raw file sha256 digests and the seven literature citations.
+
+Screenshots: `docs/screenshots/mvp-A-p5-main-demo.png`, `mvp-B-inspector-full-graph.png`,
+`mvp-C-neuron-DNp01.png`, `mvp-D-edge-LC4-DNp01.png`, `mvp-E-activity-replay.png`.
+
 ## 快速開始（開發者）
 
 完整說明見 [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md)。
@@ -81,7 +150,7 @@ make simulate ARGS="--fixture --stimulate syn_001 --intensity 2.0 --duration 3 -
 make smoke-simulation  # P3 simulated-activity smoke (模擬活動，非量測資料)
 make smoke-escape      # P4 TECHNICAL CONNECTOME-GROUNDED ESCAPE DEMO（結構為生物資料、活動為模擬、解碼為計算詮釋）
 make smoke-web         # P5 web demo smoke：escape API（REST + WebSocket）三個示範情境
-make backend && make frontend  # 開 http://127.0.0.1:5173 → 互動式示範（Environment / Fly Brain / Action）
+make backend && make frontend  # 開 http://127.0.0.1:5173 → 互動式示範（Demo）與 Brain Inspector（#inspector）
 ```
 
 測試與 smoke test 不需要下載任何 connectome 資料集；`data/raw/` 已被 git 忽略。真實資料的取得方式、schema 與授權（CC-BY）驗證紀錄見 [docs/dataset_research.md](docs/dataset_research.md)。
