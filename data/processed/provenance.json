@@ -1,0 +1,144 @@
+{
+  "dataset_name": "male-cns",
+  "dataset_version": "v1.0",
+  "source_page": "https://male-cns.janelia.org/download/",
+  "download_url": "gs://flyem-male-cns/v1.0/connectome-data/flat-connectome/",
+  "retrieved_at": "2026-09-16T12:05:38+00:00",
+  "license": "CC-BY 4.0 (https://creativecommons.org/licenses/by/4.0/). Official statement on male-cns.janelia.org/download: 'The Male CNS is licensed under CC-BY.'",
+  "raw_files": [
+    {
+      "role": "annotations",
+      "path": "data/raw/male-cns/v1.0/connectome-data/flat-connectome/body-annotations-male-cns-v1.0-minconf-0.5.feather",
+      "size_bytes": 14483314,
+      "sha256": "2177e246113e4cfbf1e7772ec37c6da1955ff22e8063d0b1f833101f99a9a3b2",
+      "md5": "50a7718770c57220f160ba4f431ab89e",
+      "expected_md5": "50a7718770c57220f160ba4f431ab89e",
+      "md5_matches_expected": true,
+      "source_url": "https://storage.googleapis.com/flyem-male-cns/v1.0/connectome-data/flat-connectome/body-annotations-male-cns-v1.0-minconf-0.5.feather",
+      "columns": [
+        "assignedOlHex1",
+        "assignedOlHex2",
+        "bodyId",
+        "flywireType",
+        "group",
+        "instance",
+        "somaSide",
+        "statusLabel",
+        "superclass",
+        "type",
+        "vfbId",
+        "hemibrainType",
+        "itoleeHl",
+        "supertype",
+        "birthtime",
+        "mancBodyid",
+        "mancGroup",
+        "mancType",
+        "subclass",
+        "synonyms",
+        "class",
+        "rootSide",
+        "somaNeuromere",
+        "trumanHl",
+        "dimorphism",
+        "matchingNotes",
+        "entryNerve",
+        "mancSerial",
+        "mcnsSerial",
+        "serialMotif",
+        "fruDsx",
+        "exitNerve",
+        "receptorType",
+        "somaLocation",
+        "tosomaLocation",
+        "status"
+      ]
+    },
+    {
+      "role": "weights",
+      "path": "data/raw/male-cns/v1.0/connectome-data/flat-connectome/connectome-weights-male-cns-v1.0-minconf-0.5.feather",
+      "size_bytes": 1051241946,
+      "sha256": "e35da783d1c686b2b58b3b87cd6a403ae43bfcfba8bff28e08ef752c1a56afc1",
+      "md5": "f30e9dcca25cfd021bf1e7b3d975599e",
+      "expected_md5": "f30e9dcca25cfd021bf1e7b3d975599e",
+      "md5_matches_expected": true,
+      "source_url": "https://storage.googleapis.com/flyem-male-cns/v1.0/connectome-data/flat-connectome/connectome-weights-male-cns-v1.0-minconf-0.5.feather",
+      "columns": [
+        "body_pre",
+        "body_post",
+        "weight"
+      ]
+    },
+    {
+      "role": "neurotransmitters",
+      "path": "data/raw/male-cns/v1.0/connectome-data/flat-connectome/body-neurotransmitters-male-cns-v1.0.feather",
+      "size_bytes": 43282834,
+      "sha256": "95c9289220663abeb3409f3ad9e5a7f8a53f8093f5139d15502cd08da8879621",
+      "md5": "3d842b12fe5c49eefade528d7dd24a1f",
+      "expected_md5": "3d842b12fe5c49eefade528d7dd24a1f",
+      "md5_matches_expected": true,
+      "source_url": "https://storage.googleapis.com/flyem-male-cns/v1.0/connectome-data/flat-connectome/body-neurotransmitters-male-cns-v1.0.feather",
+      "columns": [
+        "body",
+        "cell_type",
+        "total_nt_predictions",
+        "predicted_nt_confidence",
+        "predicted_nt",
+        "ground_truth",
+        "celltype_total_nt_predictions",
+        "celltype_predicted_nt",
+        "celltype_predicted_nt_confidence",
+        "consensus_nt"
+      ]
+    }
+  ],
+  "transform_script": "scripts/normalize_dataset.py",
+  "notes": "Release date 2026-06-08. Structural connectivity from the published flat-connectome tables; synapse_count is the published 'weight' column (number of synaptic connections between the body pair in the minconf-0.5 tables).",
+  "synthetic": false,
+  "citation": "MaleCNS paper, Cell, published 2026-09-03: https://www.cell.com/cell/fulltext/S0092-8674(26)00942-6 ; preprint: https://www.biorxiv.org/content/10.1101/2025.10.09.680999v2",
+  "generated_at": "2026-09-16T12:27:48+00:00",
+  "generator": {
+    "code_version": "0.0.1",
+    "git_commit": "a7e35c35da2eed5c52b3cd70a4690780b0350a31",
+    "pyarrow_version": "25.0.1",
+    "python_version": "3.11.15",
+    "argv": [
+      "--adapter",
+      "malecns"
+    ]
+  },
+  "normalization": {
+    "identifier_policy": "identifiers cast to strings (DATA.md §5)",
+    "neuron_set_rule": [
+      "Traced"
+    ],
+    "keep_dangling": false,
+    "column_mapping": {
+      "neuron_id": "bodyId",
+      "cell_type": "type",
+      "cell_class": "class",
+      "region": "null (not in flat annotation table)",
+      "neurotransmitter": "body-neurotransmitters predicted_nt (prediction by the dataset providers)",
+      "sex": "constant 'male' (dataset-level specimen sex)",
+      "synapse_count": "weight",
+      "passthrough_prefix": "mcns_"
+    }
+  },
+  "counts": {
+    "neurons": 165122,
+    "connections": 25563197,
+    "dangling": {
+      "total_edges_raw": 151856684,
+      "kept_edges": 25563197,
+      "pre_unknown_only": 4802106,
+      "post_unknown_only": 112538237,
+      "both_unknown": 8953144,
+      "kept_dangling": false,
+      "dangling_edges": 126293487
+    }
+  },
+  "outputs": {
+    "neurons": "data/processed/neurons.parquet",
+    "connections": "data/processed/connections.parquet"
+  }
+}

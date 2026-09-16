@@ -12,6 +12,7 @@ dependencies = [
   "uvicorn[standard]>=0.30,<1.0",
   "pydantic>=2.7,<3.0",
   "pydantic-settings>=2.3,<3.0",
+  "pyarrow>=17,<27",
 ]
 
 [project.optional-dependencies]
@@ -36,6 +37,9 @@ pythonpath = ["."]
 line-length = 100
 target-version = "py311"
 extend-exclude = [".venv"]
+
+[tool.ruff.format]
+skip-magic-trailing-comma = false
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP"]

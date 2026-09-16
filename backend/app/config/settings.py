@@ -48,6 +48,10 @@ class Settings(BaseSettings):
     project_root: Path = PROJECT_ROOT
     data_dir: Path = Field(default_factory=lambda: PROJECT_ROOT / "data")
 
+    #: Where the MaleCNS v1.0 flat-connectome release files are placed under ``raw_data_dir``.
+    #: Mirrors the object prefix in the official bucket ``gs://flyem-male-cns``.
+    malecns_raw_subdir: str = "male-cns/v1.0/connectome-data/flat-connectome"
+
     @property
     def cors_origin_list(self) -> list[str]:
         """``cors_origins`` split into a clean list, ignoring blanks."""
@@ -64,6 +68,10 @@ class Settings(BaseSettings):
     @property
     def circuits_data_dir(self) -> Path:
         return self.data_dir / "circuits"
+
+    @property
+    def malecns_raw_dir(self) -> Path:
+        return self.raw_data_dir / self.malecns_raw_subdir
 
 
 @lru_cache(maxsize=1)

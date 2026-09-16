@@ -7,7 +7,8 @@ VENV         := $(BACKEND_DIR)/.venv
 VENV_PY      := $(VENV)/bin/python
 
 .PHONY: help install install-backend install-frontend backend frontend \
-        test test-backend typecheck-frontend lint smoke smoke-backend smoke-frontend clean
+        test test-backend typecheck-frontend lint smoke smoke-backend smoke-frontend smoke-data \
+        normalize normalize-fixture inspect clean
 
 help:
 	@echo "make install            install backend (.venv) and frontend (node_modules) dependencies"
@@ -16,6 +17,9 @@ help:
 	@echo "make test               backend unit tests + frontend typecheck"
 	@echo "make smoke              backend /health smoke + frontend Playwright smoke"
 	@echo "make lint               ruff check on backend"
+	@echo "make normalize          raw MaleCNS v1.0 files (data/raw) -> data/processed (parquet + provenance)"
+	@echo "make inspect            DATA.md §7 report for data/processed"
+	@echo "make smoke-data         inspect the synthetic fixture (+ production data when present)"
 
 install: install-backend install-frontend
 
@@ -44,13 +48,26 @@ typecheck-frontend:
 lint:
 	cd $(BACKEND_DIR) && .venv/bin/ruff check .
 
-smoke: smoke-backend smoke-frontend
+smoke: smoke-backend smoke-data smoke-frontend
 
 smoke-backend:
 	$(VENV_PY) scripts/smoke_test.py
 
 smoke-frontend:
 	cd $(FRONTEND_DIR) && npm run test:e2e
+
+smoke-data:
+	$(VENV_PY) scripts/inspect_dataset.py --fixture --keep-dangling
+	$(VENV_PY) scripts/inspect_dataset.py --allow-missing
+
+normalize:
+	$(VENV_PY) scripts/normalize_dataset.py --adapter malecns
+
+normalize-fixture:
+	$(VENV_PY) scripts/normalize_dataset.py --adapter fixture --out-dir data/processed/fixture
+
+inspect:
+	$(VENV_PY) scripts/inspect_dataset.py
 
 clean:
 	rm -rf $(BACKEND_DIR)/.pytest_cache $(BACKEND_DIR)/.ruff_cache \

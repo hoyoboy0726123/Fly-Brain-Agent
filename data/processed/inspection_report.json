@@ -1,0 +1,261 @@
+{
+  "dataset": "male-cns",
+  "dataset_version": "v1.0",
+  "source_page": "https://male-cns.janelia.org/download/",
+  "download_url": "gs://flyem-male-cns/v1.0/connectome-data/flat-connectome/",
+  "license": "CC-BY 4.0 (https://creativecommons.org/licenses/by/4.0/). Official statement on male-cns.janelia.org/download: 'The Male CNS is licensed under CC-BY.'",
+  "synthetic": false,
+  "neurons": 165122,
+  "directed_connections": 25563197,
+  "self_loops": 101,
+  "synapse_count": {
+    "min": 1,
+    "max": 2591,
+    "median": 2.0,
+    "total": 124025046
+  },
+  "missing_ids": {
+    "pre_missing": 0,
+    "post_missing": 0,
+    "either_missing": 0,
+    "sample_missing_ids": []
+  },
+  "duplicates": {
+    "duplicate_neuron_ids": 0,
+    "duplicate_neuron_rows": 0,
+    "sample_duplicate_neuron_ids": [],
+    "duplicate_edge_pairs": 0
+  },
+  "annotation_columns": [
+    {
+      "name": "cell_type",
+      "non_null": 162517,
+      "distinct": 11751
+    },
+    {
+      "name": "cell_class",
+      "non_null": 24524,
+      "distinct": 21
+    },
+    {
+      "name": "region",
+      "non_null": 0,
+      "distinct": 0
+    },
+    {
+      "name": "neurotransmitter",
+      "non_null": 164620,
+      "distinct": 8
+    },
+    {
+      "name": "sex",
+      "non_null": 165122,
+      "distinct": 1
+    },
+    {
+      "name": "source_url",
+      "non_null": 165122,
+      "distinct": 1
+    },
+    {
+      "name": "mcns_assignedOlHex1",
+      "non_null": 23720,
+      "distinct": 36
+    },
+    {
+      "name": "mcns_assignedOlHex2",
+      "non_null": 23720,
+      "distinct": 39
+    },
+    {
+      "name": "mcns_flywireType",
+      "non_null": 141169,
+      "distinct": 8199
+    },
+    {
+      "name": "mcns_group",
+      "non_null": 145524,
+      "distinct": 13746
+    },
+    {
+      "name": "mcns_instance",
+      "non_null": 158082,
+      "distinct": 23848
+    },
+    {
+      "name": "mcns_somaSide",
+      "non_null": 149042,
+      "distinct": 3
+    },
+    {
+      "name": "mcns_statusLabel",
+      "non_null": 165122,
+      "distinct": 7
+    },
+    {
+      "name": "mcns_superclass",
+      "non_null": 164606,
+      "distinct": 26
+    },
+    {
+      "name": "mcns_type",
+      "non_null": 162517,
+      "distinct": 11751
+    },
+    {
+      "name": "mcns_vfbId",
+      "non_null": 164595,
+      "distinct": 164595
+    },
+    {
+      "name": "mcns_hemibrainType",
+      "non_null": 32919,
+      "distinct": 4495
+    },
+    {
+      "name": "mcns_itoleeHl",
+      "non_null": 37745,
+      "distinct": 203
+    },
+    {
+      "name": "mcns_supertype",
+      "non_null": 34096,
+      "distinct": 1925
+    },
+    {
+      "name": "mcns_birthtime",
+      "non_null": 7903,
+      "distinct": 2
+    },
+    {
+      "name": "mcns_mancBodyid",
+      "non_null": 18557,
+      "distinct": 18146
+    },
+    {
+      "name": "mcns_mancGroup",
+      "non_null": 14553,
+      "distinct": 5830
+    },
+    {
+      "name": "mcns_mancType",
+      "non_null": 22743,
+      "distinct": 3893
+    },
+    {
+      "name": "mcns_subclass",
+      "non_null": 21924,
+      "distinct": 49
+    },
+    {
+      "name": "mcns_synonyms",
+      "non_null": 3954,
+      "distinct": 280
+    },
+    {
+      "name": "mcns_class",
+      "non_null": 24524,
+      "distinct": 21
+    },
+    {
+      "name": "mcns_rootSide",
+      "non_null": 15903,
+      "distinct": 3
+    },
+    {
+      "name": "mcns_somaNeuromere",
+      "non_null": 21802,
+      "distinct": 21
+    },
+    {
+      "name": "mcns_trumanHl",
+      "non_null": 19737,
+      "distinct": 76
+    },
+    {
+      "name": "mcns_dimorphism",
+      "non_null": 2368,
+      "distinct": 4
+    },
+    {
+      "name": "mcns_matchingNotes",
+      "non_null": 3411,
+      "distinct": 276
+    },
+    {
+      "name": "mcns_entryNerve",
+      "non_null": 11781,
+      "distinct": 21
+    },
+    {
+      "name": "mcns_mancSerial",
+      "non_null": 5422,
+      "distinct": 939
+    },
+    {
+      "name": "mcns_mcnsSerial",
+      "non_null": 3945,
+      "distinct": 707
+    },
+    {
+      "name": "mcns_serialMotif",
+      "non_null": 902,
+      "distinct": 8
+    },
+    {
+      "name": "mcns_fruDsx",
+      "non_null": 5012,
+      "distinct": 6
+    },
+    {
+      "name": "mcns_exitNerve",
+      "non_null": 1005,
+      "distinct": 28
+    },
+    {
+      "name": "mcns_receptorType",
+      "non_null": 752,
+      "distinct": 3
+    },
+    {
+      "name": "mcns_somaLocation",
+      "non_null": 140024,
+      "distinct": null
+    },
+    {
+      "name": "mcns_tosomaLocation",
+      "non_null": 995,
+      "distinct": null
+    },
+    {
+      "name": "mcns_status",
+      "non_null": 165122,
+      "distinct": 1
+    },
+    {
+      "name": "mcns_nt_predicted_nt_confidence",
+      "non_null": 163763,
+      "distinct": 96710
+    },
+    {
+      "name": "mcns_nt_total_nt_predictions",
+      "non_null": 164620,
+      "distinct": 3164
+    },
+    {
+      "name": "mcns_nt_consensus_nt",
+      "non_null": 164620,
+      "distinct": 8
+    },
+    {
+      "name": "mcns_nt_celltype_predicted_nt",
+      "non_null": 164620,
+      "distinct": 8
+    },
+    {
+      "name": "mcns_nt_ground_truth",
+      "non_null": 83496,
+      "distinct": 7
+    }
+  ]
+}
