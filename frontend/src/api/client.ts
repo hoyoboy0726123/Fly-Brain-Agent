@@ -1,12 +1,26 @@
 import {
   isApiErrorDetail,
+  isCircuitEdgesPage,
+  isCircuitNodesPage,
+  isCircuitProvenance,
+  isCircuitSummary,
+  isEdgeDetail,
   isEscapeConfig,
   isEscapeRunResult,
   isHealthResponse,
+  isNeighborsResponse,
+  isNeuronDetail,
+  type CircuitEdgeRecord,
+  type CircuitNodeRecord,
+  type CircuitProvenance,
+  type CircuitSummary,
+  type EdgeDetail,
   type EscapeConfig,
   type EscapeRunRequest,
   type EscapeRunResult,
   type HealthResponse,
+  type NeighborsResponse,
+  type NeuronDetail,
 } from './types.ts'
 
 /** Base URL for the backend API. `/api` is proxied to FastAPI by the Vite dev server. */
@@ -178,4 +192,75 @@ export function withTimeout(timeoutMs: number, signal?: AbortSignal): { signal: 
       signal?.removeEventListener('abort', forward)
     },
   }
+}
+
+// ---------------------------------------------------------------------------- circuit inspector (P6)
+
+async function getGuarded<T>(path: string, guard: (value: unknown) => value is T, what: string, signal?: AbortSignal): Promise<T> {
+  const init: RequestInit = {}
+  if (signal) init.signal = signal
+  const payload = await requestJson(path, init)
+  if (!guard(payload)) {
+    throw new ApiError(`Backend returned an unexpected ${what} payload`, { code: 'unexpected_response' })
+  }
+  return payload
+}
+
+const enc = encodeURIComponent
+
+export function fetchCircuitSummary(circuitId: string, signal?: AbortSignal): Promise<CircuitSummary> {
+  return getGuarded(`/circuits/${enc(circuitId)}`, isCircuitSummary, 'circuit summary', signal)
+}
+
+export function fetchCircuitProvenance(circuitId: string, signal?: AbortSignal): Promise<CircuitProvenance> {
+  return getGuarded(`/circuits/${enc(circuitId)}/provenance`, isCircuitProvenance, 'circuit provenance', signal)
+}
+
+/** All nodes of the loaded circuit (paged transparently; the circuit is small by design). */
+export async function fetchAllCircuitNodes(circuitId: string, signal?: AbortSignal): Promise<CircuitNodeRecord[]> {
+  const limit = 1000
+  const items: CircuitNodeRecord[] = []
+  for (let offset = 0; ; offset += limit) {
+    const page = await getGuarded(
+      `/circuits/${enc(circuitId)}/nodes?offset=${offset}&limit=${limit}`,
+      isCircuitNodesPage,
+      'circuit nodes',
+      signal,
+    )
+    items.push(...page.items)
+    if (offset + limit >= page.total || page.items.length === 0) return items
+  }
+}
+
+/** All edges of the loaded circuit — every one originates from the P2 artifact. */
+export async function fetchAllCircuitEdges(circuitId: string, signal?: AbortSignal): Promise<CircuitEdgeRecord[]> {
+  const limit = 2000
+  const items: CircuitEdgeRecord[] = []
+  for (let offset = 0; ; offset += limit) {
+    const page = await getGuarded(
+      `/circuits/${enc(circuitId)}/edges?offset=${offset}&limit=${limit}`,
+      isCircuitEdgesPage,
+      'circuit edges',
+      signal,
+    )
+    items.push(...page.items)
+    if (offset + limit >= page.total || page.items.length === 0) return items
+  }
+}
+
+export function fetchNeuron(circuitId: string, neuronId: string, signal?: AbortSignal): Promise<NeuronDetail> {
+  return getGuarded(`/circuits/${enc(circuitId)}/neurons/${enc(neuronId)}`, isNeuronDetail, 'neuron', signal)
+}
+
+export function fetchNeighbors(circuitId: string, neuronId: string, signal?: AbortSignal): Promise<NeighborsResponse> {
+  return getGuarded(
+    `/circuits/${enc(circuitId)}/neurons/${enc(neuronId)}/neighbors?direction=both&limit=2000`,
+    isNeighborsResponse,
+    'neighbors',
+    signal,
+  )
+}
+
+export function fetchEdge(circuitId: string, pre: string, post: string, signal?: AbortSignal): Promise<EdgeDetail> {
+  return getGuarded(`/circuits/${enc(circuitId)}/edges/${enc(pre)}/${enc(post)}`, isEdgeDetail, 'edge', signal)
 }

@@ -10,6 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app import __version__
 from app.api import api_router
+from app.api.circuits import CircuitCatalog
 from app.api.escape import EscapeServiceHolder
 from app.config import Settings, get_settings
 
@@ -41,6 +42,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         lifespan=lifespan,
     )
     application.state.escape = EscapeServiceHolder(resolved)
+    application.state.circuits = CircuitCatalog(resolved)
     application.add_middleware(
         CORSMiddleware,
         allow_origins=resolved.cors_origin_list,

@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.0.1",
   "type": "module",
-  "description": "FlyBrain Agent web UI: connectome-grounded escape demo (P5)",
+  "description": "FlyBrain Agent web UI: connectome-grounded escape demo + brain inspector (MVP v0.1)",
   "engines": {
     "node": "^20.19.0 || >=22.12.0"
   },
@@ -16,11 +16,17 @@
     "backend:dev": "cd ../backend && python -m app"
   },
   "dependencies": {
+    "d3-force": "^3.0.0",
+    "d3-selection": "^3.0.0",
+    "d3-zoom": "^3.0.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0"
   },
   "devDependencies": {
     "@playwright/test": "1.56.1",
+    "@types/d3-force": "^3.0.10",
+    "@types/d3-selection": "^3.0.12",
+    "@types/d3-zoom": "^3.0.8",
     "@types/node": "^22.15.0",
     "@types/react": "^19.1.0",
     "@types/react-dom": "^19.1.0",

@@ -7,14 +7,14 @@
 | P2 Circuit extraction | ✅ Done (reviewer approved, PR #4) | deterministic bounded circuit |
 | P3 Simulation | ✅ Done (reviewer approved, PR #5) | tested simplified dynamics |
 | P4 Escape | ✅ Done (reviewer approved, PR #6) — biological status PARTIALLY SUPPORTED | stimulus → action |
-| P5 Web UI | ✅ Done (awaiting human confirmation) | interactive end-to-end demo |
-| P6 Brain inspector | ⬜ Not started | inspectable provenance |
+| P5 Web UI | ✅ Done (reviewer approved, PR #7) | interactive end-to-end demo |
+| P6 Brain inspector | ✅ Done (awaiting human confirmation) — MVP v0.1 candidate | inspectable provenance |
 | P7 Food | ⬜ Future | second behavior |
 | P8 Webcam | ⬜ Future | camera stimulus adapter |
 | P9 Robot | ⬜ Future | safe physical adapter |
 
 ## Current Phase
-P5 (Interactive Web Demo) complete. Stopped before P6, waiting for human confirmation.
+P6 (Brain Inspector & Provenance Explorer) complete — final phase of MVP v0.1. Stopped before P7, waiting for human confirmation.
 
 ## Blockers
 None recorded.
@@ -60,6 +60,13 @@ None recorded.
 - (P5) Only `NO ACTION` / `ESCAPE` are rendered (the decoder's action set); the firing giant-fiber side is displayed as metadata `GF activity: Left / Right / Both / None`. The fly's takeoff animation is direction-less and labelled as such.
 - (P5) `CURRENT_PHASE` in `backend/app/__init__.py` is now updated per delivered phase (`P5`); the Playwright health smoke asserts it.
 - (P5) Playwright happy paths run against the live backend; only error states intercept requests (`page.route` / `page.routeWebSocket`, installed before navigation). Smoke screenshots are written to `docs/screenshots/` by `tests/smoke-demo.spec.ts` and committed.
+- (P6) Inspector API is read-only over the P2 artifact (`backend/app/api/circuits.py`): `/circuits`, `/circuits/{id}`, `/provenance`, `/nodes`, `/edges`, `/edges/{pre}/{post}`, `/neurons/{id}`, `/neurons/{id}/neighbors`; artifacts are hash-verified on load (`Circuit.load(verify=True)`), ids validated against a safe pattern, only the loaded circuit is served (never the canonical graph). Fields absent from the artifact are returned as `null` and rendered as "Not available" — nothing is inferred.
+- (P6) Every served edge carries `pre_neuron_id`, `post_neuron_id`, `synapse_count`, `dataset`, `dataset_version` and the label "Structural connection — biological data"; the optional `simulation_weight` is computed from the escape config's `SimulationConfig` (`log1p × 1.0`) and labelled "Computational simulation weight … not a biological synaptic strength". Tests assert the served edge set equals the artifact edge set.
+- (P6) Side / role / "stimulated by config" come only from the escape config that references the circuit (`BehaviourContext`); the artifact itself carries no side. Circuits without a behaviour config (e.g. the synthetic fixture) get `null` for these fields and no biological status.
+- (P6) `POST /escape/run` now records per-neuron SIMULATED state per step (`neuron_activity`: membrane potential, fired ids, refractory) via a non-breaking `on_step` callback on `SimulationEngine.run`; ~67 KB per 30-step run. The inspector replays it locally (PLAY / PAUSE / STEP / RESET / slider); the P5 demo's group replay is unchanged.
+- (P6) Rendering: D3 (`d3-force` for a deterministic column/band layout — L/R columns, sensory rows above the output row, 220 relaxation ticks; `d3-zoom` for zoom/pan) over an SVG rendered by React; 286 nodes + 932 edges (+ 932 transparent hit lines). No Three.js. Node fill = cell type (biological identity); ring/glow = simulated state (inactive / active / fired / refractory) — two separate visual channels documented in the legend.
+- (P6) Layout positions are presentation only (no anatomical meaning); the UI states this. Search is exact-id or cell-type over loaded data (no invented autocomplete).
+- (P6) README documents MVP v0.1 (architecture chain, how to run, trigger looming, inspect a neuron, inspect provenance). Original PRD/README wording about `ESCAPE_LEFT / ESCAPE_RIGHT` is clarified: v0.1 decodes NO_ACTION / ESCAPE only (GF azimuth-invariant).
 - (P1.1) **Source dataset ≠ canonical simulation graph** (DATA.md §8). SOURCE DATASET = MaleCNS v1.0, ≈166,700 neurons (project figure; equals the 166,700 bodies with a `superclass`; paper 166,691). CANONICAL SIMULATION GRAPH = `status == "Traced"`, 165,122 neurons, 25,563,197 connections. The canonical count is never presented as the dataset census. Both blocks are mandatory in `provenance.json` for biological data (`Provenance` validator), reported by `inspect_dataset.py`, written into the parquet schema metadata, and guarded by `tests/test_canonical_graph.py`. Traced filtering behaviour is unchanged.
 
 ---
@@ -538,3 +545,72 @@ Invalid intensity 1.5 → HTTP 422. Report: `data/simulations/web_demo_smoke.rep
 1. Brain inspector: `GET /circuits/{id}`, `GET /neurons/{id}` (P2 artifact metadata, MaleCNS ids, cell types, synapse counts, provenance) and a per-neuron view of the escape circuit.
 2. Activity inspector: per-neuron spike raster from `spikes_per_step` and `SimulationSnapshot` download, all labelled SIMULATED.
 3. Provenance panel linking each displayed number to `provenance.json` / `docs/circuits/escape_v1.md`.
+
+---
+
+## P6 Report (2026-09-16) — Brain Inspector & Provenance Explorer (MVP v0.1 final phase)
+
+### A. Inspector architecture
+- **Backend** `backend/app/api/circuits.py`: `CircuitCatalog` (lazy, cached, hash-verified `Circuit.load`), `LoadedCircuit` indexes (node map, in/out edge lists, edge index), `BehaviourContext` (side/role/stimulated + `SimulationConfig` from the escape config that references the circuit). Registered in `app/api/__init__.py`; catalog created in `create_app`.
+- **Frontend** `frontend/src/inspector/`: `useCircuitData.ts` (summary + provenance + all nodes + all edges via paginated calls, indexes, layout), `layout.ts` (d3-force), `CircuitGraph.tsx` (SVG + d3-zoom, tooltip, hit lines, arrows, selection/highlight/activity channels), `SearchBar.tsx`, `Legend.tsx`, `NeuronInspector.tsx` (biological / circuit / simulated-state blocks + connectivity lists + highlight buttons), `EdgeInspector.tsx`, `ProvenancePanel.tsx`, `ReplayControls.tsx` + `useReplay.ts`, `InspectorView.tsx`. `App.tsx` gained a *Demo / Brain Inspector* tab bar (`#inspector` hash); the P5 dashboard moved to `demo/DemoView.tsx`; the P5 `useEscapeDemo` hook is shared so a run made in either view is available to both.
+
+### B. Graph rendering
+- Default view: `escape_v1` — 286 neurons / 932 edges (all of them; the canonical graph is never requested). Layout: L/R columns × (LC4, LPLC2, DNp01) bands with 220 force-relaxation ticks, deterministic. Zoom/pan (wheel, drag, +/−/fit buttons, zoom level readout), hover tooltip (neuron id, cell type, side, dataset — and simulated state during replay), click neuron, click edge (9 px hit line), search-to-centre.
+- Node identity (BIOLOGICAL DATA) = fill colour by cell type (LC4 blue, LPLC2 teal, DNp01 orange; targets drawn larger with labels). Activity (SIMULATED) = separate ring/glow channel: inactive / active (purple ring) / fired (white ring + pulsing glow) / refractory (dashed purple ring). Edges: grey with arrowheads (pre → post), width ∝ √synapse_count; highlighted edges cyan, selected edge white; non-highlighted elements dimmed during highlight/filter.
+
+### C. Node inspection
+`GET /circuits/escape_v1/neurons/{id}` → **BIOLOGICAL METADATA** (neuron_id, cell_type, cell_class → "Not available" for escape_v1, neurotransmitter_prediction, dataset, dataset_version) / **CIRCUIT / SIMULATION METADATA** (minimum_hop_from_seed, is_seed, is_target, side, role, stimulated-by-config, circuit id + hash) / **SIMULATED STATE** (membrane potential, fired, refractory at the replayed step; "not a measured neural recording") / **CONNECTIONS WITHIN LOADED CIRCUIT** (in/out degree + synapse totals; upstream and downstream tables with neuron_id, cell_type, synapse_count, jump-to-neuron and select-edge; Highlight upstream / downstream / Clear).
+
+### D. Edge inspection
+`GET /circuits/escape_v1/edges/{pre}/{post}` → label **BIOLOGICAL STRUCTURAL CONNECTION**, FROM / TO (with cell types), synapse_count ("Biological structural observation"), dataset, dataset_version, circuit_id, circuit_hash; separately **COMPUTATIONAL SIMULATION WEIGHT** (`log1p(synapse_count) × 1.0`, "Computational transformation", parameter label "NOT MEASURED MALECNS PARAMETERS"). Example LC4 12032 → DNp01 10010: 62 synapses, weight 4.1431.
+
+### E. Provenance
+`GET /circuits/escape_v1/provenance` + panel: Dataset MaleCNS v1.0 · Source dataset count ≈166,700 · Canonical graph `status == "Traced"` 165,122 neurons / 25,563,197 directed connections (with the note that this is NOT the complete census) · Loaded circuit escape_v1 286 / 932 · Circuit hash `db7c46e6…` verified against the configured hash · Biological status PARTIALLY SUPPORTED (`docs/circuits/escape_v1.md`) · License CC-BY 4.0 · official source page + bucket URL · raw file sha256 (annotations, weights, neurotransmitters) · extraction time/version · 7 citations with DOI/URL links · disclaimer.
+
+### F. Activity replay
+`POST /escape/run` returns `neuron_activity` (per-neuron per-step SIMULATED membrane potential / fired / refractory, model constants). Inspector: RUN LOOMING (direction + intensity), PLAY / PAUSE / ◀ STEP / STEP ▶ / RESET, timeline slider 0…N, step label, spikes-per-step counter, run summary (experiment id, stimulus, action, GF activity). The graph and the selected neuron's SIMULATED STATE block follow the step. Observed (CENTER 0.5): sensory fired at step 3, both GF fired at step 4 then refractory; (CENTER 1.0): sensory step 1, GF step 2.
+
+### G. API
+See §A and `docs/DEVELOPMENT.md` §4g. Pagination on nodes (≤1000), edges (≤2000) and neighbours; filters `cell_type`, `search` (exact id), `id_prefix`, `pre`, `post`, `min_synapses`, `include_simulation_weight`; 404 `circuit_not_found` / `neuron_not_found` / `edge_not_found`, 503 `circuit_mismatch` on a tampered artifact. Path-safe circuit ids.
+
+### H. Tests
+- Backend `pytest`: **294 passed** (274 + 20 in `tests/test_api_circuits.py`): circuit list/summary, unknown & unsafe ids, tampered artifact → 503, nodes = artifact nodes (field by field), nodes pagination/filters, degrees from artifact edges, **every served edge exists in the artifact and vice versa**, edge filters/pagination, computational weight labelling, edge detail + missing edge, neuron lookup (biological vs circuit blocks), seed neuron, missing neuron, neighbours within circuit (sorted, all in artifact), direction + pagination, provenance facts, synthetic fixture without biological status, per-neuron simulated state in run responses, no endpoint serves the canonical graph + OpenAPI paths. `ruff` clean.
+- Playwright: **47 passed** (27 P5/P0 + 20 new: `tests/inspector.spec.ts` 15 — open inspector, zoom/pan, hover, search id (found / not found), cell-type search, neuron inspector blocks, edge inspector, edge from list, upstream/downstream/clear highlight (156/155 → 1/0 → 0; LC4 3/2), run simulation, play to end, pause, step/slider/reset with per-neuron states, scientific labels, provenance panel, backend unavailable; `tests/smoke-inspector.spec.ts` 5 — MVP screenshots A–E). Happy paths on the live backend.
+- `make smoke-web` now also checks the inspector API (served edges identical to the artifact, neuron 10010 → DNp01, provenance counts).
+
+### I. Performance
+Only the loaded circuit is transferred: `/nodes` 286 items (~60 KB) + `/edges` 932 items (~150 KB) + provenance, fetched once. Layout: 220 d3-force ticks on 286 nodes / 932 links, computed synchronously in ~50 ms and memoised. SVG: 286 node groups + 932 visible + 932 hit lines; zoom/pan is a single transform update via d3-zoom (no React re-render); replay steps re-render node classes only. Backend: artifact loaded once per process (`Circuit.load` + hash ≈ 20 ms), all endpoints O(nodes + edges) on in-memory indexes; run response with `neuron_activity` ≈ 67 KB.
+
+### J. Screenshots (`docs/screenshots/`)
+`mvp-A-p5-main-demo.png` (P5 demo, CENTER 0.5 → ESCAPE), `mvp-B-inspector-full-graph.png`, `mvp-C-neuron-DNp01.png` (search 10010, upstream highlighted), `mvp-D-edge-LC4-DNp01.png` (12032 → 10010 with computational weight), `mvp-E-activity-replay.png` (CENTER 1.0, step 2: sensory refractory, both GF fired). P5 screenshots remain.
+
+### Acceptance Criteria (P6)
+| Criterion | Status |
+|---|---|
+| escape_v1 graph renders | ✅ 286 / 932, D3 + SVG |
+| node search works | ✅ exact id + cell type (loaded data only) |
+| neuron inspector works | ✅ biological vs circuit vs simulated blocks, "Not available" for missing fields |
+| edge inspector works | ✅ BIOLOGICAL STRUCTURAL CONNECTION + computational weight |
+| upstream/downstream works | ✅ lists + highlight + clear |
+| every biological edge is provenance-backed | ✅ served edges ≡ artifact edges (test + smoke); dataset/version/circuit hash on every edge |
+| simulated activity replay works | ✅ PLAY / PAUSE / STEP / RESET / slider; per-neuron SIMULATED STATE |
+| biological vs simulated labels remain explicit | ✅ header tags, legend, panel labels, disclaimer |
+| no full canonical graph sent to browser | ✅ only `/circuits/escape_v1/*`; test asserts totals |
+| tests pass | ✅ 294 backend / 47 Playwright / typecheck / ruff |
+| screenshots exist | ✅ A–E |
+| README documents MVP v0.1 | ✅ |
+
+### K. Known limitations
+- Layout positions are schematic (columns/bands + force relaxation), not anatomical; no soma coordinates are shown (the artifact carries none).
+- `cell_class` is "Not available" for all escape_v1 neurons (not present in the artifact); no ROI/region information (not ingested in P1).
+- Edge inspection covers edges inside the loaded circuit only; partners outside escape_v1 are not shown (labelled "within loaded circuit").
+- The simulation weight shown uses the escape config's parameters (P3 defaults); other `SimulationConfig` values would give other weights.
+- Replay data is per run (~67 KB) and kept in memory only; no snapshot download in the UI (snapshots remain a CLI feature).
+- Hit-testing edges near the DNp01 hubs is crowded; the connectivity list offers a precise alternative.
+- The `/circuits` list loads every artifact in `data/circuits/` (local technical circuits included) — fine for a dev tool, not a production index.
+- UI copy is English only; no keyboard navigation for graph elements.
+
+### Next phase suggestions (P7 — do not start without confirmation)
+1. Second behaviour (`food_v1`): research gate first (gustatory / olfactory sensory populations → descending or motor targets), same config + runner pattern.
+2. Snapshot export/import from the UI and a per-neuron voltage trace chart in the inspector.
+3. Optional `escape_v2` with DNp02/DNp04/DNp11 (forward/backward takeoff) once directional decoding is evidence-backed.

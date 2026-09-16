@@ -82,7 +82,9 @@ The Playwright run starts **both** servers itself (backend via `backend/.venv` P
 `tests/smoke.spec.ts` (backend health card, unreachable/recovery states),
 `tests/escape-demo.spec.ts` (the P5 demo: controls, live runs, error states, disclaimer) and
 `tests/smoke-demo.spec.ts` (the three documented scenarios with screenshots written to
-`docs/screenshots/`). Happy paths always hit the live backend; only error states are mocked.
+`docs/screenshots/`), `tests/inspector.spec.ts` (P6 brain inspector) and
+`tests/smoke-inspector.spec.ts` (MVP screenshots A–E). Happy paths always hit the live backend;
+only error states are mocked.
 
 Run Playwright from `frontend/` via `npm run test:e2e` (or `make smoke-frontend` from the
 root). Invoked from another directory, `playwright test` does not find
@@ -198,6 +200,31 @@ of the group firing at the replayed step, "SIMULATED ACTIVITY"), `dashboard/Acti
 backend step per tick (`?pace=<ms>`, default 140 ms; `?transport=rest` forces REST). Nothing is
 animated from a client-side clock alone: every glow, disc size and label comes from the
 backend result's per-step data.
+
+## 4g. Brain inspector (P6)
+
+Read-only API over the P2 artifact (`backend/app/api/circuits.py`; every field is read from
+`data/circuits/<circuit_id>.json`, hash-verified; nothing is reconstructed):
+
+| Endpoint | Purpose |
+|---|---|
+| `GET /circuits` | loadable artifacts (id, dataset, hash, sizes, biological status when an escape config uses it) |
+| `GET /circuits/{id}` | summary: canonical graph reference, extractor config, targets, sizes, cell-type counts |
+| `GET /circuits/{id}/provenance` | dataset, license, source/download URLs, raw file digests, source vs canonical counts, loaded circuit, hash verification, citations |
+| `GET /circuits/{id}/nodes?offset&limit&cell_type&search&id_prefix` | neurons (`search` = exact id) with degrees within the circuit and side/role from the escape config |
+| `GET /circuits/{id}/edges?offset&limit&pre&post&min_synapses&include_simulation_weight` | structural edges (`Structural connection — biological data`); the optional simulation weight is labelled computational |
+| `GET /circuits/{id}/edges/{pre}/{post}` | one edge: `BIOLOGICAL STRUCTURAL CONNECTION` + circuit id/hash + computational weight |
+| `GET /circuits/{id}/neurons/{neuron_id}` | `biological` vs `circuit` metadata blocks + connectivity summary (404 `neuron_not_found`) |
+| `GET /circuits/{id}/neurons/{neuron_id}/neighbors?direction&offset&limit` | upstream / downstream partners *within the loaded circuit* |
+
+`POST /escape/run` now also returns `neuron_activity` (per-neuron, per-step SIMULATED membrane
+potential / fired / refractory) which the inspector replays.
+
+Frontend (`frontend/src/inspector/`): `useCircuitData.ts` (loads nodes + edges + provenance once
+and builds indexes + a deterministic d3-force layout in `layout.ts`), `CircuitGraph.tsx`
+(SVG + d3-zoom; identity colour = cell type, activity = ring/glow channel), `SearchBar.tsx`,
+`NeuronInspector.tsx`, `EdgeInspector.tsx`, `ProvenancePanel.tsx`, `ReplayControls.tsx`
+(`useReplay.ts`). Open it with the *Brain Inspector* tab or `http://127.0.0.1:5173/#inspector`.
 
 ## 5. Configuration
 

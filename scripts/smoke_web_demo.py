@@ -25,6 +25,7 @@ BACKEND_DIR = PROJECT_ROOT / "backend"
 sys.path.insert(0, str(BACKEND_DIR))
 
 from app.behavior import DISCLAIMER  # noqa: E402
+from app.circuits import Circuit  # noqa: E402
 from app.config import get_settings  # noqa: E402
 
 TITLE = "WEB DEMO SMOKE — SIMULATED ACTIVITY, DECODED ACTION"
@@ -170,6 +171,55 @@ def main() -> int:
         report["invalid_intensity_status"] = status
         if status != 422:
             problems.append(f"invalid intensity accepted with HTTP {status}")
+
+        # --- P6 inspector API: every served edge must exist in the P2 artifact ---
+        artifact = Circuit.load(get_settings().circuits_data_dir / "escape_v1.json")
+        artifact_edges = {
+            (e.pre_neuron_id, e.post_neuron_id, e.synapse_count) for e in artifact.edges
+        }
+        served: list[dict] = []
+        offset = 0
+        while True:
+            status, page = http_json(f"{base}/circuits/escape_v1/edges?offset={offset}&limit=400")
+            if status != 200:
+                problems.append(f"GET /circuits/escape_v1/edges -> HTTP {status}")
+                break
+            served.extend(page["items"])
+            offset += 400
+            if offset >= page["total"]:
+                break
+        served_edges = {
+            (e["pre_neuron_id"], e["post_neuron_id"], e["synapse_count"]) for e in served
+        }
+        status, nodes = http_json(f"{base}/circuits/escape_v1/nodes?limit=1000")
+        status_n, neuron = http_json(f"{base}/circuits/escape_v1/neurons/10010")
+        status_p, prov = http_json(f"{base}/circuits/escape_v1/provenance")
+        print(
+            f"[web-demo] inspector: nodes={nodes.get('total')} edges served={len(served)} "
+            f"artifact={len(artifact_edges)} identical={served_edges == artifact_edges} | "
+            f"neuron 10010 -> {neuron.get('biological', {}).get('cell_type')} "
+            f"in_degree={neuron.get('connectivity', {}).get('in_degree')} | provenance: "
+            f"source={prov.get('source_dataset', {}).get('official_neuron_count')} canonical="
+            f"{prov.get('canonical_graph', {}).get('neuron_count')}/"
+            f"{prov.get('canonical_graph', {}).get('connection_count')} "
+            f"loaded={prov.get('loaded_circuit')}"
+        )
+        report["inspector"] = {
+            "nodes_total": nodes.get("total"),
+            "edges_served": len(served),
+            "edges_in_artifact": len(artifact_edges),
+            "served_edges_identical_to_artifact": served_edges == artifact_edges,
+            "neuron_10010_cell_type": neuron.get("biological", {}).get("cell_type"),
+            "provenance_status": prov.get("biological_status"),
+        }
+        if served_edges != artifact_edges:
+            problems.append("served edges differ from the P2 artifact edges")
+        if nodes.get("total") != len(artifact.nodes):
+            problems.append(f"nodes total {nodes.get('total')} != artifact {len(artifact.nodes)}")
+        if status_n != 200 or neuron.get("biological", {}).get("cell_type") != "DNp01":
+            problems.append("neuron 10010 lookup failed or is not DNp01")
+        if status_p != 200 or prov.get("biological_status") != "PARTIALLY SUPPORTED":
+            problems.append("provenance endpoint failed or status differs")
     except Exception as exc:  # noqa: BLE001 - report any failure
         problems.append(repr(exc))
     finally:

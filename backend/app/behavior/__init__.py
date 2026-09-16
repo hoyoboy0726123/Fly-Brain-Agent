@@ -19,6 +19,7 @@ from app.behavior.runner import (
     EscapeResult,
     GroupActivity,
     GroupEdge,
+    NeuronActivity,
     TimelineEvent,
     load_escape_circuit,
 )
@@ -33,6 +34,7 @@ __all__ = [
     "EscapeResult",
     "GroupActivity",
     "GroupEdge",
+    "NeuronActivity",
     "TimelineEvent",
     "load_escape_circuit",
     "load_escape_config",

@@ -44,6 +44,7 @@ from app.behavior import (
     EscapeResult,
     GroupActivity,
     GroupEdge,
+    NeuronActivity,
     TimelineEvent,
     load_escape_circuit,
     load_escape_config,
@@ -206,6 +207,8 @@ class EscapeRunResponse(BaseModel):
     timeline: list[TimelineEvent]
     sensory_activity: SensoryActivity
     group_activity: GroupActivity
+    #: per-neuron SIMULATED state history for the inspector replay (P6)
+    neuron_activity: NeuronActivity | None
     per_step_fired_counts: list[int]
     firing_events: int
     neurons_activated: int
@@ -387,6 +390,7 @@ def build_run_response(result: EscapeResult) -> EscapeRunResponse:
             fired_counts_per_step=sensory_per_step,
         ),
         group_activity=result.group_activity,
+        neuron_activity=result.neuron_activity,
         per_step_fired_counts=result.per_step_fired_counts,
         firing_events=result.firing_events,
         neurons_activated=result.neurons_activated,

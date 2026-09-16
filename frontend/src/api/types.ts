@@ -207,6 +207,18 @@ export interface MotorDecision {
   label: string
 }
 
+/** Per-neuron, per-step SIMULATED state (index 0 = step 1); never a measured recording. */
+export interface NeuronActivity {
+  label: string
+  neuron_ids: string[]
+  fired_ids_per_step: string[][]
+  membrane_potential_per_step: number[][]
+  refractory_per_step: number[][]
+  resting_potential: number
+  reset_potential: number
+  threshold: number
+}
+
 export interface EscapeRunResult {
   experiment_id: string
   created_at: string
@@ -223,6 +235,7 @@ export interface EscapeRunResult {
   timeline: TimelineEvent[]
   sensory_activity: SensoryActivity
   group_activity: GroupActivity
+  neuron_activity: NeuronActivity | null
   per_step_fired_counts: number[]
   firing_events: number
   neurons_activated: number
@@ -386,4 +399,232 @@ export function isEscapeSocketEvent(value: unknown): value is EscapeSocketEvent 
 
 export function isApiErrorDetail(value: unknown): value is ApiErrorDetail {
   return isRecord(value) && typeof value['error'] === 'string' && typeof value['message'] === 'string'
+}
+
+// ---------------------------------------------------------------------------- circuit inspector (P6)
+
+export interface CircuitNodeRecord {
+  neuron_id: string
+  cell_type: string | null
+  cell_class: string | null
+  neurotransmitter_prediction: string | null
+  dataset: string
+  dataset_version: string
+  minimum_hop_from_seed: number
+  is_seed: boolean
+  is_target: boolean
+  side: string | null
+  role: string | null
+  in_degree: number
+  out_degree: number
+  in_synapses: number
+  out_synapses: number
+}
+
+export interface CircuitNodesPage {
+  circuit_id: string
+  circuit_hash: string
+  label: string
+  total: number
+  offset: number
+  limit: number
+  items: CircuitNodeRecord[]
+}
+
+export interface SimulationWeightInfo {
+  label: string
+  value: number
+  weight_transform: string
+  weight_scale: number
+  parameter_label: string
+}
+
+export interface CircuitEdgeRecord {
+  label: string
+  pre_neuron_id: string
+  post_neuron_id: string
+  synapse_count: number
+  synapse_count_label: string
+  dataset: string
+  dataset_version: string
+  simulation_weight: SimulationWeightInfo | null
+}
+
+export interface CircuitEdgesPage {
+  circuit_id: string
+  circuit_hash: string
+  label: string
+  total: number
+  offset: number
+  limit: number
+  items: CircuitEdgeRecord[]
+}
+
+export interface BiologicalMetadata {
+  label: string
+  neuron_id: string
+  cell_type: string | null
+  cell_class: string | null
+  neurotransmitter_prediction: string | null
+  dataset: string
+  dataset_version: string
+}
+
+export interface CircuitMetadata {
+  label: string
+  minimum_hop_from_seed: number
+  is_seed: boolean
+  is_target: boolean
+  side: string | null
+  role: string | null
+  stimulated_by_config: boolean | null
+}
+
+export interface ConnectivitySummary {
+  label: string
+  in_degree: number
+  out_degree: number
+  in_synapses: number
+  out_synapses: number
+}
+
+export interface NeuronDetail {
+  circuit_id: string
+  circuit_hash: string
+  biological: BiologicalMetadata
+  circuit: CircuitMetadata
+  connectivity: ConnectivitySummary
+  not_available_marker: string
+}
+
+export interface NeighborRecord {
+  neuron_id: string
+  cell_type: string | null
+  synapse_count: number
+  pre_neuron_id: string
+  post_neuron_id: string
+  dataset: string
+  dataset_version: string
+}
+
+export interface NeighborList {
+  total: number
+  offset: number
+  limit: number
+  items: NeighborRecord[]
+}
+
+export interface NeighborsResponse {
+  label: string
+  circuit_id: string
+  circuit_hash: string
+  neuron_id: string
+  direction: 'upstream' | 'downstream' | 'both'
+  upstream: NeighborList | null
+  downstream: NeighborList | null
+}
+
+export interface EdgeDetail {
+  label: 'BIOLOGICAL STRUCTURAL CONNECTION'
+  pre: BiologicalMetadata
+  post: BiologicalMetadata
+  synapse_count: number
+  synapse_count_label: string
+  dataset: string
+  dataset_version: string
+  circuit_id: string
+  circuit_hash: string
+  simulation_weight: SimulationWeightInfo | null
+}
+
+export interface TargetReport {
+  neuron_id: string
+  reachable: boolean
+  minimum_path_length: number | null
+}
+
+export interface CircuitSummary {
+  circuit_id: string
+  dataset: string
+  dataset_version: string
+  circuit_hash: string
+  canonical_graph: { selection_rule: string; neuron_count: number; connection_count: number; fingerprint: string }
+  extractor_config: Record<string, unknown>
+  seed_neurons: number
+  target_neurons: TargetReport[]
+  neurons: number
+  edges: number
+  synapses_total: number
+  cell_type_counts: Record<string, number>
+  extracted_at: string
+  extractor_version: string
+  biological_interpretation: string
+  biological_status: string | null
+  research_document: string | null
+  config_version: string | null
+  disclaimer: string
+}
+
+export interface CircuitProvenance {
+  disclaimer: string
+  circuit_id: string
+  circuit_hash: string
+  expected_circuit_hash: string | null
+  circuit_verified: boolean
+  biological_status: string | null
+  research_document: string | null
+  dataset: string
+  dataset_version: string
+  license: string | null
+  source_page: string | null
+  download_url: string | null
+  source_dataset: {
+    name: string
+    version: string
+    official_neuron_count: number | null
+    official_neuron_count_source: string | null
+    description: string | null
+  } | null
+  canonical_graph: { selection_rule: string; neuron_count: number; connection_count: number; description: string | null }
+  canonical_graph_note: string
+  loaded_circuit: Record<string, number>
+  raw_files: { role: string; path: string; sha256: string | null }[]
+  graph_fingerprint: string
+  extracted_at: string
+  extractor_version: string
+  citations: Citation[]
+  mapping_confidence: Record<string, string>
+  limitations: string[]
+}
+
+function hasPage(value: unknown): value is Record<string, unknown> & { total: number; items: unknown[] } {
+  return isRecord(value) && typeof value['total'] === 'number' && Array.isArray(value['items'])
+}
+
+export function isCircuitNodesPage(value: unknown): value is CircuitNodesPage {
+  return hasPage(value) && typeof value['circuit_hash'] === 'string'
+}
+
+export function isCircuitEdgesPage(value: unknown): value is CircuitEdgesPage {
+  return hasPage(value) && typeof value['circuit_hash'] === 'string'
+}
+
+export function isNeuronDetail(value: unknown): value is NeuronDetail {
+  return isRecord(value) && isRecord(value['biological']) && isRecord(value['circuit']) && isRecord(value['connectivity'])
+}
+
+export function isNeighborsResponse(value: unknown): value is NeighborsResponse {
+  return isRecord(value) && typeof value['neuron_id'] === 'string' && 'upstream' in value && 'downstream' in value
+}
+
+export function isEdgeDetail(value: unknown): value is EdgeDetail {
+  return isRecord(value) && value['label'] === 'BIOLOGICAL STRUCTURAL CONNECTION' && isRecord(value['pre']) && isRecord(value['post'])
+}
+
+export function isCircuitSummary(value: unknown): value is CircuitSummary {
+  return isRecord(value) && typeof value['circuit_id'] === 'string' && typeof value['neurons'] === 'number' && isRecord(value['canonical_graph'])
+}
+
+export function isCircuitProvenance(value: unknown): value is CircuitProvenance {
+  return isRecord(value) && typeof value['circuit_hash'] === 'string' && isRecord(value['canonical_graph']) && isRecord(value['loaded_circuit'])
 }
