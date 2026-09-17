@@ -1,4 +1,4 @@
-# Embodiment architecture (P7.0) and Virtual Threat Lab (P7.1)
+# Embodiment architecture (P7.0), Virtual Threat Lab (P7.1), Neural Intervention Lab (P7.2)
 
 > Structural connectivity is biological data. Neural activity is simulated.
 > Virtual sensing, motor mapping, body dynamics, and world physics are computational
@@ -156,8 +156,9 @@ results under the same configuration).
 ```bash
 make smoke-embodiment      # scripts/smoke_embodiment.py: looming object → virtual fly, 30 loop steps
 make smoke-threat-lab      # scripts/smoke_threat_lab.py: the same loop through the P7.1 API over HTTP
-make test-backend          # includes backend/tests/test_embodiment.py and test_api_embodiment.py
-make demo                  # then open the "Virtual Threat Lab" tab (or /#threat-lab)
+make smoke-intervention    # scripts/smoke_intervention.py: CONTROL vs SILENCE_LPLC2 through the P7.2 A/B API
+make test-backend          # includes test_embodiment.py, test_api_embodiment.py, test_intervention.py, test_api_intervention.py
+make demo                  # then open "Virtual Threat Lab" (/#threat-lab) or "Neural Intervention Lab" (/#intervention)
 ```
 
 ## 10. Virtual Threat Lab (P7.1)
@@ -169,7 +170,7 @@ scientific logic. Roles of the three P7 sub-phases:
 |---|---|---|
 | P7.0 | embodiment architecture: models, adapters, `EmbodiedAgentLoop` | done |
 | P7.1 | Virtual Threat Lab: replayable API + 2D arena / brain / loop-story UI | done |
-| P7.2 | neural intervention in the lab (silence / stimulate / lesion groups) | planned, **not implemented** |
+| P7.2 | Neural Intervention Lab: COMPUTATIONAL FIRING SUPPRESSION inside the engine, A/B comparison UI | done (SUPPRESS_FIRING only) |
 
 ### 10.1 API (`backend/app/api/embodiment.py`)
 
@@ -238,7 +239,120 @@ Additive P7.0 change for this: `BrainStepSummary` gained `sensory_first_fire_ste
 
 ### 10.3 What P7.1 does not do
 
-No neural intervention (silence / stimulate / lesion — P7.2), no food or odor, no Three.js /
-3D body, no FlyGym / NeuroMechFly / MuJoCo, no six-leg gait, no robotics, no change to the
-P0–P7.0 scientific logic, no frontend-generated activity or movement, no default outcome when
-the backend fails. The v0.1.0 tag / release are not touched.
+No neural intervention (added in P7.2 as computational firing suppression), no food or odor,
+no Three.js / 3D body, no FlyGym / NeuroMechFly / MuJoCo, no six-leg gait, no robotics, no
+change to the P0–P7.0 scientific logic, no frontend-generated activity or movement, no
+default outcome when the backend fails. The v0.1.0 tag / release are not touched.
+
+## 11. Neural Intervention Lab (P7.2)
+
+> Computational intervention suppresses simulated firing of selected neurons while
+> preserving the biological structural connectivity.
+
+> Neural interventions in this lab are computational manipulations of simulated neural
+> dynamics. They do not reproduce a specific biological silencing, optogenetic, genetic,
+> pharmacological, or lesion technique. Biological structural connectivity remains unchanged.
+
+### 11.1 STRUCTURE ≠ DYNAMICS ≠ INTERVENTION ≠ BEHAVIOR
+
+| Layer | What it is | Where | Touched by P7.2? |
+|---|---|---|---|
+| STRUCTURE | MaleCNS neuron ids, cell types, edges, synapse counts (circuit artifact, sealed hash) | `app/circuits` | **never** — verified before / after every trial (node count, edge count, synapse total, content hash) |
+| DYNAMICS | simplified LIF-like simulation of activity on that structure | `app/simulation` | yes — this is the only place the intervention acts |
+| INTERVENTION | a computational manipulation of the dynamics (`InterventionConfig`, layer COMPUTATIONAL DYNAMICS) | `app/simulation/intervention.py` | new |
+| BEHAVIOR | decoded action → motor command → body → world | `app/motor`, `app/embodiment` | **never** — whatever changes downstream emerges from the model |
+
+### 11.2 Exact suppression semantics (`SUPPRESS_FIRING`)
+
+Implemented in `SimulationEngine.step()`; the engine builds a boolean mask from the target ids
+(unknown ids fail loudly) and never touches the `Circuit`, the edge arrays or the weights.
+For a targeted neuron at every step:
+
+1. it remains in the circuit with its biological id; its structural edges and their
+   `synapse_count` are unchanged (the P2 artifact is read-only);
+2. synaptic input from spikes of the previous step and external stimulus input are still
+   accumulated; the membrane potential still integrates, leaks and is clamped as for any
+   other neuron;
+3. when `potential ≥ threshold`, `fired` is forced to `False`: no spike is recorded in the
+   raster, the neuron is **not** reset and **not** made refractory, and therefore no
+   spike-driven input propagates along its outgoing edges at the next step.
+
+`StepSummary.suppressed_count` / `RunSummary.suppressed_events` count these silent threshold
+crossings (they are large: a suppressed neuron that stays above threshold is counted every
+step). `NeuronState.suppressed` flags targeted neurons in `get_state()`. `NONE` (the default
+for every existing caller) is byte-for-byte the pre-P7.2 behaviour (tested). Other mechanisms
+(`STIMULATE`, `CLAMP`, `LESION`, `REMOVE_CONNECTION`, `SYNAPTIC_BLOCK`) are documented in
+`FUTURE_INTERVENTION_TYPES` and rejected by the engine — **not implemented**.
+
+Forbidden and absent: deleting neurons or edges, zeroing `synapse_count`, rewriting the
+artifact, touching `MotorDecoder`, `MotorAdapter`, `BodyAdapter`, `WorldAdapter`, the
+frontend or `ThreatLabService` with any suppression logic, and any `if intervention == …:
+action = …` rule.
+
+### 11.3 Target resolution (`app/behavior/intervention.py`)
+
+User-facing selectors `CONTROL`, `SILENCE_LC4`, `SILENCE_LPLC2`, `SILENCE_LC4_LPLC2` are
+resolved with `resolve_targets(circuit, selector)`: circuit nodes whose MaleCNS `cell_type`
+annotation equals the selected type(s), union without duplicates, sorted. It fails loudly when
+the selector is unknown, the circuit carries no annotations, a cell type resolves to zero
+neurons or the union is empty. The result (`ResolvedTargets`: cell types, ids, count,
+per-type counts, circuit hash, resolution rule) is recorded in provenance. On the committed
+escape_v1 artifact this resolves to LC4 126, LPLC2 158, both 284 — read from the artifact,
+never hard-coded.
+
+### 11.4 Plumbing (no logic)
+
+`EscapeExperiment.run(…, intervention=None)` hands the config to `SimulationEngine`;
+`EmbodiedAgentLoop(…, intervention=None)` passes it to the brain at every loop step (only
+when active, so pre-P7.2 brains keep their call signature) and writes it into
+`EmbodimentProvenance.intervention` (`intervention_layer = "COMPUTATIONAL DYNAMICS"`);
+`BrainStepSummary.suppressed_events` and `BrainView.suppressed_events` carry the counts.
+`ThreatLabService.run(request, intervention=None)` forwards it to the loop.
+
+### 11.5 A/B API (`app/api/intervention.py`)
+
+| Endpoint | Returns |
+|---|---|
+| `GET /embodiment/intervention/config` | label, layer, semantics, both disclaimers, implemented types (`NONE`, `SUPPRESS_FIRING`), future types (not implemented), the four suppression rules, `selectors[]` with resolved targets from the loaded circuit, `structural_signature`, circuit / dataset, `biological_context` (Ache et al. 2019), the "CURRENT COMPUTATIONAL RESULT — not a validation" label |
+| `POST /embodiment/intervention/compare` `{intervention, seed, max_steps ≤ 200, world}` | `comparison_id`, `control` and `intervention` trials (`intervention_config`, `resolved_targets`, the full P7.1 `experiment` incl. provenance, `structural_signature`, `simulated_firing_totals` per LC4 / LPLC2 / DNp01, `suppressed_events`), `comparison` = **verified** `matched_conditions` (seed, world, initial body, sensor / body / motor / simulation configs, circuit hash, dataset version, timing, loop config, decoder version; the server refuses to answer if any is false), descriptive `differences` (first ESCAPE steps, occurrence, escape steps, action counts, per-cell-type simulated spikes with deltas, displacements, first divergent step, plain-language summary that never interprets biology), `synchronization` (steps per trial, shared steps, cursor max, "TRIAL ENDED" rule), `structural_integrity` (signature before / after, `unchanged`), `biological_context`, `runtime` |
+
+Both trials are fresh P7.0 loops on the shared escape_v1 brain with the same
+`ThreatLabRunRequest`; the only difference is the `InterventionConfig`. Errors: 422 for an
+unknown selector or extra field, 503 when the brain or the targets are unavailable, 500
+(no partial comparison) when a trial fails or conditions do not match, 504 on timeout.
+
+### 11.6 UI (`frontend/src/intervention/`)
+
+`useInterventionLab` (config, one comparison call, one shared cursor), `InterventionLabView`
+(selector, seed / steps / world, RUN CONTROL + INTERVENTION, "SAME WORLD • SAME SEED • SAME
+MODEL" only once the backend has verified it), two `TrialPanel`s (arena, metrics, ACTION, brain
+panel; a trial past its timeline shows **TRIAL ENDED** and nothing else), shared replay
+(◀ STEP / PLAY / PAUSE / STEP ▶ / RESET / slider with ⚡A and ⚡B first-ESCAPE markers),
+`ComparisonPanel` (verified conditions + descriptive table + summary), `BiologicalContext`
+(BIOLOGICAL EVIDENCE column vs CURRENT COMPUTATIONAL RESULT column, both disclaimers).
+Suppressed groups in `ThreatLabBrain` are crossed out and labelled SUPPRESSED with their
+neuron count (structure present, glow off, raster hatched) — never hidden. The Brain
+Inspector's neuron panel shows BIOLOGICAL STRUCTURE present · INTERVENTION COMPUTATIONAL
+FIRING SUPPRESSION · SIMULATED FIRED false for neurons targeted by the last comparison; the
+structural graph is unchanged.
+
+### 11.7 Observed with the current model (descriptive, not biological validation)
+
+Default world (object radius 1 at 20 units, 10 units/s, azimuth 0°), seed 0, 30 loop steps:
+
+| Trial | first ESCAPE | LC4 spikes | LPLC2 spikes | GF (DNp01) spikes | displacement |
+|---|---|---|---|---|---|
+| CONTROL | step 16 | 378 | 474 | 6 | 1.50 |
+| SILENCE LC4 (126 neurons) | step 16 | 0 | 474 | 6 | 1.50 |
+| SILENCE LPLC2 (158 neurons) | step 16 | 378 | 0 | 6 | 1.50 |
+| SILENCE LC4 + LPLC2 (284 neurons) | none | 0 | 0 | 0 | 0.00 |
+
+In the current computational model either population alone still drives the simulated giant
+fiber over threshold; only suppressing both removes the ESCAPE. This is reported as observed
+and says nothing about real flies.
+
+### 11.8 What P7.2 does not do
+
+No STIMULATE / CLAMP / LESION / synapse editing, no food seeking, olfaction, reward or
+learning, no Three.js / FlyGym / NeuroMechFly / MuJoCo / robotics, no change to P0–P7.1
+scientific logic, no tuning to reproduce literature. The v0.1.0 tag / release are not touched.

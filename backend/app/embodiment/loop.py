@@ -36,6 +36,7 @@ from app.embodiment.motor import MotorAdapter
 from app.embodiment.sensors import SensorAdapter, StimulusEncoder
 from app.embodiment.world import WorldAdapter
 from app.sensors import LoomingStimulus
+from app.simulation import NO_INTERVENTION, InterventionConfig
 
 
 @runtime_checkable
@@ -52,6 +53,7 @@ class BrainAdapter(Protocol):
         steps: int | None = None,
         *,
         record_neuron_states: bool = True,
+        **kwargs: Any,  # P7.2: ``intervention=InterventionConfig`` when one is active
     ) -> EscapeResult: ...
 
 
@@ -66,6 +68,7 @@ class EmbodiedAgentLoop:
         body: BodyAdapter,
         config: LoopConfig | None = None,
         encoder: StimulusEncoder | None = None,
+        intervention: InterventionConfig | None = None,
     ) -> None:
         self.world = world
         self.sensor = sensor
@@ -74,6 +77,9 @@ class EmbodiedAgentLoop:
         self.body = body
         self.config = config or LoopConfig()
         self.encoder = encoder or StimulusEncoder()
+        #: P7.2: computational intervention handed to the brain (engine) at every loop step;
+        #: NONE = control. The loop never inspects or acts on it — only the engine does.
+        self.intervention: InterventionConfig = intervention or NO_INTERVENTION
         self.clock = SimulationClock(dt=self.config.dt)
         self.records: list[EmbodiedStepRecord] = []
         self.initial_world: WorldState | None = None
@@ -103,10 +109,16 @@ class EmbodiedAgentLoop:
         body_state = self.body.get_state()  # 2
         observation = self.sensor.observe(world_state, body_state)  # 3
         stimulus = self.encoder.encode(observation)  # 4
+        # The kwarg is passed only when an intervention is active so that pre-P7.2 brains
+        # (and the P7.0 spy brains) keep their exact call signature.
+        brain_kwargs: dict[str, Any] = (
+            {"intervention": self.intervention} if self.intervention.is_active else {}
+        )
         result = self.brain.run(  # 5
             stimulus,
             steps=self.neural_steps,
             record_neuron_states=self.config.keep_full_brain_results,
+            **brain_kwargs,
         )
         decision = result.decision  # 6
         command = self.motor.translate(decision, clock)  # 7
@@ -134,6 +146,7 @@ class EmbodiedAgentLoop:
                     (e.step for e in result.timeline if e.tag == "t1_sensory_activation"), None
                 ),
                 group_fired_counts=dict(result.group_activity.fired_counts),
+                suppressed_events=getattr(result, "suppressed_events", 0),
             ),
             command=command,
             body_state=body_after,
@@ -180,6 +193,7 @@ class EmbodiedAgentLoop:
                 neural_dt=sim.dt,
                 neural_steps_per_loop_step=self.neural_steps,
             ),
+            intervention=self.intervention.summary() if self.intervention.is_active else None,
         )
 
     def record(self) -> EmbodiedExperimentRecord:

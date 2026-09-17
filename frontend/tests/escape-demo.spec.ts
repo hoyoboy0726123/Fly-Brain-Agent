@@ -44,7 +44,7 @@ test.describe('P5 escape demo', () => {
 
   test('backend is connected and the circuit configuration is loaded', async ({ page }) => {
     await open(page)
-    await expect(page.getByTestId('backend-health-phase')).toHaveText('P7.1')
+    await expect(page.getByTestId('backend-health-phase')).toHaveText('P7.2')
     for (const key of ['LC4_L', 'LC4_R', 'LPLC2_L', 'LPLC2_R', 'DNp01_L', 'DNp01_R']) {
       await expect(page.getByTestId(`brain-node-${key}`)).toBeVisible()
     }

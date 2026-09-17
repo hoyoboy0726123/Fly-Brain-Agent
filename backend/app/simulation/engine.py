@@ -33,12 +33,14 @@ from app.circuits.artifact import Circuit
 from app.simulation.config import SimulationConfig
 from app.simulation.errors import (
     CircuitCompatibilityError,
+    InterventionError,
     InvalidStimulusError,
     NumericalInstabilityError,
     SimulationLimitError,
     SnapshotMismatchError,
     UnknownNeuronError,
 )
+from app.simulation.intervention import NO_INTERVENTION, InterventionConfig, InterventionType
 from app.simulation.state import (
     NeuronState,
     RunSummary,
@@ -53,7 +55,12 @@ from app.simulation.weights import normalize_weights
 class SimulationEngine:
     """Runs the LIF-like model on one ``Circuit``; see the module docstring for the equations."""
 
-    def __init__(self, circuit: Circuit, config: SimulationConfig) -> None:
+    def __init__(
+        self,
+        circuit: Circuit,
+        config: SimulationConfig,
+        intervention: InterventionConfig | None = None,
+    ) -> None:
         self.config = config
         # --- reference to the biological structure (read once, never mutated) ---
         self.circuit_id = circuit.circuit_id
@@ -108,6 +115,11 @@ class SimulationEngine:
         self.firing_events = 0
         self.first_fire_step: dict[str, int] = {}
         self.rng = np.random.default_rng(config.random_seed)
+        # --- P7.2 computational intervention (COMPUTATIONAL DYNAMICS; structure untouched) ---
+        self.intervention: InterventionConfig = NO_INTERVENTION
+        self.suppressed_mask = np.zeros(n, dtype=bool)
+        self.suppressed_events = 0
+        self.set_intervention(intervention or NO_INTERVENTION)
         self.reset()
 
     # ------------------------------------------------------------------ properties
@@ -128,6 +140,29 @@ class SimulationEngine:
         )
 
     # ------------------------------------------------------------------ control
+    def set_intervention(self, intervention: InterventionConfig | None) -> InterventionConfig:
+        """Install a computational intervention (P7.2). Only SUPPRESS_FIRING / NONE exist.
+
+        Targets must be circuit neurons (unknown ids fail loudly). The circuit itself, the
+        edge arrays and the weights are not touched — only a boolean mask is built.
+        """
+        intervention = intervention or NO_INTERVENTION
+        if not isinstance(intervention, InterventionConfig):
+            raise InterventionError("intervention must be an InterventionConfig")
+        if intervention.intervention_type not in (
+            InterventionType.NONE,
+            InterventionType.SUPPRESS_FIRING,
+        ):
+            raise InterventionError(
+                f"intervention type {intervention.intervention_type!r} is not implemented"
+            )
+        mask = np.zeros(self.num_neurons, dtype=bool)
+        if intervention.is_active:
+            mask[self.index_of(list(intervention.target_neuron_ids))] = True
+        self.intervention = intervention
+        self.suppressed_mask = mask
+        return intervention
+
     def reset(self) -> None:
         """Return to the initial state: rest potential, no refractory, no stimuli, reseeded RNG."""
         self.membrane_potential[:] = self.config.resting_potential
@@ -138,6 +173,7 @@ class SimulationEngine:
         self.stimuli = []
         self.spike_history = []
         self.firing_events = 0
+        self.suppressed_events = 0
         self.first_fire_step = {}
         self.rng = np.random.default_rng(self.config.random_seed)
 
@@ -207,6 +243,11 @@ class SimulationEngine:
             raise NumericalInstabilityError("membrane potential became NaN/Inf during the step")
 
         fired = active & (potential >= self.threshold)
+        # P7.2 COMPUTATIONAL FIRING SUPPRESSION: a targeted neuron that reaches threshold emits
+        # no spike (so it is neither reset nor made refractory and propagates nothing);
+        # its membrane state, inputs, id and edges are untouched.
+        suppressed = fired & self.suppressed_mask
+        fired = fired & ~self.suppressed_mask
         potential = np.where(fired, self.reset_potential, potential)
         refractory = np.where(active, 0, self.refractory_remaining - 1)
         refractory = np.where(fired, cfg.refractory_steps, refractory)
@@ -218,8 +259,10 @@ class SimulationEngine:
         self.simulation_time = self.step_index * cfg.dt
 
         fired_idx = np.flatnonzero(fired)
+        suppressed_idx = np.flatnonzero(suppressed)
         self.spike_history.append(fired_idx)
         self.firing_events += int(fired_idx.size)
+        self.suppressed_events += int(suppressed_idx.size)
         for i in fired_idx.tolist():
             self.first_fire_step.setdefault(self.neuron_ids[i], self.step_index)
         return StepSummary(
@@ -229,18 +272,34 @@ class SimulationEngine:
             fired_neuron_ids=[self.neuron_ids[i] for i in fired_idx.tolist()],
             max_membrane_potential=float(potential.max()) if n else float(rest),
             external_input_neurons=touched,
+            suppressed_count=int(suppressed_idx.size),
+            suppressed_neuron_ids=[self.neuron_ids[i] for i in suppressed_idx.tolist()],
         )
 
-    def run(self, steps: int, on_step: Callable[[StepSummary], None] | None = None) -> RunSummary:
-        """Advance ``steps`` times; ``on_step`` (if given) sees every ``StepSummary`` in order."""
+    def run(
+        self,
+        steps: int,
+        on_step: Callable[[StepSummary], None] | None = None,
+        *,
+        intervention: InterventionConfig | None = None,
+    ) -> RunSummary:
+        """Advance ``steps`` times; ``on_step`` (if given) sees every ``StepSummary`` in order.
+
+        ``intervention`` (P7.2) installs a computational intervention for this and later
+        steps; omitted → the engine's current intervention (default NONE) is kept, so every
+        pre-P7.2 caller behaves exactly as before.
+        """
         if isinstance(steps, bool) or not isinstance(steps, int) or steps < 1:
             raise SimulationLimitError(f"steps must be a positive integer, got {steps!r}")
         if steps > self.config.max_steps_per_run:
             raise SimulationLimitError(
                 f"steps={steps} exceeds max_steps_per_run={self.config.max_steps_per_run}"
             )
+        if intervention is not None:
+            self.set_intervention(intervention)
         start_step = self.step_index
         events_before = self.firing_events
+        suppressed_before = self.suppressed_events
         activated: dict[str, int] = {}
         counts: list[int] = []
         started = time.perf_counter()
@@ -263,6 +322,7 @@ class SimulationEngine:
             per_step_fired_counts=counts,
             runtime_seconds=elapsed,
             mean_step_seconds=elapsed / steps,
+            suppressed_events=self.suppressed_events - suppressed_before,
         )
 
     # ------------------------------------------------------------------ inspection
@@ -277,6 +337,7 @@ class SimulationEngine:
                 refractory_remaining=int(self.refractory_remaining[i]),
                 fired=bool(self.fired[i]),
                 neurotransmitter_prediction=self.neurotransmitter_prediction[i],
+                suppressed=bool(self.suppressed_mask[i]),
             )
             for i, nid in enumerate(self.neuron_ids)
         ]
@@ -301,6 +362,8 @@ class SimulationEngine:
             "spikes_per_step": [
                 [self.neuron_ids[i] for i in fired.tolist()] for fired in self.spike_history
             ],
+            "intervention": self.intervention.summary(),
+            "suppressed_events": self.suppressed_events,
         }
 
     # ------------------------------------------------------------------ snapshots
@@ -318,6 +381,7 @@ class SimulationEngine:
             stimuli=list(self.stimuli),
             neuron_states=self.neuron_states(),
             firing_events_total=self.firing_events,
+            intervention=self.intervention,
             rng_state=self.rng.bit_generator.state,
             created_at=datetime.now(UTC).isoformat(timespec="seconds"),
         )
@@ -332,7 +396,7 @@ class SimulationEngine:
                 f"({snapshot.circuit_hash[:12]}…) but got {circuit.circuit_id} "
                 f"({circuit_hash[:12]}…)"
             )
-        engine = cls(circuit, snapshot.simulation_config)
+        engine = cls(circuit, snapshot.simulation_config, snapshot.intervention)
         by_id = {state.neuron_id: state for state in snapshot.neuron_states}
         missing = [nid for nid in engine.neuron_ids if nid not in by_id]
         if missing or len(by_id) != engine.num_neurons:

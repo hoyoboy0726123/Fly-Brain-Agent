@@ -2468,3 +2468,277 @@ code,
     transition: none;
   }
 }
+
+
+/* ================================================================ P7.2 — Neural Intervention Lab */
+:root {
+  --suppressed: #ff5c8a;
+  --suppressed-soft: rgba(255, 92, 138, 0.16);
+}
+
+.tag--suppressed {
+  color: var(--suppressed);
+  background: var(--suppressed-soft);
+}
+
+.tag--error {
+  color: var(--error);
+  background: rgba(229, 72, 77, 0.16);
+}
+
+.ilab__tag {
+  white-space: normal;
+  text-align: right;
+  max-width: 320px;
+  line-height: 1.3;
+}
+
+.ilab__setup {
+  gap: 0.6rem;
+}
+
+.ilab__controls {
+  display: grid;
+  grid-template-columns: minmax(220px, auto) 1fr;
+  gap: 0.6rem 1rem;
+  align-items: end;
+}
+
+@media (max-width: 1023px) {
+  .ilab__controls {
+    grid-template-columns: 1fr;
+  }
+}
+
+.ilab__selector select {
+  font: inherit;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: var(--text);
+  background: var(--panel-2);
+  border: 1px solid var(--border-strong);
+  border-radius: 10px;
+  padding: 0.6rem 0.8rem;
+  min-width: 220px;
+}
+
+.ilab__resolved {
+  font-size: 0.78rem;
+  color: var(--muted);
+  align-self: center;
+}
+
+.ilab__params {
+  grid-column: 1 / -1;
+  grid-template-columns: repeat(4, 1fr);
+}
+
+@media (max-width: 767px) {
+  .ilab__params {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.ilab__controls .btn--primary {
+  grid-column: 1 / -1;
+  justify-self: start;
+}
+
+.ilab__matched {
+  margin: 0;
+  font-size: 0.8rem;
+  letter-spacing: 0.08em;
+  color: var(--decoding);
+}
+
+.ilab__grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  align-items: stretch;
+}
+
+@media (max-width: 1023px) {
+  .ilab__grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.trial--intervention {
+  border-color: rgba(255, 92, 138, 0.45);
+}
+
+.trial__title {
+  letter-spacing: 0.08em;
+}
+
+.trial__targets {
+  margin: 0;
+  font-size: 0.76rem;
+  color: var(--suppressed);
+}
+
+.trial__arena {
+  position: relative;
+}
+
+.trial__ended {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--mono);
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  color: var(--text);
+  background: rgba(10, 14, 20, 0.82);
+  border-radius: 12px;
+}
+
+.lab-metrics--trial .lab-metric dd {
+  font-size: 0.85rem;
+}
+
+.panel--lab-brain-compact .brain--lab {
+  max-height: 210px;
+}
+
+.lab-suppressed-note {
+  margin: 0;
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+  color: var(--suppressed);
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.node--suppressed .node__core {
+  stroke: var(--suppressed);
+  stroke-width: 2;
+  stroke-dasharray: 4 3;
+}
+
+.node--suppressed .node__glow {
+  opacity: 0 !important;
+}
+
+.node__suppressed-mark line {
+  stroke: var(--suppressed);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+}
+
+.node__count--suppressed {
+  fill: var(--suppressed);
+  font-weight: 700;
+}
+
+.lab-raster__row--suppressed .lab-raster__bar {
+  background: repeating-linear-gradient(45deg, #2a1f27 0 2px, #3a2530 2px 4px);
+}
+
+.lab-raster__suppressed {
+  color: var(--suppressed);
+  font-weight: 700;
+}
+
+.ilab__replay .control__label {
+  align-self: center;
+}
+
+.lab-replay__marker--b {
+  top: auto;
+  bottom: -1.2rem;
+  color: var(--suppressed);
+  background: var(--suppressed-soft);
+  opacity: 1;
+}
+
+.comparison__grid {
+  display: grid;
+  grid-template-columns: 1fr 1.3fr;
+  gap: 1rem;
+}
+
+@media (max-width: 1023px) {
+  .comparison__grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.comparison__conditions {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: 0.76rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.comparison__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.78rem;
+}
+
+.comparison__table th,
+.comparison__table td {
+  text-align: left;
+  padding: 0.3rem 0.5rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.comparison__table th {
+  color: var(--muted);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.comparison__summary {
+  margin: 0;
+  padding-left: 1.1rem;
+  font-size: 0.84rem;
+  line-height: 1.45;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.context__grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+@media (max-width: 1023px) {
+  .context__grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.context__col {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 0.8rem 0.9rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  font-size: 0.84rem;
+  line-height: 1.45;
+}
+
+.context__col p {
+  margin: 0;
+}
+
+.context__col--bio {
+  border-color: rgba(76, 201, 240, 0.4);
+}
+
+.context__col--comp {
+  border-color: rgba(199, 125, 255, 0.4);
+}

@@ -11,14 +11,14 @@
 | P6 Brain inspector | ✅ Done (reviewer approved, PR #8) — MVP v0.1 APPROVED | inspectable provenance |
 | P6.1 Release polish | ✅ Done (awaiting human confirmation) — v0.1.0 release candidate, no tag | CI, one-command demo, presentation-ready docs |
 | P7.0 Embodiment architecture | ✅ Done (reviewer approved, PR #11) | closed-loop World → Sensor → Brain → Motor → Body foundation |
-| P7.1 Virtual Threat Lab | ✅ Done — P7.1 COMPLETE — WAITING FOR HUMAN REVIEW | visible, interactive, replayable closed loop with real backend data |
-| P7.2 Neural intervention | ⬜ Planned (not started) | silence / stimulate / lesion groups inside the lab |
-| P7.3+ FlyGym / food | ⬜ Not started | physics bodies, second behaviour after its own research gate |
+| P7.1 Virtual Threat Lab | ✅ Done (reviewer approved, PR #12) | visible, interactive, replayable closed loop with real backend data |
+| P7.2 Neural Intervention Lab | ✅ Done — P7.2 COMPLETE — WAITING FOR HUMAN REVIEW | computational firing suppression in the engine, CONTROL vs INTERVENTION A/B |
+| P7.3+ Further mechanisms / FlyGym / food | ⬜ Not started | STIMULATE / CLAMP / LESION (documented only), physics bodies, second behaviour after its own research gate |
 | P8 Webcam | ⬜ Future | camera stimulus adapter |
 | P9 Robot | ⬜ Future | safe physical adapter |
 
 ## Current Phase
-**P7.1 COMPLETE — WAITING FOR HUMAN REVIEW.** Virtual Threat Lab: `GET /embodiment/config` + `POST /embodiment/run` (`backend/app/api/embodiment.py`, thin layer over the P7.0 loop) and the new **Virtual Threat Lab** tab (`frontend/src/threatlab/`: SVG arena, metrics, WORLD / BODY / SENSOR read-outs, SIMULATED brain panel, closed-loop story, replay with ⚡ ESCAPE markers, WAITING FOR EXPERIMENT / NO RESULT states, boundaries + disclaimer). The frontend renders backend-recorded states only. Scientific logic of P0–P7.0 unchanged (escape_v1 regression + P7.0 tests pass). Stopped before P7.2 (no neural intervention, no food, no Three.js / FlyGym / robotics). The v0.1.0 tag / GitHub Release were not created or modified.
+**P7.2 COMPLETE — WAITING FOR HUMAN REVIEW.** Neural Intervention Lab: COMPUTATIONAL FIRING SUPPRESSION implemented inside `SimulationEngine` (`app/simulation/intervention.py`, `InterventionConfig`, layer COMPUTATIONAL DYNAMICS); selectors `SILENCE_LC4` / `SILENCE_LPLC2` / `SILENCE_LC4_LPLC2` resolved from the circuit artifact's cell-type annotations (`app/behavior/intervention.py`); `GET /embodiment/intervention/config` + `POST /embodiment/intervention/compare` (`app/api/intervention.py`, verified matched conditions, descriptive differences, structural integrity before / after); new **Neural Intervention Lab** tab (`frontend/src/intervention/`, one cursor for both trials, SUPPRESSED groups structurally present, BIOLOGICAL EVIDENCE separated from CURRENT COMPUTATIONAL RESULT, both disclaimers); Brain Inspector shows the intervention state per neuron. Biological structure is never modified; no downstream result is hard-coded; CONTROL is byte-identical to P7.1. Stopped before P7.3 (no STIMULATE / CLAMP / LESION / synapse editing, no food / olfaction / reward / learning, no Three.js / FlyGym / NeuroMechFly / MuJoCo / robotics). The v0.1.0 tag / GitHub Release were not created or modified.
 
 ## Blockers
 - ~~Release blocker (human decision): the repository has no project-code `LICENSE`.~~ **Resolved 2026-09-16:** the owner selected the Apache License 2.0; root `LICENSE` added, README / DATA.md / CHANGELOG / package metadata updated. The dataset license (CC-BY 4.0) remains a separate domain.
@@ -91,6 +91,12 @@
 - (P7.1) `BrainStepSummary` gained two additive fields (`sensory_first_fire_step`, `group_fired_counts`) copied from the P4 result so the lab replays real simulated group activity without per-neuron payloads (≈ 66 KiB per 30-step run).
 - (P7.1) The frontend never generates behaviour: every panel reads `timeline[step]`; the fly moves only where the recorded `BodyState` moved; the 110 ms CSS tween between two recorded steps is presentation only (DOM `data-*` attributes carry the exact recorded values and the Playwright tests assert on them); a failed run shows NO RESULT with no timeline. RESET rewinds the replay to step 0 (the recorded experiment stays loaded).
 - (P7.1) P7 roles: P7.0 = architecture, P7.1 = visual Threat Lab, P7.2 = neural intervention (planned, not implemented). No Three.js / FlyGym / NeuroMechFly / MuJoCo / gait / robotics / food in P7.1.
+
+- (P7.2) The intervention lives in the simulation engine only: `SimulationEngine.step()` forces `fired = False` for targeted neurons at threshold (no reset, no refractory, no propagation) while the `Circuit`, edge arrays and weights are untouched; membrane integration continues. `NONE` is the default everywhere and is byte-identical to P7.1 (tested). Frontend, `ThreatLabService`, decoder, motor, body and world carry no suppression logic.
+- (P7.2) Targets are resolved from the artifact's `cell_type` annotations at request time (LC4 126, LPLC2 158, union 284 on escape_v1 — read, never hard-coded) and fail loudly otherwise; the resolved ids are recorded in provenance (`intervention`, `intervention_layer = COMPUTATIONAL DYNAMICS`).
+- (P7.2) The A/B endpoint verifies matched conditions field by field (seed, world, initial body, sensor / body / motor / simulation configs, circuit hash, dataset version, timing, loop config, decoder version) and refuses to answer otherwise; differences are descriptive numbers plus sentences that start with "In the current computational model …" and never interpret biology. Results are reported as observed: in this model LC4-only or LPLC2-only suppression left the first ESCAPE at step 16; suppressing both removed it.
+- (P7.2) Suppressed groups are drawn crossed-out with STRUCTURE PRESENT · SIMULATED FIRING SUPPRESSED (never hidden). A trial past its timeline shows TRIAL ENDED; its last state is not reused. Literature (Ache et al. 2019) motivates target selection only and is displayed apart from the computational result.
+- (P7.2) Documented but NOT implemented: STIMULATE, CLAMP, LESION, REMOVE_CONNECTION, SYNAPTIC_BLOCK (`FUTURE_INTERVENTION_TYPES`; the engine rejects them).
 
 ## P0 Report (2026-09-16)
 
@@ -791,3 +797,63 @@ A `threatlab-A-initial.png` (WAITING FOR EXPERIMENT) · B `threatlab-B-approachi
 
 ### J. Files changed
 `backend/app/api/embodiment.py` (new), `backend/app/api/__init__.py`, `backend/app/embodiment/{models,loop}.py` (additive fields), `backend/app/__init__.py` (phase), `backend/tests/test_api_embodiment.py` (new), `scripts/smoke_threat_lab.py` (new), `Makefile`, `.github/workflows/ci.yml`, `frontend/src/threatlab/*` (new), `frontend/src/{App,landing/Hero}.tsx`, `frontend/src/api/{types,client}.ts`, `frontend/src/styles.css`, `frontend/tests/{threat-lab,smoke-threat-lab}.spec.ts` (new), `frontend/tests/{smoke,escape-demo}.spec.ts` (phase string), `docs/screenshots/threatlab-A…E.png` (new), `README.md`, `docs/EMBODIMENT.md`, `docs/DEVELOPMENT.md`, `CHANGELOG.md`, `PROGRESS.md`.
+
+
+## P7.2 Report (2026-09-17) — Computational Neural Intervention Lab
+
+**Status: P7.2 COMPLETE — WAITING FOR HUMAN REVIEW.** Baseline `bc392c8` (P7.1 approved). Scientific logic of P0–P7.1 unchanged; CONTROL trials are byte-identical to P7.1 runs (tested).
+
+### A. Intervention architecture
+- **Simulation layer (COMPUTATIONAL DYNAMICS)** `backend/app/simulation/intervention.py` (new): `InterventionType` (`NONE`, `SUPPRESS_FIRING`), immutable `InterventionConfig` (target neuron ids, target cell types, label, description, `layer = "COMPUTATIONAL DYNAMICS"`, semantics sentence; `NONE` must have no targets, `SUPPRESS_FIRING` must have ≥ 1), `NO_INTERVENTION`, `INTERVENTION_DISCLAIMER`, `INTERVENTION_SEMANTICS`, `FUTURE_INTERVENTION_TYPES` (documented, rejected). `SimulationEngine(circuit, config, intervention=None)` / `set_intervention()` / `run(steps, on_step, *, intervention=None)`: builds a boolean mask from the target ids (unknown ids → `UnknownNeuronError`), never touches the `Circuit`; `StepSummary.suppressed_count` / `suppressed_neuron_ids`, `RunSummary.suppressed_events`, `NeuronState.suppressed`, `get_activity()["intervention"]`, snapshots round-trip the intervention. New `InterventionError`.
+- **Application layer** `backend/app/behavior/intervention.py` (new): selectors → `ResolvedTargets` from `circuit.nodes[*].cell_type` (fail loudly on unknown selector / no annotations / zero neurons), `build_intervention`, `structural_signature` (node count, edge count, synapse total, content hash, recorded hash), `BIOLOGICAL_CONTEXT` (Ache et al. 2019). `EscapeExperiment.run(…, intervention=None)` passes it to the engine; `EscapeResult.intervention` / `.suppressed_events` (additive).
+- **Embodiment plumbing** `EmbodiedAgentLoop(…, intervention=None)` passes it to the brain at every loop step (kwarg only when active, so pre-P7.2 brains keep their signature); `EmbodimentProvenance.intervention` + `intervention_layer`; `BrainStepSummary.suppressed_events`; `ThreatLabService.run(request, intervention=None)`; `BrainView.suppressed_events`.
+- **A/B API** `backend/app/api/intervention.py` (new): `GET /embodiment/intervention/config`, `POST /embodiment/intervention/compare` (`InterventionService` over the P7.1 `ThreatLabService`: two fresh P7.0 loops, structural signature before / after each trial, verified `matched_conditions` — the server raises if any is false —, descriptive `differences`, `synchronization`, `structural_integrity`, `biological_context`, `runtime`). 422 unknown selector / extra field, 503 brain or targets unavailable, 500 no partial comparison, 504 timeout.
+- **Frontend** `frontend/src/intervention/` (new): `useInterventionLab`, `InterventionLabView`, `TrialPanel`, `ComparisonPanel`, `BiologicalContext`; `ThreatLabBrain` gains `suppressedCellTypes` (crossed-out nodes, SUPPRESSED label with neuron count, hatched raster, STRUCTURE PRESENT · SIMULATED FIRING SUPPRESSED note); `App.tsx` view `intervention` (`#intervention`, tab `tab-intervention`), hero CTA; `InspectorView` / `NeuronInspector` `intervention-state` block (BIOLOGICAL STRUCTURE present · INTERVENTION COMPUTATIONAL FIRING SUPPRESSION · SIMULATED FIRED false) without touching the structural graph. `CURRENT_PHASE = "P7.2"`.
+
+### B. Exact suppression semantics
+For a neuron in `target_neuron_ids`, at every simulation step: (1) it stays in the circuit with its biological id; its edges and `synapse_count` are unchanged (artifact read-only); (2) synaptic input from the previous step's spikes and external stimulus input are accumulated; the membrane integrates, leaks and is clamped as for any neuron; (3) when `potential ≥ threshold`, `fired` is forced to `False` — no spike in the raster, no reset, no refractory period, hence no spike-driven propagation along its outgoing edges. Non-targets are never touched directly. Decoder, motor mapping, body and world are unchanged; every downstream effect emerges from the model. Not optogenetic / Kir2.1 / TNT / pharmacological / lesion / ablation.
+
+### C. Resolved targets (escape_v1, read from the artifact's `cell_type` annotations)
+LC4 **126** neurons · LPLC2 **158** neurons · LC4 + LPLC2 **284** (union, no duplicates) · CONTROL 0. No id invented; counts asserted against the artifact in tests, not hard-coded.
+
+### D. Structural-integrity evidence
+Before and after every trial (config endpoint, each trial, comparison): 286 nodes, 932 edges, 18,843 synapses, content hash `db7c46e6a165…` = recorded hash; `circuit.verify()` passes after an intervention run; `model_dump_json()` of a synthetic circuit identical before / after; engine `num_neurons` / `num_edges` / `synapse_counts.sum()` unchanged; targets and their edges still queryable. Tests: `test_suppress_firing_preserves_neuron_count_edge_count_synapses_and_hash`, `test_suppress_firing_on_escape_v1_keeps_the_sealed_artifact_identical`, `test_same_circuit_hash_seed_and_world_across_both_trials`, smoke checks.
+
+### E. Results (default world, seed 0, 30 loop steps; the model's output, nothing tuned)
+| Comparison | first ESCAPE (control → intervention) | LC4 spikes | LPLC2 spikes | GF (DNp01) spikes | displacement | suppressed threshold crossings | first divergent step |
+|---|---|---|---|---|---|---|---|
+| CONTROL vs SILENCE LC4 (126) | 16 → 16 | 378 → 0 | 474 → 474 | 6 → 6 | 1.50 → 1.50 | 1861 | 16 |
+| CONTROL vs SILENCE LPLC2 (158) | 16 → 16 | 378 → 378 | 474 → 0 | 6 → 6 | 1.50 → 1.50 | 2212 | 16 |
+| CONTROL vs SILENCE LC4 + LPLC2 (284) | 16 → none | 378 → 0 | 474 → 0 | 6 → 0 | 1.50 → 0.00 | 8804 | 16 |
+In the current computational model either sensory population alone still drives the simulated giant fiber over threshold (the escape_v1 decoder needs one output spike); suppressing both removes the ESCAPE. Reported as observed; not a biological interpretation and not a validation of Ache et al. 2019. The A/A check (`intervention = CONTROL`) yields identical trials.
+
+### F. Tests
+- `backend/tests/test_intervention.py` — **18**: config model (immutability, NONE / SUPPRESS_FIRING validation, future types), **NONE == legacy** (summary, raster, state), structure preserved on a synthetic chain (counts, synapses, hash, JSON) and on the sealed escape_v1 artifact, targets never fire but still integrate (suppressed events, `suppressed` flag, emergent downstream silence), non-targets not suppressed, targets / edges queryable, empty target fails, unknown target fails loudly (engine, runner, resolver), LC4 / LPLC2 / union resolution against the artifact, control determinism, intervention determinism, **decoder only sees the raster** (spy), **body only receives motor commands** (spy body; provenance carries the intervention, body / motor / world configs do not), control loop == P7.1 loop and provenance equality except the intervention block, snapshot round-trip.
+- `backend/tests/test_api_intervention.py` — **27**: config (resolved selectors == artifact, structural signature, literature, semantics), CONTROL vs LC4 / LPLC2 / LC4+LPLC2 (targets never fire, control == plain `/embodiment/run`), matched conditions all true and provenance equality per field (×3), intervention provenance differs only by the intervention block, same hash / seed / world, resolved count > 0 from the circuit, synchronisation metadata, **no hard-coded outcome** (every reported number recomputed from the returned timelines, summary wording, A/A identical), determinism + P7.1 shape, 11 invalid requests → 422, mid-comparison failure → 500 with no comparison (+ recovery), missing circuit → 503, P5 / P6 / P7.1 endpoints unchanged.
+- Full backend suite: **413 passed** (368 + 45); `ruff check` + `ruff format --check` clean.
+- Playwright `frontend/tests/intervention-lab.spec.ts` — **15 tests covering the 21 required checks** on the live backend (load; select SILENCE LC4; run; both panels; one slider; CONTROL LC4 normal; INTERVENTION LC4 SUPPRESSED yet structurally present with the same neuron count; SILENCE LPLC2; LC4 + LPLC2; GF, actions and body backend-derived; step back / forward; reset; disclaimers; biological context separated; Threat Lab and Brain Inspector still functional incl. the inspector intervention state). `smoke-intervention.spec.ts` — 3 screenshots. Full Playwright suite: **101 passed** (83 + 18); typecheck + production build clean.
+
+### G. Smoke (`make smoke-intervention`, CONTROL vs SILENCE_LPLC2)
+Same circuit hash / world config / seed verified; 158 LPLC2 targets resolved; LPLC2 simulated fired count in the intervention = 0; structural LPLC2 neurons still present (counts per group unchanged, signature unchanged); comparison returned. Printed result: CONTROL first escape step 16, LC4 378, LPLC2 474, GF 6 · INTERVENTION target LPLC2, 158 neurons, first escape step 16, LC4 378, LPLC2 0, GF 6 · DIFFERENCE "left the first ESCAPE step unchanged (16)" — printed as observed, not labelled validation. Report: `data/simulations/intervention_smoke.report.json`. Whole `make smoke` PASS.
+
+### H. Performance
+Control ≈ 0.05 s, intervention ≈ 0.05 s, combined ≈ 0.10 s backend (HTTP wall ≈ 0.12 s) for 2 × 30 loop steps; comparison payload ≈ 145–152 KiB (two P7.1 timelines with group summaries only; per-neuron states stay in the P5 API / P6 inspector).
+
+### I. Scientific boundaries and disclaimers
+Config, every comparison and the lab footer carry both disclaimers (intervention + embodiment); `matched_conditions` and `structural_integrity` are computed, not asserted; the literature panel is labelled BIOLOGICAL EVIDENCE — motivates target selection only; the result panel is labelled CURRENT COMPUTATIONAL RESULT — not a validation of the biological study. STRUCTURE ≠ DYNAMICS ≠ INTERVENTION ≠ BEHAVIOR documented in `docs/EMBODIMENT.md` §11.
+
+### J. Known limitations
+- Only `SUPPRESS_FIRING`; a suppressed neuron that stays above threshold is counted as a suppressed crossing every step (informational), and its membrane is never reset (documented semantics, not a bug).
+- Targets are whole cell types; per-side or per-neuron selection is not exposed in the UI (the engine supports arbitrary id sets).
+- The comparison is one deterministic run per arm (no seeds sweep, no statistics); the A/B payload is two full P7.1 timelines (≈ 150 KiB).
+- The inspector shows the intervention state for the last comparison only (no per-step replay of the intervention trial in the inspector).
+- No neural state carried across loop steps (inherited from P7.0).
+
+### K. Screenshots (`docs/screenshots/intervention-*.png`, 1440×900, live backend)
+A `intervention-A-initial.png` · B `intervention-B-silence-lplc2.png` (CONTROL vs SILENCE LPLC2 at the control ESCAPE step) · C `intervention-C-comparison.png` (LC4 + LPLC2: matched conditions, differences, biological context).
+
+### L. Files changed
+`backend/app/simulation/{intervention.py (new), engine.py, state.py, errors.py, __init__.py}`, `backend/app/behavior/{intervention.py (new), runner.py, __init__.py}`, `backend/app/embodiment/{loop.py, models.py}`, `backend/app/api/{intervention.py (new), embodiment.py, __init__.py}`, `backend/app/__init__.py` (phase), `backend/tests/{test_intervention.py, test_api_intervention.py}` (new), `scripts/smoke_intervention.py` (new), `Makefile`, `.github/workflows/ci.yml`, `frontend/src/intervention/*` (new), `frontend/src/threatlab/ThreatLabBrain.tsx`, `frontend/src/inspector/{InspectorView,NeuronInspector}.tsx`, `frontend/src/{App,landing/Hero}.tsx`, `frontend/src/api/{types,client}.ts`, `frontend/src/styles.css`, `frontend/tests/{intervention-lab,smoke-intervention}.spec.ts` (new), `frontend/tests/{smoke,escape-demo}.spec.ts` (phase string), `docs/screenshots/intervention-A…C.png` (new), `data/simulations/intervention_smoke.report.json` (new), `README.md`, `docs/EMBODIMENT.md`, `docs/DEVELOPMENT.md`, `SDD.md`, `CHANGELOG.md`, `PROGRESS.md`.
+
+### M. Not started
+P7.3 was NOT started: no STIMULATE / CLAMP / LESION / synapse editing, no food seeking, olfaction, reward or learning, no Three.js / FlyGym / NeuroMechFly / MuJoCo / robotics. v0.1.0 tag / GitHub Release untouched.

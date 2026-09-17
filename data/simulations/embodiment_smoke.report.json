@@ -2,7 +2,7 @@
   "title": "TECHNICAL EMBODIMENT SMOKE — SIMPLIFIED COMPUTATIONAL BODY",
   "record": {
     "label": "TECHNICAL EMBODIED EXPERIMENT — SIMPLIFIED COMPUTATIONAL BODY",
-    "created_at": "2026-09-17T15:13:20+00:00",
+    "created_at": "2026-09-17T16:21:19+00:00",
     "runner_version": "0.1.0",
     "provenance": {
       "disclaimer": "Structural connectivity is biological data. Neural activity is simulated. Virtual sensing, motor mapping, body dynamics, and world physics are computational interpretations.",
@@ -83,7 +83,9 @@
         "neural_dt": 1.0,
         "neural_steps_per_loop_step": 30,
         "note": "P7.0 uses one common deterministic loop timestep for the world and the body; each loop step runs a fresh neural experiment of neural_steps_per_loop_step model steps (neural dt = SimulationConfig.dt, a dimensionless model unit). The two time bases are recorded separately and are not claimed to be physically related."
-      }
+      },
+      "intervention": null,
+      "intervention_layer": "COMPUTATIONAL DYNAMICS"
     },
     "initial_world": {
       "label": "VIRTUAL WORLD — computational environment state; not a biological measurement",
@@ -366,7 +368,8 @@
               0,
               0
             ]
-          }
+          },
+          "suppressed_events": 0
         },
         "command": {
           "command": "IDLE",
@@ -664,7 +667,8 @@
               0,
               0
             ]
-          }
+          },
+          "suppressed_events": 0
         },
         "command": {
           "command": "IDLE",
@@ -962,7 +966,8 @@
               0,
               0
             ]
-          }
+          },
+          "suppressed_events": 0
         },
         "command": {
           "command": "IDLE",
@@ -1260,7 +1265,8 @@
               0,
               0
             ]
-          }
+          },
+          "suppressed_events": 0
         },
         "command": {
           "command": "IDLE",
@@ -1558,7 +1564,8 @@
               0,
               0
             ]
-          }
+          },
+          "suppressed_events": 0
         },
         "command": {
           "command": "IDLE",
@@ -1856,7 +1863,8 @@
               0,
               0
             ]
-          }
+          },
+          "suppressed_events": 0
         },
         "command": {
           "command": "IDLE",
@@ -2154,7 +2162,8 @@
               0,
               0
             ]
-          }
+          },
+          "suppressed_events": 0
         },
         "command": {
           "command": "IDLE",
@@ -2452,7 +2461,8 @@
               0,
               0
             ]
-          }
+          },
+          "suppressed_events": 0
         },
         "command": {
           "command": "IDLE",
@@ -2750,7 +2760,8 @@
               0,
               0
             ]
-          }
+          },
+          "suppressed_events": 0
         },
         "command": {
           "command": "IDLE",
@@ -3048,7 +3059,8 @@
               0,
               0
             ]
-          }
+          },
+          "suppressed_events": 0
         },
         "command": {
           "command": "IDLE",
@@ -3346,7 +3358,8 @@
               0,
               0
             ]
-          }
+          },
+          "suppressed_events": 0
         },
         "command": {
           "command": "IDLE",
@@ -3644,7 +3657,8 @@
               0,
               0
             ]
-          }
+          },
+          "suppressed_events": 0
         },
         "command": {
           "command": "IDLE",
@@ -3942,7 +3956,8 @@
               0,
               0
             ]
-          }
+          },
+          "suppressed_events": 0
         },
         "command": {
           "command": "IDLE",
@@ -4240,7 +4255,8 @@
               0,
               0
             ]
-          }
+          },
+          "suppressed_events": 0
         },
         "command": {
           "command": "IDLE",
@@ -4538,7 +4554,8 @@
               0,
               0
             ]
-          }
+          },
+          "suppressed_events": 0
         },
         "command": {
           "command": "IDLE",
@@ -4836,7 +4853,8 @@
               0,
               0
             ]
-          }
+          },
+          "suppressed_events": 0
         },
         "command": {
           "command": "IDLE",
@@ -5137,7 +5155,8 @@
               0,
               0
             ]
-          }
+          },
+          "suppressed_events": 0
         },
         "command": {
           "command": "ESCAPE",
@@ -5438,7 +5457,8 @@
               0,
               0
             ]
-          }
+          },
+          "suppressed_events": 0
         },
         "command": {
           "command": "ESCAPE",
@@ -5739,7 +5759,8 @@
               0,
               0
             ]
-          }
+          },
+          "suppressed_events": 0
         },
         "command": {
           "command": "ESCAPE",
@@ -6037,7 +6058,8 @@
               0,
               0
             ]
-          }
+          },
+          "suppressed_events": 0
         },
         "command": {
           "command": "IDLE",
@@ -6335,7 +6357,8 @@
               0,
               0
             ]
-          }
+          },
+          "suppressed_events": 0
         },
         "command": {
           "command": "IDLE",
@@ -6633,7 +6656,8 @@
               0,
               0
             ]
-          }
+          },
+          "suppressed_events": 0
         },
         "command": {
           "command": "IDLE",
@@ -6931,7 +6955,8 @@
               0,
               0
             ]
-          }
+          },
+          "suppressed_events": 0
         },
         "command": {
           "command": "IDLE",
@@ -7229,7 +7254,8 @@
               0,
               0
             ]
-          }
+          },
+          "suppressed_events": 0
         },
         "command": {
           "command": "IDLE",
@@ -7527,7 +7553,8 @@
               0,
               0
             ]
-          }
+          },
+          "suppressed_events": 0
         },
         "command": {
           "command": "IDLE",
@@ -7825,7 +7852,8 @@
               0,
               0
             ]
-          }
+          },
+          "suppressed_events": 0
         },
         "command": {
           "command": "IDLE",
@@ -8123,7 +8151,8 @@
               0,
               0
             ]
-          }
+          },
+          "suppressed_events": 0
         },
         "command": {
           "command": "IDLE",
@@ -8421,7 +8450,8 @@
               0,
               0
             ]
-          }
+          },
+          "suppressed_events": 0
         },
         "command": {
           "command": "IDLE",
@@ -8719,7 +8749,8 @@
               0,
               0
             ]
-          }
+          },
+          "suppressed_events": 0
         },
         "command": {
           "command": "IDLE",
@@ -9017,7 +9048,8 @@
               0,
               0
             ]
-          }
+          },
+          "suppressed_events": 0
         },
         "command": {
           "command": "IDLE",
@@ -9102,6 +9134,6 @@
       "displacement": 1.5,
       "final_grounded": true
     },
-    "runtime_seconds": 0.05003
+    "runtime_seconds": 0.054349
   }
 }

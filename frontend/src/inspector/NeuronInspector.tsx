@@ -5,12 +5,22 @@ import type { NeighborRecord, NeighborsResponse, NeuronDetail } from '../api/typ
 import { cellTypeDescription } from './cellTypeStyle.ts'
 import type { NeuronSimState } from './useReplay.ts'
 
+/** P7.2: what the last Neural Intervention Lab comparison did to a set of neurons. */
+export interface InterventionInfo {
+  comparisonId: string
+  selector: string
+  label: string
+  cellTypes: string[]
+  neuronIds: ReadonlySet<string>
+}
+
 export interface NeuronInspectorProps {
   circuitId: string
   neuronId: string
   simState: NeuronSimState | null
   replayStep: number
   replayAvailable: boolean
+  intervention?: InterventionInfo | null
   highlightMode: 'upstream' | 'downstream' | null
   onHighlight: (mode: 'upstream' | 'downstream' | null) => void
   onSelectNeuron: (neuronId: string) => void
@@ -95,7 +105,8 @@ function NeighborTable({
 }
 
 export function NeuronInspector(props: NeuronInspectorProps) {
-  const { circuitId, neuronId, simState, replayStep, replayAvailable, highlightMode } = props
+  const { circuitId, neuronId, simState, replayStep, replayAvailable, highlightMode, intervention = null } = props
+  const silenced = intervention !== null && intervention.neuronIds.has(neuronId)
   const [state, setState] = useState<State>({ kind: 'loading' })
 
   useEffect(() => {
@@ -209,6 +220,33 @@ export function NeuronInspector(props: NeuronInspectorProps) {
         ) : (
           <p className="muted" data-testid="sim-state-empty">
             Run looming (replay controls) to see this neuron's simulated state per step.
+          </p>
+        )}
+      </section>
+
+      <section className="meta meta--intervention" data-testid="intervention-state" data-silenced={silenced}>
+        <p className="meta__label">
+          <span className="tag tag--suppressed">INTERVENTION</span>
+          <span className="muted"> last Neural Intervention Lab comparison (P7.2); the structural graph is never modified</span>
+        </p>
+        {intervention ? (
+          <dl className="kv kv--tight">
+            <dt>biological structure</dt>
+            <dd data-testid="intervention-structure">present</dd>
+            <dt>intervention</dt>
+            <dd data-testid="intervention-kind">{silenced ? 'COMPUTATIONAL FIRING SUPPRESSION' : 'none (not a target)'}</dd>
+            <dt>simulated fired (intervention trial)</dt>
+            <dd className="mono" data-testid="intervention-fired">
+              {silenced ? 'false' : 'as simulated'}
+            </dd>
+            <dt>comparison</dt>
+            <dd className="mono">
+              {intervention.label} · {intervention.comparisonId.slice(0, 8)}…
+            </dd>
+          </dl>
+        ) : (
+          <p className="muted" data-testid="intervention-empty">
+            none — run a comparison in the Neural Intervention Lab to see whether this neuron's simulated firing was suppressed.
           </p>
         )}
       </section>

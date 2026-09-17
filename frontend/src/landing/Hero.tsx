@@ -6,10 +6,11 @@ export interface HeroProps {
   onRunDemo: () => void
   onExplore: () => void
   onThreatLab: () => void
+  onIntervention: () => void
 }
 
 /** Above-the-fold summary: what this is, in one glance, with the two entry points. */
-export function Hero({ running, canRun, onRunDemo, onExplore, onThreatLab }: HeroProps) {
+export function Hero({ running, canRun, onRunDemo, onExplore, onThreatLab, onIntervention }: HeroProps) {
   return (
     <section className="hero" data-testid="hero" aria-labelledby="hero-title">
       <h1 id="hero-title" className="hero__title">
@@ -29,6 +30,9 @@ export function Hero({ running, canRun, onRunDemo, onExplore, onThreatLab }: Her
         </button>
         <button type="button" className="btn btn--large" onClick={onThreatLab} data-testid="cta-threat-lab">
           VIRTUAL THREAT LAB
+        </button>
+        <button type="button" className="btn btn--large" onClick={onIntervention} data-testid="cta-intervention">
+          NEURAL INTERVENTION LAB
         </button>
       </div>
       <p className="hero__qualifier subtitle" data-testid="subtitle">

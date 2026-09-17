@@ -79,7 +79,7 @@ way (`/api/ws/escape` -> `/ws/escape`).
 
 | Job | Steps | Data |
 |---|---|---|
-| backend (Python 3.11, 3.12) | `pip install -e backend[dev]`, `ruff check` + `ruff format --check` (backend + scripts), `pytest`, smoke scripts (health, fixture inspection, fixture circuit / simulation, escape demo, web demo API, embodiment loop, Threat Lab API) | synthetic fixture + committed `escape_v1` artifact |
+| backend (Python 3.11, 3.12) | `pip install -e backend[dev]`, `ruff check` + `ruff format --check` (backend + scripts), `pytest`, smoke scripts (health, fixture inspection, fixture circuit / simulation, escape demo, web demo API, embodiment loop, Threat Lab API, intervention A/B) | synthetic fixture + committed `escape_v1` artifact |
 | frontend (Node 22) | `npm ci`, `npm run typecheck`, `npm run build` | — |
 | e2e | backend + frontend install, `npx playwright install --with-deps chromium`, `scripts/run_demo.py --check`, `--smoke`, `npm run test:e2e` (all specs, live backend) | committed `escape_v1` artifact |
 
@@ -104,6 +104,7 @@ make smoke-backend      # scripts/smoke_test.py: boots uvicorn on a free port, a
 make smoke-web          # scripts/smoke_web_demo.py: escape API over REST + WebSocket (P5)
 make smoke-embodiment   # scripts/smoke_embodiment.py: closed loop in-process (P7.0)
 make smoke-threat-lab   # scripts/smoke_threat_lab.py: /embodiment/config + /embodiment/run over HTTP (P7.1)
+make smoke-intervention # scripts/smoke_intervention.py: CONTROL vs SILENCE_LPLC2 over the A/B API (P7.2)
 make smoke-frontend     # cd frontend && npm run test:e2e (Playwright)
 ```
 
@@ -115,7 +116,9 @@ The Playwright run starts **both** servers itself (backend via `backend/.venv` P
 inspector), `tests/landing.spec.ts` (P6.1 landing, story, presets), `tests/smoke-inspector.spec.ts`
 (MVP screenshots A–E), `tests/release-screenshots.spec.ts` (release screenshots),
 `tests/threat-lab.spec.ts` (P7.1 Virtual Threat Lab: 19 tests, replay compared with the captured
-backend payload) and `tests/smoke-threat-lab.spec.ts` (Threat Lab screenshots A–E). Screenshot
+backend payload), `tests/smoke-threat-lab.spec.ts` (Threat Lab screenshots A–E),
+`tests/intervention-lab.spec.ts` (P7.2 Neural Intervention Lab: 15 tests covering the 21 required
+checks) and `tests/smoke-intervention.spec.ts` (intervention screenshots A–C). Screenshot
 specs write to `frontend/test-results/screenshots/` (git-ignored); `make screenshots` sets
 `FLYBRAIN_SCREENSHOT_DIR=../docs/screenshots` to refresh the curated set. Happy paths always hit
 the live backend; only error states are mocked.
@@ -291,6 +294,30 @@ paths unchanged). Frontend: `frontend/src/threatlab/` (`useThreatLab`, `ThreatLa
 make smoke-threat-lab      # boots uvicorn, GET /embodiment/config, POST /embodiment/run, checks the replay
                            # -> data/simulations/threat_lab_smoke.report.json (runtime, payload size)
 cd frontend && npx playwright test tests/threat-lab.spec.ts tests/smoke-threat-lab.spec.ts
+```
+
+## 4j. Neural Intervention Lab (P7.2)
+
+`backend/app/simulation/intervention.py` — `InterventionConfig` (frozen; `NONE` |
+`SUPPRESS_FIRING`, target ids / cell types, label, layer COMPUTATIONAL DYNAMICS),
+`NO_INTERVENTION`, `FUTURE_INTERVENTION_TYPES` (documented, rejected). `SimulationEngine`
+takes `intervention=` (constructor or `run(...)`), builds a mask and forces `fired = False`
+for targets at threshold; the circuit is never modified. `backend/app/behavior/intervention.py`
+— selectors → `ResolvedTargets` from the circuit's `cell_type` annotations (fails loudly),
+`build_intervention`, `structural_signature`, `BIOLOGICAL_CONTEXT`.
+`backend/app/api/intervention.py` — `GET /embodiment/intervention/config`,
+`POST /embodiment/intervention/compare` (`InterventionService` on top of the P7.1
+`ThreatLabService`; verified matched conditions, descriptive differences, structural integrity
+before / after). Tests: `backend/tests/test_intervention.py` (simulation layer, 18) and
+`backend/tests/test_api_intervention.py` (A/B API, 27). Frontend: `frontend/src/intervention/`
+(`useInterventionLab`, `InterventionLabView`, `TrialPanel`, `ComparisonPanel`,
+`BiologicalContext`), `ThreatLabBrain` `suppressedCellTypes`, tab `Neural Intervention Lab`
+/ hash `#intervention`, inspector `intervention-state` block. Design: `docs/EMBODIMENT.md` §11.
+
+```bash
+make smoke-intervention    # boots uvicorn, CONTROL vs SILENCE_LPLC2, prints both trials and the
+                           # descriptive difference -> data/simulations/intervention_smoke.report.json
+cd frontend && npx playwright test tests/intervention-lab.spec.ts tests/smoke-intervention.spec.ts
 ```
 
 ## 5. Configuration
