@@ -206,7 +206,9 @@ Embodiment layer (P7.0): `backend/app/embodiment/` implements the closed loop
 World → Sensor → Brain → Motor → Body → World with adapter interfaces; no endpoints yet
 (additive, backend-only). See `docs/EMBODIMENT.md`.
 
-Virtual Threat Lab (P7.1): `backend/app/api/embodiment.py` exposes that loop read-only (`GET /embodiment/config`, `POST /embodiment/run`; a fresh `EmbodiedAgentLoop` per request on the shared escape_v1 brain, safe world / seed / step parameters only, no neural parameter). The `frontend/src/threatlab/` view replays the returned timeline — every panel renders `timeline[step]`; the browser never simulates, decodes or moves anything, and a failed run shows NO RESULT. Neural intervention is P7.2 (not implemented). See `docs/EMBODIMENT.md` §10.
+Virtual Threat Lab (P7.1): `backend/app/api/embodiment.py` exposes that loop read-only (`GET /embodiment/config`, `POST /embodiment/run`; a fresh `EmbodiedAgentLoop` per request on the shared escape_v1 brain, safe world / seed / step parameters only, no neural parameter). The `frontend/src/threatlab/` view replays the returned timeline — every panel renders `timeline[step]`; the browser never simulates, decodes or moves anything, and a failed run shows NO RESULT. See `docs/EMBODIMENT.md` §10.
+
+Neural Intervention Lab (P7.2): `app/simulation/intervention.py` adds `InterventionConfig` (COMPUTATIONAL FIRING SUPPRESSION, layer COMPUTATIONAL DYNAMICS) applied inside `SimulationEngine.step()` — a targeted neuron keeps its id, edges and synapse counts and still integrates input, but emits no spike (no reset, no refractory period, no propagation). `app/behavior/intervention.py` resolves `SILENCE_LC4` / `SILENCE_LPLC2` / `SILENCE_LC4_LPLC2` from the circuit's cell-type annotations; `app/api/intervention.py` runs CONTROL and one intervention under verified matched conditions and returns descriptive differences only. STRUCTURE ≠ DYNAMICS ≠ INTERVENTION ≠ BEHAVIOR: structure is never modified (checked before / after each trial), the decoder / motor / body / world are untouched, no expected outcome is encoded. See `docs/EMBODIMENT.md` §11.
 
 ## 8. Frontend
 Main layout:

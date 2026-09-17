@@ -8,7 +8,7 @@ VENV_PY      := $(VENV)/bin/python
 
 .PHONY: help install install-backend install-frontend backend frontend \
         test test-backend typecheck-frontend lint smoke smoke-backend smoke-frontend smoke-data \
-        smoke-circuit smoke-simulation smoke-escape smoke-web smoke-embodiment smoke-threat-lab normalize normalize-fixture inspect \
+        smoke-circuit smoke-simulation smoke-escape smoke-web smoke-embodiment smoke-threat-lab smoke-intervention normalize normalize-fixture inspect \
         extract simulate build-escape-config demo demo-check demo-smoke screenshots build-frontend clean
 
 help:
@@ -32,6 +32,7 @@ help:
 	@echo "make smoke-web          WEB DEMO SMOKE: escape API over REST + WebSocket + inspector API"
 	@echo "make smoke-embodiment   TECHNICAL EMBODIMENT SMOKE: closed loop with the SIMPLIFIED COMPUTATIONAL BODY (P7.0)"
 	@echo "make smoke-threat-lab   VIRTUAL THREAT LAB SMOKE: /embodiment/config + /embodiment/run replay over HTTP (P7.1)"
+	@echo "make smoke-intervention NEURAL INTERVENTION SMOKE: CONTROL vs SILENCE_LPLC2 over the A/B API (P7.2)"
 	@echo "make demo-smoke         start both servers, verify they answer, stop (release/CI check)"
 	@echo "make screenshots        refresh docs/screenshots/release-*.png with Playwright"
 	@echo "make build-frontend     production build of the frontend (frontend/dist)"
@@ -66,7 +67,7 @@ lint:
 build-frontend:
 	cd $(FRONTEND_DIR) && npm run build
 
-smoke: smoke-backend smoke-data smoke-circuit smoke-simulation smoke-escape smoke-web smoke-embodiment smoke-threat-lab smoke-frontend
+smoke: smoke-backend smoke-data smoke-circuit smoke-simulation smoke-escape smoke-web smoke-embodiment smoke-threat-lab smoke-intervention smoke-frontend
 
 smoke-backend:
 	$(VENV_PY) scripts/smoke_test.py
@@ -105,6 +106,9 @@ smoke-embodiment:
 smoke-threat-lab:
 	$(VENV_PY) scripts/smoke_threat_lab.py
 
+smoke-intervention:
+	$(VENV_PY) scripts/smoke_intervention.py
+
 demo:
 	$(VENV_PY) scripts/run_demo.py
 
@@ -115,7 +119,7 @@ demo-smoke:
 	$(VENV_PY) scripts/run_demo.py --smoke
 
 screenshots:
-	cd $(FRONTEND_DIR) && FLYBRAIN_SCREENSHOT_DIR=../docs/screenshots npx playwright test tests/release-screenshots.spec.ts tests/smoke-inspector.spec.ts tests/smoke-threat-lab.spec.ts
+	cd $(FRONTEND_DIR) && FLYBRAIN_SCREENSHOT_DIR=../docs/screenshots npx playwright test tests/release-screenshots.spec.ts tests/smoke-inspector.spec.ts tests/smoke-threat-lab.spec.ts tests/smoke-intervention.spec.ts
 
 normalize:
 	$(VENV_PY) scripts/normalize_dataset.py --adapter malecns

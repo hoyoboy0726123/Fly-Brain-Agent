@@ -145,15 +145,15 @@ Every derived artifact carries its provenance: `data/processed/provenance.json` 
 make test           # backend pytest + frontend typecheck
 make lint           # ruff check + format check (backend + scripts)
 make build-frontend # production build (frontend/dist)
-make smoke          # health · fixture data · circuit · simulation · escape demo · web demo API · embodiment · threat lab · Playwright
+make smoke          # health · fixture data · circuit · simulation · escape demo · web demo API · embodiment · threat lab · intervention · Playwright
 make demo-smoke     # start both servers via the launcher, verify, stop
 ```
 
 | Suite | What it covers | Data used |
 |---|---|---|
-| `pytest` (backend) | dataset adapters, canonical-graph guards, extractor, simulation engine, escape pipeline, escape API, circuits API (incl. "every served edge exists in the artifact"), embodiment loop, Threat Lab API (timeline = P7.0 loop records, determinism, limits, failure → no timeline), launcher validation | synthetic fixture + committed `escape_v1` artifact |
-| Playwright (frontend) | health smoke, P5 demo, landing / presets / story, P6 inspector, P7.1 Virtual Threat Lab (replay = backend record, ESCAPE marker, body moves only per `BodyState`, NO RESULT on failure), screenshot specs — happy paths on the live backend, error states intercepted | committed `escape_v1` artifact |
-| smoke scripts | health, fixture inspection, fixture extraction / simulation (production steps skipped without data), escape demo, web demo REST + WebSocket + inspector API, embodiment loop, Threat Lab API over HTTP | fixture + committed artifact |
+| `pytest` (backend) | dataset adapters, canonical-graph guards, extractor, simulation engine, escape pipeline, escape API, circuits API (incl. "every served edge exists in the artifact"), embodiment loop, Threat Lab API (timeline = P7.0 loop records, determinism, limits, failure → no timeline), computational firing suppression (structure unchanged, targets never fire, NONE = legacy), A/B intervention API (matched conditions verified), launcher validation | synthetic fixture + committed `escape_v1` artifact |
+| Playwright (frontend) | health smoke, P5 demo, landing / presets / story, P6 inspector, P7.1 Virtual Threat Lab (replay = backend record, ESCAPE marker, body moves only per `BodyState`, NO RESULT on failure), P7.2 Neural Intervention Lab (one cursor for both trials, SUPPRESSED groups structurally present, backend-derived actions / GF / body, disclaimers, literature separated from result), screenshot specs — happy paths on the live backend, error states intercepted | committed `escape_v1` artifact |
+| smoke scripts | health, fixture inspection, fixture extraction / simulation (production steps skipped without data), escape demo, web demo REST + WebSocket + inspector API, embodiment loop, Threat Lab API over HTTP, CONTROL vs SILENCE_LPLC2 over the A/B API | fixture + committed artifact |
 
 **Continuous integration** ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)) runs on every push and pull request: backend (Python 3.11 and 3.12: ruff, pytest, smoke scripts), frontend (Node 22: `npm ci`, typecheck, production build) and end-to-end (launcher `--check` and `--smoke`, then the full Playwright suite against the live backend with the committed artifact). **CI never downloads the MaleCNS dataset**; steps that need the raw data (`make normalize`, technical extraction / simulation on the canonical graph, `make build-escape-config`) are local-only and skip themselves in CI.
 
@@ -205,10 +205,62 @@ circuit, dataset, labels, scientific boundaries, disclaimer, request limits) and
 azimuth_deg}`; unknown or neural fields → 422). Details in
 [docs/EMBODIMENT.md §10](docs/EMBODIMENT.md#10-virtual-threat-lab-p71).
 
+## Neural Intervention Lab (P7.2)
+
+The fourth tab, **Neural Intervention Lab**, runs the same virtual threat twice under
+verified matched conditions — **CONTROL** and one **computational intervention** — and
+replays both with one cursor. The intervention is **COMPUTATIONAL FIRING SUPPRESSION**
+applied inside the simulation engine (`InterventionConfig`, layer COMPUTATIONAL DYNAMICS):
+
+> Computational intervention suppresses simulated firing of selected neurons while
+> preserving the biological structural connectivity.
+
+For a targeted neuron the id, edges and synapse counts stay in the circuit, input is still
+accumulated and the membrane still integrates; when it reaches threshold no spike is
+emitted (no reset, no refractory period, no propagation). Targets (`SILENCE LC4`,
+`SILENCE LPLC2`, `SILENCE LC4 + LPLC2`) are resolved from the circuit artifact's own
+cell-type annotations — no id is invented, no count is assumed — and recorded in
+provenance. Nothing downstream is touched: the decoder, motor mapping, body and world are
+unchanged, no expected outcome is encoded, and the simulation decides whether ESCAPE still
+happens. Suppressed groups are drawn crossed-out with **STRUCTURE PRESENT · SIMULATED FIRING
+SUPPRESSED**; the Brain Inspector shows the intervention state of a selected neuron.
+
+The literature that motivates the targets (Ache et al. 2019, *Current Biology*, DOI
+10.1016/j.cub.2019.01.079: LC4 → GF angular-velocity contribution, LPLC2 → GF angular-size
+contribution, experimental LPLC2 silencing impaired GF-mediated escape) is shown as
+**BIOLOGICAL EVIDENCE**, separated from the **CURRENT COMPUTATIONAL RESULT**; the simulation
+result is never presented as validation of that study.
+
+> Neural interventions in this lab are computational manipulations of simulated neural
+> dynamics. They do not reproduce a specific biological silencing, optogenetic, genetic,
+> pharmacological, or lesion technique. Biological structural connectivity remains unchanged.
+
+Observed with the current model (default world, seed 0, 30 loop steps; reported as is):
+suppressing LC4 alone or LPLC2 alone left the first ESCAPE at loop step 16; suppressing
+both removed the ESCAPE (GF never fired). Structure before / after: 286 neurons, 932 edges,
+18,843 synapses, same hash.
+
+| Screenshot | State |
+|---|---|
+| [`docs/screenshots/intervention-A-initial.png`](docs/screenshots/intervention-A-initial.png) | lab before a comparison |
+| [`docs/screenshots/intervention-B-silence-lplc2.png`](docs/screenshots/intervention-B-silence-lplc2.png) | CONTROL vs SILENCE LPLC2 at the control ESCAPE step (LPLC2 crossed out, structure present) |
+| [`docs/screenshots/intervention-C-comparison.png`](docs/screenshots/intervention-C-comparison.png) | matched conditions and descriptive differences for LC4 + LPLC2 |
+
+```bash
+make smoke-intervention    # scripts/smoke_intervention.py: CONTROL vs SILENCE_LPLC2 over the A/B API
+```
+
+API: `GET /embodiment/intervention/config` (resolved selectors, semantics, disclaimers,
+literature, structural signature) and `POST /embodiment/intervention/compare`
+(`intervention`, `seed`, `max_steps`, `world`) → `control`, `intervention` (config, resolved
+targets, experiment, provenance) and `comparison` (verified `matched_conditions`,
+descriptive `differences`, `synchronization`, `structural_integrity`). Details in
+[docs/EMBODIMENT.md §11](docs/EMBODIMENT.md#11-neural-intervention-lab-p72).
+
 ## Roadmap
 
 - **Release:** v0.1.0 tag and GitHub Release — pending explicit authorization by the project owner (license decision resolved: Apache-2.0).
-- P7.0 — embodiment architecture foundation (done, approved); P7.1 — Virtual Threat Lab (done, awaiting review); P7.2 — neural intervention (silence / stimulate / lesion) in the lab, planned; later — FlyGym / NeuroMechFly adapters; food seeking only after its own research gate.
+- P7.0 — embodiment architecture (done, approved); P7.1 — Virtual Threat Lab (done, approved); P7.2 — computational neural intervention lab, SUPPRESS_FIRING only (done, awaiting review); P7.3+ — further intervention mechanisms (STIMULATE / CLAMP / LESION / synaptic edits are documented, not implemented), FlyGym / NeuroMechFly adapters; food seeking only after its own research gate.
 - P8 — webcam stimulus adapter; P9 — safe robot / physical adapter.
 - Candidate `escape_v2`: DNp02 / DNp04 / DNp11 (forward / backward takeoff) once directional decoding is evidence-backed; contralateral giant-fiber inputs.
 - Inspector: per-neuron voltage traces, snapshot export / import.

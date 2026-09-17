@@ -35,6 +35,11 @@ export interface ThreatLabBrainProps {
   phase: LabPhase
   brain: BrainRecord | null
   loopStep: number | null
+  /** P7.2: cell types whose simulated firing is suppressed (structure stays present). */
+  suppressedCellTypes?: readonly string[]
+  /** Compact layout for the side-by-side intervention lab. */
+  compact?: boolean
+  title?: string
 }
 
 /**
@@ -42,8 +47,9 @@ export interface ThreatLabBrainProps {
  * biological structure from the circuit artifact; the glow and the per-neural-step bars
  * are the SIMULATED activity the backend recorded for the replayed loop step.
  */
-export function ThreatLabBrain({ groups, edges, circuitId, phase, brain, loopStep }: ThreatLabBrainProps) {
+export function ThreatLabBrain({ groups, edges, circuitId, phase, brain, loopStep, suppressedCellTypes = [], compact = false, title }: ThreatLabBrainProps) {
   const nodes = layout(groups)
+  const suppressed = new Set(suppressedCellTypes)
   const position = new Map(nodes.map((n) => [n.group.key, n]))
   const drawnEdges = edges.filter((e) => e.pre_key !== e.post_key && position.has(e.pre_key) && position.has(e.post_key))
   const maxSynapses = Math.max(1, ...drawnEdges.map((e) => e.synapse_total))
@@ -51,18 +57,24 @@ export function ThreatLabBrain({ groups, edges, circuitId, phase, brain, loopSte
   const neuralSteps = brain?.neural_steps ?? 0
 
   return (
-    <section className="panel panel--lab-brain" data-testid="lab-brain-panel" aria-labelledby="lab-brain-title">
+    <section className={`panel panel--lab-brain ${compact ? 'panel--lab-brain-compact' : ''}`} data-testid="lab-brain-panel" data-suppressed={[...suppressed].sort().join(',')} aria-labelledby="lab-brain-title">
       <header className="panel__header">
         <div>
           <p className="panel__kicker">Brain · escape circuit {circuitId ? <span className="mono">({circuitId})</span> : null}</p>
           <h2 id="lab-brain-title" className="panel__title">
-            LC4 / LPLC2 → DNp01
+            {title ?? 'LC4 / LPLC2 → DNp01'}
           </h2>
         </div>
         <span className="tag tag--simulated" data-testid="lab-brain-label">
           SIMULATED NEURAL ACTIVITY
         </span>
       </header>
+      {suppressed.size > 0 && (
+        <p className="lab-suppressed-note" data-testid="lab-suppressed-note">
+          <span className="tag tag--suppressed">COMPUTATIONAL FIRING SUPPRESSION</span> {[...suppressed].sort().join(' + ')}: STRUCTURE PRESENT · SIMULATED FIRING
+          SUPPRESSED
+        </p>
+      )}
 
       <div className="brain__status">
         <span className="mono" data-testid="lab-brain-step">
@@ -127,26 +139,35 @@ export function ThreatLabBrain({ groups, edges, circuitId, phase, brain, loopSte
             const fired = brain?.group_peak_fired[group.key] ?? 0
             const fraction = group.neuron_count > 0 ? fired / group.neuron_count : 0
             const active = fired > 0
+            const isSuppressed = suppressed.has(group.cell_type)
             return (
               <g
                 key={group.key}
-                className={`node node--${group.role} ${active ? 'node--active' : ''}`}
+                className={`node node--${group.role} ${active ? 'node--active' : ''} ${isSuppressed ? 'node--suppressed' : ''}`}
                 data-testid={`lab-node-${group.key}`}
                 data-active={active}
                 data-fired={fired}
+                data-suppressed={isSuppressed}
+                data-neuron-count={group.neuron_count}
                 style={{ ['--fraction' as string]: fraction }}
               >
                 <circle className="node__ring" cx={x} cy={y} r={NODE_R + 4} />
                 <circle className="node__glow" cx={x} cy={y} r={NODE_R} filter="url(#labNodeGlow)" />
                 <circle className="node__core" cx={x} cy={y} r={NODE_R} />
+                {isSuppressed && (
+                  <g className="node__suppressed-mark" aria-hidden="true">
+                    <line x1={x - NODE_R * 0.7} y1={y - NODE_R * 0.7} x2={x + NODE_R * 0.7} y2={y + NODE_R * 0.7} />
+                    <line x1={x - NODE_R * 0.7} y1={y + NODE_R * 0.7} x2={x + NODE_R * 0.7} y2={y - NODE_R * 0.7} />
+                  </g>
+                )}
                 <text className="node__label" x={x} y={y - 3} textAnchor="middle">
                   {group.cell_type}
                 </text>
                 <text className="node__sub" x={x} y={y + 10} textAnchor="middle">
                   {group.side === 'L' ? 'left' : group.side === 'R' ? 'right' : group.side}
                 </text>
-                <text className="node__count" x={x} y={y + NODE_R + 13} textAnchor="middle">
-                  {brain ? `peak ${fired} / ${group.neuron_count}` : `${group.neuron_count} neurons`}
+                <text className={`node__count ${isSuppressed ? 'node__count--suppressed' : ''}`} x={x} y={y + NODE_R + 13} textAnchor="middle">
+                  {isSuppressed ? `SUPPRESSED · ${group.neuron_count} neurons` : brain ? `peak ${fired} / ${group.neuron_count}` : `${group.neuron_count} neurons`}
                 </text>
               </g>
             )
@@ -158,9 +179,19 @@ export function ThreatLabBrain({ groups, edges, circuitId, phase, brain, loopSte
         {groups.map((group) => {
           const counts = brain?.group_fired_counts[group.key] ?? []
           const max = Math.max(1, group.neuron_count)
+          const isSuppressed = suppressed.has(group.cell_type)
           return (
-            <div key={group.key} className="lab-raster__row" data-testid={`lab-raster-${group.key}`} data-total={counts.reduce((a, b) => a + b, 0)}>
-              <span className="lab-raster__key mono">{group.key}</span>
+            <div
+              key={group.key}
+              className={`lab-raster__row ${isSuppressed ? 'lab-raster__row--suppressed' : ''}`}
+              data-testid={`lab-raster-${group.key}`}
+              data-total={counts.reduce((a, b) => a + b, 0)}
+              data-suppressed={isSuppressed}
+            >
+              <span className="lab-raster__key mono">
+                {group.key}
+                {isSuppressed ? <span className="lab-raster__suppressed"> SUPPRESSED</span> : null}
+              </span>
               <span className="lab-raster__bars" aria-hidden="true">
                 {(counts.length > 0 ? counts : Array.from({ length: Math.max(neuralSteps, 1) }, () => 0)).map((count, i) => (
                   <span key={i} className={`lab-raster__bar ${count > 0 ? 'lab-raster__bar--on' : ''}`} style={{ height: `${Math.max(count > 0 ? 18 : 6, Math.round((count / max) * 100))}%` }} />
@@ -174,6 +205,7 @@ export function ThreatLabBrain({ groups, edges, circuitId, phase, brain, loopSte
         <p>
           Node identity, neuron counts and edges = <strong>biological structure</strong> (MaleCNS circuit artifact). Glow = fraction of the group
           with a simulated spike at its peak neural step; bars = simulated spike counts per neural step of this loop step. {firedTotal === 0 && brain ? 'No simulated activity at this step.' : ''}
+          {suppressed.size > 0 ? ' Crossed-out groups: neurons and edges are present (biological structure); their simulated firing is suppressed by a computational intervention.' : ''}
         </p>
       </footer>
     </section>

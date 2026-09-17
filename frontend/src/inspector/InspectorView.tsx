@@ -4,7 +4,7 @@ import type { EscapeDemo } from '../demo/useEscapeDemo.ts'
 import { CircuitGraph, type EdgeSelection, type GraphHighlight } from './CircuitGraph.tsx'
 import { EdgeInspector } from './EdgeInspector.tsx'
 import { Legend } from './Legend.tsx'
-import { NeuronInspector } from './NeuronInspector.tsx'
+import { NeuronInspector, type InterventionInfo } from './NeuronInspector.tsx'
 import { ProvenancePanel } from './ProvenancePanel.tsx'
 import { ReplayControls } from './ReplayControls.tsx'
 import { SearchBar } from './SearchBar.tsx'
@@ -20,9 +20,11 @@ const EMPTY_HIGHLIGHT: GraphHighlight = { mode: null, nodeIds: new Set(), edgeKe
 export interface InspectorViewProps {
   demo: EscapeDemo
   paceMs: number
+  /** P7.2: the last Neural Intervention Lab comparison (targets are shown per neuron; graph unchanged). */
+  intervention?: InterventionInfo | null
 }
 
-export function InspectorView({ demo, paceMs }: InspectorViewProps) {
+export function InspectorView({ demo, paceMs, intervention = null }: InspectorViewProps) {
   const circuitId = demo.state.config?.circuit_id ?? DEFAULT_CIRCUIT_ID
   const { state, index, reload } = useCircuitData(circuitId)
   const replay = useReplay(demo.state.result?.neuron_activity ?? null, paceMs)
@@ -169,6 +171,7 @@ export function InspectorView({ demo, paceMs }: InspectorViewProps) {
                 simState={simState}
                 replayStep={replay.step}
                 replayAvailable={replayActive}
+                intervention={intervention}
                 highlightMode={highlightMode}
                 onHighlight={setHighlightMode}
                 onSelectNeuron={(id) => selectNeuron(id, true)}

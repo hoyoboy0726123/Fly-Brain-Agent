@@ -13,6 +13,7 @@ from typing import Any, Literal
 from pydantic import BaseModel, Field
 
 from app.simulation.config import SimulationConfig
+from app.simulation.intervention import InterventionConfig
 
 ACTIVITY_LABEL = (
     "SIMULATED neural activity (simplified LIF-like model); not measured biological activity"
@@ -33,6 +34,8 @@ class NeuronState(BaseModel):
     fired: bool
     #: dataset-provided prediction carried as metadata; it does NOT influence the dynamics
     neurotransmitter_prediction: str | None = None
+    #: P7.2: simulated firing of this neuron is suppressed by a computational intervention
+    suppressed: bool = False
 
 
 class StimulusRecord(BaseModel):
@@ -70,6 +73,9 @@ class StepSummary(BaseModel):
     fired_neuron_ids: list[str]
     max_membrane_potential: float
     external_input_neurons: int
+    #: P7.2: neurons whose simulated threshold crossing was suppressed by an intervention
+    suppressed_count: int = 0
+    suppressed_neuron_ids: list[str] = Field(default_factory=list)
 
 
 class RunSummary(BaseModel):
@@ -83,6 +89,8 @@ class RunSummary(BaseModel):
     per_step_fired_counts: list[int]
     runtime_seconds: float
     mean_step_seconds: float
+    #: P7.2: total suppressed threshold crossings during the run (0 without intervention)
+    suppressed_events: int = 0
 
 
 class SimulationSnapshot(BaseModel):
@@ -102,6 +110,8 @@ class SimulationSnapshot(BaseModel):
     stimuli: list[StimulusRecord]
     neuron_states: list[NeuronState]
     firing_events_total: int
+    #: P7.2: intervention active in the engine (None / NONE = control)
+    intervention: InterventionConfig | None = None
     rng_state: dict[str, Any] | None = None
     created_at: str
 

@@ -36,3 +36,7 @@ class SimulationLimitError(SimulationError):
 
 class SnapshotMismatchError(SimulationError):
     """A snapshot references a different circuit than the one supplied."""
+
+
+class InterventionError(SimulationError):
+    """A computational intervention (P7.2) is invalid or not implemented."""

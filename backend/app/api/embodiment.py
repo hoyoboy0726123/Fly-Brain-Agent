@@ -45,6 +45,7 @@ from app.embodiment import (
     VirtualLoomingSensor,
     VirtualLoomingSensorConfig,
 )
+from app.simulation import InterventionConfig
 from app.simulation.errors import SimulationError
 
 router = APIRouter(tags=["embodiment"])
@@ -208,6 +209,8 @@ class BrainView(BaseModel):
     neurons_activated: int
     action: str
     activity_label: str
+    #: P7.2: simulated threshold crossings suppressed by a computational intervention (0 = none)
+    suppressed_events: int = 0
 
 
 class MotorView(BaseModel):
@@ -343,6 +346,7 @@ def _step_view(record: EmbodiedStepRecord, world_before, body_before) -> ThreatL
             neurons_activated=b.neurons_activated,
             action=b.action,
             activity_label=b.activity_label,
+            suppressed_events=b.suppressed_events,
         ),
         motor=_motor_view(record.command),
     )
@@ -398,7 +402,11 @@ class ThreatLabService:
     def config_response(self) -> ThreatLabConfigResponse:
         return self.default_config_response(self.escape, LoopConfig())
 
-    def run(self, request: ThreatLabRunRequest) -> ThreatLabRunResponse:
+    def run(
+        self, request: ThreatLabRunRequest, intervention: InterventionConfig | None = None
+    ) -> ThreatLabRunResponse:
+        """One experiment. ``intervention`` (P7.2) is passed straight to the P7.0 loop, which
+        hands it to the brain / engine; this service never inspects or applies it."""
         started = datetime.now(UTC)
         world_config = SimpleWorldConfig(
             start_distance=request.world.start_distance,
@@ -412,6 +420,7 @@ class ThreatLabService:
             motor=EscapeMotorAdapter(),
             body=SimpleBodyAdapter(),
             config=LoopConfig(dt=0.1, max_steps=request.max_steps, random_seed=request.seed),
+            intervention=intervention,
         )
         initial_world, initial_body = loop.reset()
         timeline: list[ThreatLabStep] = []

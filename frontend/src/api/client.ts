@@ -10,6 +10,8 @@ import {
   isHealthResponse,
   isNeighborsResponse,
   isNeuronDetail,
+  isInterventionCompareResult,
+  isInterventionLabConfig,
   isThreatLabConfig,
   isThreatLabRunResult,
   type CircuitEdgeRecord,
@@ -22,6 +24,9 @@ import {
   type EscapeRunResult,
   type HealthResponse,
   type NeighborsResponse,
+  type InterventionCompareRequest,
+  type InterventionCompareResult,
+  type InterventionLabConfig,
   type NeuronDetail,
   type ThreatLabConfig,
   type ThreatLabRunRequest,
@@ -39,6 +44,7 @@ export type ErrorCode =
   | 'circuit_mismatch'
   | 'simulation_error'
   | 'embodiment_error'
+  | 'target_resolution_failed'
   | 'timeout'
   | 'backend_unavailable'
   | 'unexpected_response'
@@ -74,6 +80,8 @@ export function describeErrorCode(code: ErrorCode): string {
       return 'Simulation error'
     case 'embodiment_error':
       return 'Embodiment error (world / sensor / motor / body adapter)'
+    case 'target_resolution_failed':
+      return 'Intervention targets could not be resolved from the circuit'
     case 'timeout':
       return 'Timeout'
     case 'unexpected_response':
@@ -290,6 +298,27 @@ export async function runThreatLab(request: ThreatLabRunRequest, signal?: AbortS
   const payload = await requestJson('/embodiment/run', init)
   if (!isThreatLabRunResult(payload)) {
     throw new ApiError('Backend returned an unexpected /embodiment/run payload', { code: 'unexpected_response' })
+  }
+  return payload
+}
+
+// ---------------------------------------------------------------------------- neural intervention lab (P7.2)
+
+export function fetchInterventionLabConfig(signal?: AbortSignal): Promise<InterventionLabConfig> {
+  return getGuarded('/embodiment/intervention/config', isInterventionLabConfig, '/embodiment/intervention/config', signal)
+}
+
+/** `POST /embodiment/intervention/compare` — CONTROL and one computational intervention, matched conditions. */
+export async function compareIntervention(request: InterventionCompareRequest, signal?: AbortSignal): Promise<InterventionCompareResult> {
+  const init: RequestInit = {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(request),
+  }
+  if (signal) init.signal = signal
+  const payload = await requestJson('/embodiment/intervention/compare', init)
+  if (!isInterventionCompareResult(payload)) {
+    throw new ApiError('Backend returned an unexpected /embodiment/intervention/compare payload', { code: 'unexpected_response' })
   }
   return payload
 }

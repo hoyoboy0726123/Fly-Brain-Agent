@@ -19,7 +19,7 @@ from app.circuits import Circuit, CircuitExtractor, ConnectivityGraph
 from app.circuits.errors import ArtifactIntegrityError
 from app.motor import MotorDecision, MotorDecoder
 from app.sensors import LoomingStimulus, SensoryDrive, StimulusMapper
-from app.simulation import ACTIVITY_LABEL, SimulationConfig, SimulationEngine
+from app.simulation import ACTIVITY_LABEL, InterventionConfig, SimulationConfig, SimulationEngine
 
 DISCLAIMER = (
     "STRUCTURAL CONNECTIVITY IS BIOLOGICAL DATA. NEURAL ACTIVITY IS SIMULATED. "
@@ -149,6 +149,10 @@ class EscapeResult(BaseModel):
     decision: MotorDecision
     timeline: list[TimelineEvent]
     runtime_seconds: float
+    #: P7.2: computational intervention applied inside the engine (default: none / control)
+    intervention: InterventionConfig = Field(default_factory=InterventionConfig)
+    #: P7.2: simulated threshold crossings suppressed by the intervention (0 for control)
+    suppressed_events: int = 0
 
 
 class EscapeExperiment:
@@ -256,11 +260,14 @@ class EscapeExperiment:
         steps: int | None = None,
         *,
         record_neuron_states: bool = True,
+        intervention: InterventionConfig | None = None,
     ) -> EscapeResult:
+        """Run the pipeline once. ``intervention`` (P7.2) is handed to the engine only —
+        the mapper, decoder and everything after them are unchanged; ``None`` = control."""
         started = time.perf_counter()
         steps = steps or self.config.simulation_steps
         drive = self.mapper.map(stimulus)
-        engine = SimulationEngine(self.circuit, self.simulation_config)
+        engine = SimulationEngine(self.circuit, self.simulation_config, intervention)
         engine.stimulate(drive.neuron_ids, drive.injected_current, drive.duration_steps)
         potentials: list[list[float]] = []
         refractory: list[list[int]] = []
@@ -391,6 +398,8 @@ class EscapeExperiment:
             decision=decision,
             timeline=timeline,
             runtime_seconds=round(time.perf_counter() - started, 6),
+            intervention=engine.intervention,
+            suppressed_events=engine.suppressed_events,
         )
 
 

@@ -913,3 +913,210 @@ export function isThreatLabRunResult(value: unknown): value is ThreatLabRunResul
     typeof value['runtime_seconds'] === 'number'
   )
 }
+
+// ---------------------------------------------------------------------------- neural intervention lab (P7.2)
+// Mirrors of `app.api.intervention`. The intervention is COMPUTATIONAL FIRING SUPPRESSION
+// applied inside the backend simulation engine; the UI only renders the two recorded trials.
+
+export type InterventionSelector = 'CONTROL' | 'SILENCE_LC4' | 'SILENCE_LPLC2' | 'SILENCE_LC4_LPLC2'
+export const INTERVENTION_SELECTORS: readonly InterventionSelector[] = ['CONTROL', 'SILENCE_LC4', 'SILENCE_LPLC2', 'SILENCE_LC4_LPLC2']
+
+export interface InterventionConfigRecord {
+  intervention_type: 'NONE' | 'SUPPRESS_FIRING'
+  target_neuron_ids: string[]
+  target_cell_types: string[]
+  label: string
+  description: string
+  layer: string
+  semantics: string
+}
+
+export interface ResolvedTargets {
+  selector: string
+  label: string
+  cell_types: string[]
+  neuron_ids: string[]
+  neuron_count: number
+  per_cell_type_counts: Record<string, number>
+  circuit_id: string
+  circuit_hash: string
+  resolution_rule: string
+}
+
+export interface SelectorInfo {
+  selector: InterventionSelector
+  label: string
+  cell_types: string[]
+  resolved: ResolvedTargets
+}
+
+export interface BiologicalContext {
+  label: string
+  citation: { authors: string; year: number; title: string; journal: string; doi: string }
+  LC4: string
+  LPLC2: string
+  scope: string
+}
+
+export interface StructuralSignature {
+  node_count: number
+  edge_count: number
+  synapse_total: number
+  circuit_hash: string
+  recorded_hash: string
+}
+
+export interface InterventionLabConfig {
+  label: string
+  layer: string
+  semantics: string
+  intervention_disclaimer: string
+  disclaimer: string
+  implemented_types: string[]
+  future_types_not_implemented: string[]
+  suppression_semantics: string[]
+  selectors: SelectorInfo[]
+  structural_signature: StructuralSignature
+  circuit_id: string
+  dataset: string
+  dataset_version: string
+  biological_context: BiologicalContext
+  computational_result_label: string
+  experiment_name: string
+  max_loop_steps: number
+}
+
+export interface InterventionCompareRequest {
+  intervention: InterventionSelector
+  seed: number
+  max_steps: number
+  world: ThreatLabWorldParams
+}
+
+export interface TrialView {
+  role: 'control' | 'intervention'
+  intervention_config: InterventionConfigRecord
+  resolved_targets: ResolvedTargets
+  experiment: ThreatLabRunResult
+  structural_signature: StructuralSignature
+  simulated_firing_totals: Record<string, number>
+  suppressed_events: number
+  runtime_seconds: number
+}
+
+export interface MatchedConditions {
+  same_seed: boolean
+  same_world: boolean
+  same_initial_body: boolean
+  same_sensor_config: boolean
+  same_body_config: boolean
+  same_motor_config: boolean
+  same_simulation_config: boolean
+  same_circuit: boolean
+  same_dataset_version: boolean
+  same_timing: boolean
+  same_loop_config: boolean
+  same_decoder_and_mapping: boolean
+  all_matched: boolean
+  only_difference: string
+}
+
+export interface FiringDelta {
+  control: number
+  intervention: number
+  delta: number
+}
+
+export interface ComparisonDifferences {
+  label: string
+  control_first_escape_step: number | null
+  intervention_first_escape_step: number | null
+  first_escape_step_delta: number | null
+  control_escape_occurred: boolean
+  intervention_escape_occurred: boolean
+  control_escape_steps: number[]
+  intervention_escape_steps: number[]
+  control_actions: Record<string, number>
+  intervention_actions: Record<string, number>
+  simulated_firing_totals: Record<string, FiringDelta>
+  control_final_displacement: number
+  intervention_final_displacement: number
+  displacement_delta: number
+  first_divergent_step: number | null
+  summary: string[]
+}
+
+export interface Synchronization {
+  control_steps: number
+  intervention_steps: number
+  shared_steps: number
+  cursor_max: number
+  note: string
+}
+
+export interface InterventionCompareResult {
+  comparison_id: string
+  created_at: string
+  label: string
+  disclaimer: string
+  intervention_disclaimer: string
+  semantics: string
+  layer: string
+  request: InterventionCompareRequest
+  control: TrialView
+  intervention: TrialView
+  comparison: {
+    matched_conditions: MatchedConditions
+    differences: ComparisonDifferences
+    synchronization: Synchronization
+    structural_integrity: { before: StructuralSignature; after: StructuralSignature; unchanged: boolean }
+  }
+  biological_context: BiologicalContext
+  runtime: Record<string, number>
+}
+
+function isTrialView(value: unknown): value is TrialView {
+  if (!isRecord(value)) return false
+  const config = value['intervention_config']
+  const resolved = value['resolved_targets']
+  return (
+    (value['role'] === 'control' || value['role'] === 'intervention') &&
+    isRecord(config) &&
+    Array.isArray(config['target_neuron_ids']) &&
+    isRecord(resolved) &&
+    Array.isArray(resolved['neuron_ids']) &&
+    typeof resolved['neuron_count'] === 'number' &&
+    isThreatLabRunResult(value['experiment']) &&
+    isRecord(value['simulated_firing_totals']) &&
+    typeof value['suppressed_events'] === 'number'
+  )
+}
+
+export function isInterventionLabConfig(value: unknown): value is InterventionLabConfig {
+  if (!isRecord(value)) return false
+  return (
+    typeof value['label'] === 'string' &&
+    typeof value['semantics'] === 'string' &&
+    typeof value['intervention_disclaimer'] === 'string' &&
+    typeof value['disclaimer'] === 'string' &&
+    Array.isArray(value['selectors']) &&
+    isRecord(value['structural_signature']) &&
+    isRecord(value['biological_context'])
+  )
+}
+
+export function isInterventionCompareResult(value: unknown): value is InterventionCompareResult {
+  if (!isRecord(value)) return false
+  const comparison = value['comparison']
+  return (
+    typeof value['comparison_id'] === 'string' &&
+    typeof value['intervention_disclaimer'] === 'string' &&
+    isTrialView(value['control']) &&
+    isTrialView(value['intervention']) &&
+    isRecord(comparison) &&
+    isRecord(comparison['matched_conditions']) &&
+    isRecord(comparison['differences']) &&
+    isRecord(comparison['synchronization']) &&
+    isRecord(value['biological_context'])
+  )
+}

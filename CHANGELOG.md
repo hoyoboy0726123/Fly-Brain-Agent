@@ -5,11 +5,37 @@ All notable changes to FlyBrain Agent are documented here. The format follows
 
 ## [Unreleased]
 
-P7 is delivered in three parts: **P7.0** (embodiment architecture, below), **P7.1** (the visual
-Virtual Threat Lab, below) and **P7.2** (neural intervention in the lab — planned, not
-implemented).
+P7 is delivered in three parts: **P7.0** (embodiment architecture), **P7.1** (the visual
+Virtual Threat Lab) and **P7.2** (the computational Neural Intervention Lab), all below.
 
 ### Added
+- **Neural Intervention Lab (P7.2)** — computational firing suppression at the simulation
+  layer: `app/simulation/intervention.py` (`InterventionConfig`: `NONE` | `SUPPRESS_FIRING`,
+  layer COMPUTATIONAL DYNAMICS; future mechanisms documented, not implemented),
+  `SimulationEngine(…, intervention=)` / `run(…, intervention=)` — a targeted neuron keeps its
+  biological id, edges and synapse counts, still integrates input, but never emits a spike
+  (no reset, no refractory period, no propagation); `NONE` is byte-for-byte the previous
+  behaviour. `app/behavior/intervention.py` resolves `CONTROL` / `SILENCE_LC4` /
+  `SILENCE_LPLC2` / `SILENCE_LC4_LPLC2` from the circuit artifact's cell-type annotations
+  (fails loudly, no invented ids), records `ResolvedTargets`, exposes `structural_signature`
+  and the Ache et al. 2019 literature context. `EscapeExperiment.run(…, intervention=)`,
+  `EmbodiedAgentLoop(…, intervention=)` and `ThreatLabService.run(…, intervention=)` only pass
+  it through; provenance gains `intervention` / `intervention_layer`, results gain
+  `suppressed_events`. `GET /embodiment/intervention/config` and
+  `POST /embodiment/intervention/compare` (`app/api/intervention.py`): CONTROL and one
+  intervention under **verified** matched conditions (seed, world, initial body, sensor / body
+  / motor / simulation configs, circuit hash, dataset version, timing, loop, decoder), structural
+  integrity before / after, descriptive differences (first ESCAPE steps, per-cell-type simulated
+  spikes, displacement, first divergent step, plain-language summary — no biological
+  interpretation, no expected outcome). New frontend tab **Neural Intervention Lab**
+  (`frontend/src/intervention/`): selector, RUN CONTROL + INTERVENTION, two trial panels with
+  one shared cursor (TRIAL ENDED past a timeline), SUPPRESSED groups crossed out but
+  structurally present, comparison panel, BIOLOGICAL EVIDENCE vs CURRENT COMPUTATIONAL RESULT,
+  both disclaimers; the Brain Inspector shows the intervention state of a selected neuron.
+  `scripts/smoke_intervention.py` / `make smoke-intervention` (CI), `tests/test_intervention.py`
+  (18), `tests/test_api_intervention.py` (27), `frontend/tests/intervention-lab.spec.ts`,
+  `frontend/tests/smoke-intervention.spec.ts` (screenshots `docs/screenshots/intervention-A…C.png`),
+  `docs/EMBODIMENT.md` §11. `CURRENT_PHASE = "P7.2"`. No scientific logic of P0–P7.1 changed.
 - **Virtual Threat Lab (P7.1)** — `GET /embodiment/config` and `POST /embodiment/run`
   (`backend/app/api/embodiment.py`): one deterministic P7.0 closed-loop experiment per request
   (safe parameters only: seed, `max_steps ≤ 200`, world start distance / approach speed /

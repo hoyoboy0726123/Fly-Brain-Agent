@@ -308,6 +308,8 @@ class BrainStepSummary(Frozen):
     sensory_first_fire_step: int | None = None
     #: SIMULATED spike counts per group (cell_type × side) per neural step (P4 group_activity)
     group_fired_counts: dict[str, list[int]] = Field(default_factory=dict)
+    #: P7.2: simulated threshold crossings suppressed by a computational intervention
+    suppressed_events: int = 0
 
 
 class EmbodiedStepRecord(Frozen):
@@ -344,6 +346,9 @@ class EmbodimentProvenance(Frozen):
     body_config: dict[str, Any]
     loop_config: LoopConfig
     timing: TimingInfo
+    #: P7.2: computational intervention applied inside the engine (None = control)
+    intervention: dict[str, Any] | None = None
+    intervention_layer: str = "COMPUTATIONAL DYNAMICS"
 
 
 class EmbodiedExperimentRecord(Frozen):

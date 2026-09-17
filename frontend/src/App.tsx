@@ -5,11 +5,14 @@ import { APP_SUBTITLE, APP_TITLE, DEFAULT_PACE_MS, DISCLAIMER, SCIENTIFIC_LABELS
 import { DemoView } from './demo/DemoView.tsx'
 import { useEscapeDemo, type DemoOptions } from './demo/useEscapeDemo.ts'
 import { InspectorView } from './inspector/InspectorView.tsx'
+import type { InterventionInfo } from './inspector/NeuronInspector.tsx'
 import { Hero } from './landing/Hero.tsx'
+import { InterventionLabView } from './intervention/InterventionLabView.tsx'
+import { useInterventionLab } from './intervention/useInterventionLab.ts'
 import { ThreatLabView } from './threatlab/ThreatLabView.tsx'
 import { useThreatLab } from './threatlab/useThreatLab.ts'
 
-type View = 'demo' | 'inspector' | 'threat-lab'
+type View = 'demo' | 'inspector' | 'threat-lab' | 'intervention'
 
 /** `?pace=<ms>` speeds replay up for tests; `?transport=rest` forces the REST path. */
 function optionsFromLocation(): DemoOptions {
@@ -24,6 +27,7 @@ function optionsFromLocation(): DemoOptions {
 function viewFromHash(): View {
   if (window.location.hash === '#inspector') return 'inspector'
   if (window.location.hash === '#threat-lab') return 'threat-lab'
+  if (window.location.hash === '#intervention') return 'intervention'
   return 'demo'
 }
 
@@ -32,6 +36,21 @@ export function App() {
   const demo = useEscapeDemo(options)
   const labOptions = useMemo(() => (options.paceMs === undefined ? {} : { paceMs: options.paceMs }), [options])
   const lab = useThreatLab(labOptions)
+  const interventionLab = useInterventionLab(labOptions)
+  const interventionResult = interventionLab.state.result
+  const interventionInfo = useMemo<InterventionInfo | null>(
+    () =>
+      interventionResult
+        ? {
+            comparisonId: interventionResult.comparison_id,
+            selector: interventionResult.request.intervention,
+            label: interventionResult.intervention.resolved_targets.label,
+            cellTypes: interventionResult.intervention.resolved_targets.cell_types,
+            neuronIds: new Set(interventionResult.intervention.resolved_targets.neuron_ids),
+          }
+        : null,
+    [interventionResult],
+  )
   const { state } = demo
   const [view, setView] = useState<View>(viewFromHash)
   const labels = state.config?.scientific_labels ?? SCIENTIFIC_LABELS
@@ -44,7 +63,7 @@ export function App() {
 
   const switchView = (next: View) => {
     setView(next)
-    const hash = next === 'inspector' ? '#inspector' : next === 'threat-lab' ? '#threat-lab' : ''
+    const hash = next === 'inspector' ? '#inspector' : next === 'threat-lab' ? '#threat-lab' : next === 'intervention' ? '#intervention' : ''
     window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}${hash}`)
     window.scrollTo({ top: 0 })
   }
@@ -65,6 +84,7 @@ export function App() {
               onRunDemo={runDemo}
               onExplore={() => switchView('inspector')}
               onThreatLab={() => switchView('threat-lab')}
+              onIntervention={() => switchView('intervention')}
             />
           ) : (
             <>
@@ -106,6 +126,15 @@ export function App() {
             >
               Virtual Threat Lab
             </button>
+            <button
+              type="button"
+              className={`tabs__tab ${view === 'intervention' ? 'tabs__tab--active' : ''}`}
+              aria-pressed={view === 'intervention'}
+              onClick={() => switchView('intervention')}
+              data-testid="tab-intervention"
+            >
+              Neural Intervention Lab
+            </button>
           </nav>
         </div>
       </header>
@@ -123,9 +152,11 @@ export function App() {
       {view === 'demo' ? (
         <DemoView demo={demo} />
       ) : view === 'inspector' ? (
-        <InspectorView demo={demo} paceMs={options.paceMs ?? DEFAULT_PACE_MS} />
-      ) : (
+        <InspectorView demo={demo} paceMs={options.paceMs ?? DEFAULT_PACE_MS} intervention={interventionInfo} />
+      ) : view === 'threat-lab' ? (
         <ThreatLabView lab={lab} />
+      ) : (
+        <InterventionLabView lab={interventionLab} />
       )}
 
       <footer className="app__footer">

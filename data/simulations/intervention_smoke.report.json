@@ -1,0 +1,345 @@
+{
+  "title": "NEURAL INTERVENTION SMOKE — COMPUTATIONAL FIRING SUPPRESSION (CONTROL vs SILENCE_LPLC2)",
+  "intervention_disclaimer": "Neural interventions in this lab are computational manipulations of simulated neural dynamics. They do not reproduce a specific biological silencing, optogenetic, genetic, pharmacological, or lesion technique. Biological structural connectivity remains unchanged.",
+  "disclaimer": "Structural connectivity is biological data. Neural activity is simulated. Virtual sensing, motor mapping, body dynamics, and world physics are computational interpretations.",
+  "config": {
+    "circuit_id": "escape_v1",
+    "structural_signature": {
+      "node_count": 286,
+      "edge_count": 932,
+      "synapse_total": 18843,
+      "circuit_hash": "db7c46e6a165354d7aed499525e303131bd8d6367e492b2e4fc31117cdc2c78d",
+      "recorded_hash": "db7c46e6a165354d7aed499525e303131bd8d6367e492b2e4fc31117cdc2c78d"
+    },
+    "selectors": {
+      "CONTROL": {
+        "neuron_count": 0,
+        "per_cell_type_counts": {}
+      },
+      "SILENCE_LC4": {
+        "neuron_count": 126,
+        "per_cell_type_counts": {
+          "LC4": 126
+        }
+      },
+      "SILENCE_LPLC2": {
+        "neuron_count": 158,
+        "per_cell_type_counts": {
+          "LPLC2": 158
+        }
+      },
+      "SILENCE_LC4_LPLC2": {
+        "neuron_count": 284,
+        "per_cell_type_counts": {
+          "LC4": 126,
+          "LPLC2": 158
+        }
+      }
+    }
+  },
+  "comparison": {
+    "request": {
+      "intervention": "SILENCE_LPLC2",
+      "seed": 0,
+      "max_steps": 30
+    },
+    "comparison_id": "1cc04801-8d9f-453f-997b-1282d8b4db96",
+    "matched_conditions": {
+      "same_seed": true,
+      "same_world": true,
+      "same_initial_body": true,
+      "same_sensor_config": true,
+      "same_body_config": true,
+      "same_motor_config": true,
+      "same_simulation_config": true,
+      "same_circuit": true,
+      "same_dataset_version": true,
+      "same_timing": true,
+      "same_loop_config": true,
+      "same_decoder_and_mapping": true,
+      "all_matched": true,
+      "only_difference": "intervention_config"
+    },
+    "structural_integrity": {
+      "before": {
+        "node_count": 286,
+        "edge_count": 932,
+        "synapse_total": 18843,
+        "circuit_hash": "db7c46e6a165354d7aed499525e303131bd8d6367e492b2e4fc31117cdc2c78d",
+        "recorded_hash": "db7c46e6a165354d7aed499525e303131bd8d6367e492b2e4fc31117cdc2c78d"
+      },
+      "after": {
+        "node_count": 286,
+        "edge_count": 932,
+        "synapse_total": 18843,
+        "circuit_hash": "db7c46e6a165354d7aed499525e303131bd8d6367e492b2e4fc31117cdc2c78d",
+        "recorded_hash": "db7c46e6a165354d7aed499525e303131bd8d6367e492b2e4fc31117cdc2c78d"
+      },
+      "unchanged": true
+    },
+    "synchronization": {
+      "control_steps": 30,
+      "intervention_steps": 30,
+      "shared_steps": 30,
+      "cursor_max": 29,
+      "note": "one replay cursor drives both trials; a step beyond a trial's timeline means that trial has ended (its last state must not be reused)"
+    },
+    "differences": {
+      "label": "CURRENT COMPUTATIONAL RESULT — not a validation of the biological study",
+      "control_first_escape_step": 16,
+      "intervention_first_escape_step": 16,
+      "first_escape_step_delta": 0,
+      "control_escape_occurred": true,
+      "intervention_escape_occurred": true,
+      "control_escape_steps": [
+        16,
+        17,
+        18
+      ],
+      "intervention_escape_steps": [
+        16,
+        17,
+        18
+      ],
+      "control_actions": {
+        "ESCAPE": 3,
+        "NO_ACTION": 27
+      },
+      "intervention_actions": {
+        "ESCAPE": 3,
+        "NO_ACTION": 27
+      },
+      "simulated_firing_totals": {
+        "LC4": {
+          "control": 378,
+          "intervention": 378,
+          "delta": 0
+        },
+        "LPLC2": {
+          "control": 474,
+          "intervention": 0,
+          "delta": -474
+        },
+        "DNp01": {
+          "control": 6,
+          "intervention": 6,
+          "delta": 0
+        }
+      },
+      "control_final_displacement": 1.5,
+      "intervention_final_displacement": 1.5,
+      "displacement_delta": 0.0,
+      "first_divergent_step": 16,
+      "summary": [
+        "In the current computational model, suppressing simulated firing of 158 LPLC2 neuron(s) left the first ESCAPE step unchanged (16).",
+        "Simulated LC4 spikes over the run: control 378, intervention 378 (delta +0).",
+        "Simulated LPLC2 spikes over the run: control 474, intervention 0 (delta -474).",
+        "Simulated DNp01 spikes over the run: control 6, intervention 6 (delta +0).",
+        "Final body displacement: control 1.50 units, intervention 1.50 units.",
+        "Descriptive comparison of one simulation; not a biological interpretation and not a validation of the cited experiments."
+      ]
+    },
+    "control": {
+      "first_escape_step": 16,
+      "simulated_firing_totals": {
+        "LC4": 378,
+        "LPLC2": 474,
+        "DNp01": 6
+      },
+      "displacement": 1.5
+    },
+    "intervention": {
+      "resolved_targets": {
+        "selector": "SILENCE_LPLC2",
+        "label": "SILENCE LPLC2",
+        "cell_types": [
+          "LPLC2"
+        ],
+        "neuron_count": 158,
+        "per_cell_type_counts": {
+          "LPLC2": 158
+        },
+        "circuit_id": "escape_v1",
+        "circuit_hash": "db7c46e6a165354d7aed499525e303131bd8d6367e492b2e4fc31117cdc2c78d",
+        "resolution_rule": "circuit nodes whose MaleCNS cell_type annotation equals the selected cell type(s); union without duplicates; ids sorted"
+      },
+      "resolved_neuron_ids": [
+        "100103",
+        "112292",
+        "12384",
+        "129687",
+        "134521",
+        "13726",
+        "14102",
+        "14465",
+        "15804",
+        "17059",
+        "17551",
+        "17774",
+        "17775",
+        "17880",
+        "17990",
+        "18672",
+        "18900",
+        "18936",
+        "19034",
+        "19146",
+        "19229",
+        "19589",
+        "19608",
+        "19787",
+        "19830",
+        "19911",
+        "20047",
+        "20103",
+        "20162",
+        "20182",
+        "20240",
+        "20269",
+        "20329",
+        "20334",
+        "20471",
+        "20535",
+        "20694",
+        "20749",
+        "20799",
+        "21045",
+        "21361",
+        "21562",
+        "21703",
+        "21769",
+        "21808",
+        "21862",
+        "21899",
+        "22218",
+        "22253",
+        "22261",
+        "22557",
+        "23247",
+        "23349",
+        "23497",
+        "23550",
+        "23590",
+        "23665",
+        "23878",
+        "23919",
+        "24118",
+        "24187",
+        "24268",
+        "24308",
+        "24401",
+        "24568",
+        "24605",
+        "24800",
+        "24840",
+        "25027",
+        "25136",
+        "25209",
+        "25253",
+        "25497",
+        "25511",
+        "25524",
+        "25572",
+        "25575",
+        "25636",
+        "25854",
+        "26147",
+        "26393",
+        "26416",
+        "26528",
+        "26915",
+        "27023",
+        "27355",
+        "27399",
+        "27471",
+        "27566",
+        "27716",
+        "27796",
+        "28003",
+        "28011",
+        "28044",
+        "28188",
+        "28741",
+        "28871",
+        "29014",
+        "29183",
+        "29216",
+        "29287",
+        "29319",
+        "29391",
+        "29598",
+        "29702",
+        "29753",
+        "29815",
+        "29873",
+        "29955",
+        "29986",
+        "30041",
+        "30512",
+        "30895",
+        "30938",
+        "31257",
+        "31563",
+        "31964",
+        "31988",
+        "32223",
+        "32237",
+        "32507",
+        "32737",
+        "33185",
+        "33303",
+        "33396",
+        "33406",
+        "33439",
+        "33694",
+        "33965",
+        "34051",
+        "34110",
+        "34407",
+        "34655",
+        "34681",
+        "35294",
+        "35680",
+        "35889",
+        "37431",
+        "39620",
+        "40811",
+        "40841",
+        "41097",
+        "50287",
+        "514670",
+        "515971",
+        "517078",
+        "517079",
+        "517819",
+        "518731",
+        "520764",
+        "521115",
+        "524366",
+        "525844",
+        "531014",
+        "533895",
+        "536444",
+        "55627",
+        "95241"
+      ],
+      "first_escape_step": 16,
+      "simulated_firing_totals": {
+        "LC4": 378,
+        "LPLC2": 0,
+        "DNp01": 6
+      },
+      "suppressed_events": 2212,
+      "displacement": 1.5
+    },
+    "performance": {
+      "control_seconds": 0.057582,
+      "intervention_seconds": 0.050249,
+      "combined_seconds": 0.107831,
+      "wall_seconds": 0.122044,
+      "http_wall_seconds": 0.1268,
+      "payload_bytes": 148837
+    }
+  },
+  "problems": []
+}
