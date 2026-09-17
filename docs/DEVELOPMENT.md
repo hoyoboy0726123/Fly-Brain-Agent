@@ -79,7 +79,7 @@ way (`/api/ws/escape` -> `/ws/escape`).
 
 | Job | Steps | Data |
 |---|---|---|
-| backend (Python 3.11, 3.12) | `pip install -e backend[dev]`, `ruff check` + `ruff format --check` (backend + scripts), `pytest`, smoke scripts (health, fixture inspection, fixture circuit / simulation, escape demo, web demo API) | synthetic fixture + committed `escape_v1` artifact |
+| backend (Python 3.11, 3.12) | `pip install -e backend[dev]`, `ruff check` + `ruff format --check` (backend + scripts), `pytest`, smoke scripts (health, fixture inspection, fixture circuit / simulation, escape demo, web demo API, embodiment loop) | synthetic fixture + committed `escape_v1` artifact |
 | frontend (Node 22) | `npm ci`, `npm run typecheck`, `npm run build` | — |
 | e2e | backend + frontend install, `npx playwright install --with-deps chromium`, `scripts/run_demo.py --check`, `--smoke`, `npm run test:e2e` (all specs, live backend) | committed `escape_v1` artifact |
 
@@ -255,6 +255,21 @@ and builds indexes + a deterministic d3-force layout in `layout.ts`), `CircuitGr
 (SVG + d3-zoom; identity colour = cell type, activity = ring/glow channel), `SearchBar.tsx`,
 `NeuronInspector.tsx`, `EdgeInspector.tsx`, `ProvenancePanel.tsx`, `ReplayControls.tsx`
 (`useReplay.ts`). Open it with the *Brain Inspector* tab or `http://127.0.0.1:5173/#inspector`.
+
+## 4h. Embodiment architecture (P7.0)
+
+`backend/app/embodiment/` — APPLICATION / EMBODIMENT INTERPRETATION layer: `models.py`
+(frozen `WorldState`, `BodyState`, `SensoryObservation`, `MotorCommand`, `SimulationClock`,
+configs, records, provenance), `world.py` (`WorldAdapter`, `SimpleWorldAdapter`), `sensors.py`
+(`SensorAdapter`, `VirtualLoomingSensor`, `StimulusEncoder`), `motor.py` (`MotorAdapter`,
+`EscapeMotorAdapter`: NO_ACTION → IDLE, ESCAPE → ESCAPE), `body.py` (`BodyAdapter`,
+`SimpleBodyAdapter` — SIMPLIFIED COMPUTATIONAL BODY), `loop.py` (`EmbodiedAgentLoop`).
+Design, boundaries, timing and future adapters: `docs/EMBODIMENT.md`.
+
+```bash
+make smoke-embodiment      # closed loop: looming object → virtual fly (escape_v1 brain unchanged)
+                           # -> data/simulations/embodiment_smoke.report.json
+```
 
 ## 5. Configuration
 

@@ -1,0 +1,3257 @@
+{
+  "title": "TECHNICAL EMBODIMENT SMOKE — SIMPLIFIED COMPUTATIONAL BODY",
+  "record": {
+    "label": "TECHNICAL EMBODIED EXPERIMENT — SIMPLIFIED COMPUTATIONAL BODY",
+    "created_at": "2026-09-17T13:47:30+00:00",
+    "runner_version": "0.1.0",
+    "provenance": {
+      "disclaimer": "Structural connectivity is biological data. Neural activity is simulated. Virtual sensing, motor mapping, body dynamics, and world physics are computational interpretations.",
+      "dataset": "male-cns",
+      "dataset_version": "v1.0",
+      "canonical_selection_rule": "status == \"Traced\"",
+      "circuit_id": "escape_v1",
+      "circuit_hash": "db7c46e6a165354d7aed499525e303131bd8d6367e492b2e4fc31117cdc2c78d",
+      "biological_status": "PARTIALLY SUPPORTED",
+      "escape_config_version": "escape_v1",
+      "simulation_config": {
+        "label": "COMPUTATIONAL MODEL PARAMETERS — NOT MEASURED MALECNS PARAMETERS",
+        "dt": 1.0,
+        "resting_potential": 0.0,
+        "reset_potential": 0.0,
+        "threshold": 1.0,
+        "leak": 0.2,
+        "refractory_steps": 2,
+        "weight_transform": "log1p",
+        "weight_scale": 1.0,
+        "stimulus_gain": 1.0,
+        "noise_std": 0.0,
+        "max_potential": 100.0,
+        "max_steps_per_run": 10000,
+        "random_seed": 0,
+        "sign_mode": "unsigned_excitatory_only"
+      },
+      "random_seed": 0,
+      "world_adapter": "SimpleWorldAdapter",
+      "world_config": {
+        "label": "COMPUTATIONAL WORLD PARAMETERS — dimensionless world units, not biological measurements",
+        "looming_object": true,
+        "object_id": "looming_1",
+        "object_type": "looming_object",
+        "start_distance": 20.0,
+        "approach_speed": 10.0,
+        "object_size": 1.0,
+        "azimuth_deg": 0.0,
+        "height": 0.0
+      },
+      "sensor_adapter": "VirtualLoomingSensor",
+      "sensor_config": {
+        "label": "COMPUTATIONAL SENSOR PARAMETERS — angular-size rule, not a retinal model",
+        "object_type": "looming_object",
+        "saturation_angle_rad": 1.5707963267948966,
+        "center_half_angle_rad": 0.3490658503988659,
+        "field_of_view_rad": 3.141592653589793
+      },
+      "motor_adapter": "EscapeMotorAdapter",
+      "motor_config": {
+        "label": "COMPUTATIONAL MOTOR PARAMETERS — NO_ACTION → IDLE, ESCAPE → ESCAPE; no direction",
+        "escape_magnitude": 1.0
+      },
+      "body_adapter": "SimpleBodyAdapter",
+      "body_config": {
+        "label": "COMPUTATIONAL BODY PARAMETERS — not biological measurements",
+        "initial_position": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "initial_heading": 0.0,
+        "escape_speed": 5.0,
+        "escape_vertical_speed": 3.0,
+        "airborne_duration": 0.3,
+        "ground_drag": 1.0
+      },
+      "loop_config": {
+        "label": "COMPUTATIONAL LOOP PARAMETERS — not biological timing",
+        "dt": 0.1,
+        "max_steps": 30,
+        "brain_steps_per_loop_step": null,
+        "keep_full_brain_results": false,
+        "random_seed": 0
+      },
+      "timing": {
+        "loop_dt": 0.1,
+        "neural_dt": 1.0,
+        "neural_steps_per_loop_step": 30,
+        "note": "P7.0 uses one common deterministic loop timestep for the world and the body; each loop step runs a fresh neural experiment of neural_steps_per_loop_step model steps (neural dt = SimulationConfig.dt, a dimensionless model unit). The two time bases are recorded separately and are not claimed to be physically related."
+      }
+    },
+    "initial_world": {
+      "label": "VIRTUAL WORLD — computational environment state; not a biological measurement",
+      "simulation_time": 0.0,
+      "step_index": 0,
+      "objects": [
+        {
+          "object_id": "looming_1",
+          "object_type": "looming_object",
+          "position": {
+            "x": 20.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "velocity": {
+            "x": -10.0,
+            "y": -0.0,
+            "z": -0.0
+          },
+          "size": 1.0,
+          "properties": {
+            "approach_speed": 10.0,
+            "azimuth_deg": 0.0
+          }
+        }
+      ],
+      "metadata": {
+        "adapter": "SimpleWorldAdapter",
+        "label": "COMPUTATIONAL WORLD PARAMETERS — dimensionless world units, not biological measurements"
+      }
+    },
+    "initial_body": {
+      "label": "SIMPLIFIED COMPUTATIONAL BODY — virtual-body movement is not claimed to reproduce real Drosophila biomechanics",
+      "position": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "heading": 0.0,
+      "linear_velocity": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "grounded": true,
+      "simulation_time": 0.0,
+      "step_index": 0
+    },
+    "steps": [
+      {
+        "step_index": 0,
+        "simulation_time": 0.0,
+        "dt": 0.1,
+        "observation": {
+          "sensor_type": "virtual_looming",
+          "simulation_time": 0.0,
+          "step_index": 0,
+          "source": "VirtualLoomingSensor: looming_1",
+          "values": {
+            "intensity": 0.06360900502470551,
+            "distance": 20.0,
+            "angular_size_rad": 0.09991679144388553,
+            "bearing_rad": 0.0,
+            "visible": 1.0
+          },
+          "interpretation_label": "COMPUTATIONAL SENSOR INPUT — virtual-world state converted into a neural stimulus; not a biological measurement",
+          "metadata": {
+            "direction": "center",
+            "object_id": "looming_1",
+            "rule": "intensity = min(angular_size / saturation_angle, 1); angular_size = 2·atan(size / distance); direction by bearing sign with a center band; objects outside the field of view give intensity 0"
+          }
+        },
+        "stimulus": {
+          "stimulus": "looming",
+          "direction": "center",
+          "intensity": 0.06360900502470551
+        },
+        "brain": {
+          "escape_config_version": "escape_v1",
+          "neural_steps": 30,
+          "neural_dt": 1.0,
+          "action": "NO_ACTION",
+          "output_spike_count": 0,
+          "first_output_fire_step": null,
+          "fired_output_sides": [],
+          "firing_events": 0,
+          "neurons_activated": 0,
+          "activity_label": "SIMULATED neural activity (simplified LIF-like model); not measured biological activity"
+        },
+        "command": {
+          "command": "IDLE",
+          "magnitude": 0.0,
+          "source_action": "NO_ACTION",
+          "simulation_time": 0.0,
+          "step_index": 0,
+          "label": "COMPUTATIONAL MOTOR MAPPING — decoded simulated neural output converted into a body command; not observed behaviour",
+          "metadata": {
+            "rule": "NO_ACTION → IDLE, ESCAPE → ESCAPE (application interpretation)",
+            "output_spike_count": 0,
+            "gf_sides_metadata_only": "",
+            "direction_decoded": false
+          }
+        },
+        "body_state": {
+          "label": "SIMPLIFIED COMPUTATIONAL BODY — virtual-body movement is not claimed to reproduce real Drosophila biomechanics",
+          "position": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "heading": 0.0,
+          "linear_velocity": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "grounded": true,
+          "simulation_time": 0.1,
+          "step_index": 1
+        },
+        "world_state": {
+          "label": "VIRTUAL WORLD — computational environment state; not a biological measurement",
+          "simulation_time": 0.1,
+          "step_index": 1,
+          "objects": [
+            {
+              "object_id": "looming_1",
+              "object_type": "looming_object",
+              "position": {
+                "x": 19.0,
+                "y": 0.0,
+                "z": 0.0
+              },
+              "velocity": {
+                "x": -10.0,
+                "y": -0.0,
+                "z": -0.0
+              },
+              "size": 1.0,
+              "properties": {
+                "approach_speed": 10.0,
+                "azimuth_deg": 0.0
+              }
+            }
+          ],
+          "metadata": {
+            "adapter": "SimpleWorldAdapter",
+            "label": "COMPUTATIONAL WORLD PARAMETERS — dimensionless world units, not biological measurements"
+          }
+        },
+        "brain_result": null
+      },
+      {
+        "step_index": 1,
+        "simulation_time": 0.1,
+        "dt": 0.1,
+        "observation": {
+          "sensor_type": "virtual_looming",
+          "simulation_time": 0.1,
+          "step_index": 1,
+          "source": "VirtualLoomingSensor: looming_1",
+          "values": {
+            "intensity": 0.06695083342629644,
+            "distance": 19.0,
+            "angular_size_rad": 0.10516612322188343,
+            "bearing_rad": 0.0,
+            "visible": 1.0
+          },
+          "interpretation_label": "COMPUTATIONAL SENSOR INPUT — virtual-world state converted into a neural stimulus; not a biological measurement",
+          "metadata": {
+            "direction": "center",
+            "object_id": "looming_1",
+            "rule": "intensity = min(angular_size / saturation_angle, 1); angular_size = 2·atan(size / distance); direction by bearing sign with a center band; objects outside the field of view give intensity 0"
+          }
+        },
+        "stimulus": {
+          "stimulus": "looming",
+          "direction": "center",
+          "intensity": 0.06695083342629644
+        },
+        "brain": {
+          "escape_config_version": "escape_v1",
+          "neural_steps": 30,
+          "neural_dt": 1.0,
+          "action": "NO_ACTION",
+          "output_spike_count": 0,
+          "first_output_fire_step": null,
+          "fired_output_sides": [],
+          "firing_events": 0,
+          "neurons_activated": 0,
+          "activity_label": "SIMULATED neural activity (simplified LIF-like model); not measured biological activity"
+        },
+        "command": {
+          "command": "IDLE",
+          "magnitude": 0.0,
+          "source_action": "NO_ACTION",
+          "simulation_time": 0.1,
+          "step_index": 1,
+          "label": "COMPUTATIONAL MOTOR MAPPING — decoded simulated neural output converted into a body command; not observed behaviour",
+          "metadata": {
+            "rule": "NO_ACTION → IDLE, ESCAPE → ESCAPE (application interpretation)",
+            "output_spike_count": 0,
+            "gf_sides_metadata_only": "",
+            "direction_decoded": false
+          }
+        },
+        "body_state": {
+          "label": "SIMPLIFIED COMPUTATIONAL BODY — virtual-body movement is not claimed to reproduce real Drosophila biomechanics",
+          "position": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "heading": 0.0,
+          "linear_velocity": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "grounded": true,
+          "simulation_time": 0.2,
+          "step_index": 2
+        },
+        "world_state": {
+          "label": "VIRTUAL WORLD — computational environment state; not a biological measurement",
+          "simulation_time": 0.2,
+          "step_index": 2,
+          "objects": [
+            {
+              "object_id": "looming_1",
+              "object_type": "looming_object",
+              "position": {
+                "x": 18.0,
+                "y": 0.0,
+                "z": 0.0
+              },
+              "velocity": {
+                "x": -10.0,
+                "y": -0.0,
+                "z": -0.0
+              },
+              "size": 1.0,
+              "properties": {
+                "approach_speed": 10.0,
+                "azimuth_deg": 0.0
+              }
+            }
+          ],
+          "metadata": {
+            "adapter": "SimpleWorldAdapter",
+            "label": "COMPUTATIONAL WORLD PARAMETERS — dimensionless world units, not biological measurements"
+          }
+        },
+        "brain_result": null
+      },
+      {
+        "step_index": 2,
+        "simulation_time": 0.2,
+        "dt": 0.1,
+        "observation": {
+          "sensor_type": "virtual_looming",
+          "simulation_time": 0.2,
+          "step_index": 2,
+          "source": "VirtualLoomingSensor: looming_1",
+          "values": {
+            "intensity": 0.07066289155253853,
+            "distance": 18.0,
+            "angular_size_rad": 0.11099701049143366,
+            "bearing_rad": 0.0,
+            "visible": 1.0
+          },
+          "interpretation_label": "COMPUTATIONAL SENSOR INPUT — virtual-world state converted into a neural stimulus; not a biological measurement",
+          "metadata": {
+            "direction": "center",
+            "object_id": "looming_1",
+            "rule": "intensity = min(angular_size / saturation_angle, 1); angular_size = 2·atan(size / distance); direction by bearing sign with a center band; objects outside the field of view give intensity 0"
+          }
+        },
+        "stimulus": {
+          "stimulus": "looming",
+          "direction": "center",
+          "intensity": 0.07066289155253853
+        },
+        "brain": {
+          "escape_config_version": "escape_v1",
+          "neural_steps": 30,
+          "neural_dt": 1.0,
+          "action": "NO_ACTION",
+          "output_spike_count": 0,
+          "first_output_fire_step": null,
+          "fired_output_sides": [],
+          "firing_events": 0,
+          "neurons_activated": 0,
+          "activity_label": "SIMULATED neural activity (simplified LIF-like model); not measured biological activity"
+        },
+        "command": {
+          "command": "IDLE",
+          "magnitude": 0.0,
+          "source_action": "NO_ACTION",
+          "simulation_time": 0.2,
+          "step_index": 2,
+          "label": "COMPUTATIONAL MOTOR MAPPING — decoded simulated neural output converted into a body command; not observed behaviour",
+          "metadata": {
+            "rule": "NO_ACTION → IDLE, ESCAPE → ESCAPE (application interpretation)",
+            "output_spike_count": 0,
+            "gf_sides_metadata_only": "",
+            "direction_decoded": false
+          }
+        },
+        "body_state": {
+          "label": "SIMPLIFIED COMPUTATIONAL BODY — virtual-body movement is not claimed to reproduce real Drosophila biomechanics",
+          "position": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "heading": 0.0,
+          "linear_velocity": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "grounded": true,
+          "simulation_time": 0.30000000000000004,
+          "step_index": 3
+        },
+        "world_state": {
+          "label": "VIRTUAL WORLD — computational environment state; not a biological measurement",
+          "simulation_time": 0.30000000000000004,
+          "step_index": 3,
+          "objects": [
+            {
+              "object_id": "looming_1",
+              "object_type": "looming_object",
+              "position": {
+                "x": 17.0,
+                "y": 0.0,
+                "z": 0.0
+              },
+              "velocity": {
+                "x": -10.0,
+                "y": -0.0,
+                "z": -0.0
+              },
+              "size": 1.0,
+              "properties": {
+                "approach_speed": 10.0,
+                "azimuth_deg": 0.0
+              }
+            }
+          ],
+          "metadata": {
+            "adapter": "SimpleWorldAdapter",
+            "label": "COMPUTATIONAL WORLD PARAMETERS — dimensionless world units, not biological measurements"
+          }
+        },
+        "brain_result": null
+      },
+      {
+        "step_index": 3,
+        "simulation_time": 0.30000000000000004,
+        "dt": 0.1,
+        "observation": {
+          "sensor_type": "virtual_looming",
+          "simulation_time": 0.30000000000000004,
+          "step_index": 3,
+          "source": "VirtualLoomingSensor: looming_1",
+          "values": {
+            "intensity": 0.07481023696510669,
+            "distance": 17.0,
+            "angular_size_rad": 0.11751164543144538,
+            "bearing_rad": 0.0,
+            "visible": 1.0
+          },
+          "interpretation_label": "COMPUTATIONAL SENSOR INPUT — virtual-world state converted into a neural stimulus; not a biological measurement",
+          "metadata": {
+            "direction": "center",
+            "object_id": "looming_1",
+            "rule": "intensity = min(angular_size / saturation_angle, 1); angular_size = 2·atan(size / distance); direction by bearing sign with a center band; objects outside the field of view give intensity 0"
+          }
+        },
+        "stimulus": {
+          "stimulus": "looming",
+          "direction": "center",
+          "intensity": 0.07481023696510669
+        },
+        "brain": {
+          "escape_config_version": "escape_v1",
+          "neural_steps": 30,
+          "neural_dt": 1.0,
+          "action": "NO_ACTION",
+          "output_spike_count": 0,
+          "first_output_fire_step": null,
+          "fired_output_sides": [],
+          "firing_events": 0,
+          "neurons_activated": 0,
+          "activity_label": "SIMULATED neural activity (simplified LIF-like model); not measured biological activity"
+        },
+        "command": {
+          "command": "IDLE",
+          "magnitude": 0.0,
+          "source_action": "NO_ACTION",
+          "simulation_time": 0.30000000000000004,
+          "step_index": 3,
+          "label": "COMPUTATIONAL MOTOR MAPPING — decoded simulated neural output converted into a body command; not observed behaviour",
+          "metadata": {
+            "rule": "NO_ACTION → IDLE, ESCAPE → ESCAPE (application interpretation)",
+            "output_spike_count": 0,
+            "gf_sides_metadata_only": "",
+            "direction_decoded": false
+          }
+        },
+        "body_state": {
+          "label": "SIMPLIFIED COMPUTATIONAL BODY — virtual-body movement is not claimed to reproduce real Drosophila biomechanics",
+          "position": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "heading": 0.0,
+          "linear_velocity": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "grounded": true,
+          "simulation_time": 0.4,
+          "step_index": 4
+        },
+        "world_state": {
+          "label": "VIRTUAL WORLD — computational environment state; not a biological measurement",
+          "simulation_time": 0.4,
+          "step_index": 4,
+          "objects": [
+            {
+              "object_id": "looming_1",
+              "object_type": "looming_object",
+              "position": {
+                "x": 16.0,
+                "y": 0.0,
+                "z": 0.0
+              },
+              "velocity": {
+                "x": -10.0,
+                "y": -0.0,
+                "z": -0.0
+              },
+              "size": 1.0,
+              "properties": {
+                "approach_speed": 10.0,
+                "azimuth_deg": 0.0
+              }
+            }
+          ],
+          "metadata": {
+            "adapter": "SimpleWorldAdapter",
+            "label": "COMPUTATIONAL WORLD PARAMETERS — dimensionless world units, not biological measurements"
+          }
+        },
+        "brain_result": null
+      },
+      {
+        "step_index": 4,
+        "simulation_time": 0.4,
+        "dt": 0.1,
+        "observation": {
+          "sensor_type": "virtual_looming",
+          "simulation_time": 0.4,
+          "step_index": 4,
+          "source": "VirtualLoomingSensor: looming_1",
+          "values": {
+            "intensity": 0.07947409722216336,
+            "distance": 16.0,
+            "angular_size_rad": 0.1248376199919147,
+            "bearing_rad": 0.0,
+            "visible": 1.0
+          },
+          "interpretation_label": "COMPUTATIONAL SENSOR INPUT — virtual-world state converted into a neural stimulus; not a biological measurement",
+          "metadata": {
+            "direction": "center",
+            "object_id": "looming_1",
+            "rule": "intensity = min(angular_size / saturation_angle, 1); angular_size = 2·atan(size / distance); direction by bearing sign with a center band; objects outside the field of view give intensity 0"
+          }
+        },
+        "stimulus": {
+          "stimulus": "looming",
+          "direction": "center",
+          "intensity": 0.07947409722216336
+        },
+        "brain": {
+          "escape_config_version": "escape_v1",
+          "neural_steps": 30,
+          "neural_dt": 1.0,
+          "action": "NO_ACTION",
+          "output_spike_count": 0,
+          "first_output_fire_step": null,
+          "fired_output_sides": [],
+          "firing_events": 0,
+          "neurons_activated": 0,
+          "activity_label": "SIMULATED neural activity (simplified LIF-like model); not measured biological activity"
+        },
+        "command": {
+          "command": "IDLE",
+          "magnitude": 0.0,
+          "source_action": "NO_ACTION",
+          "simulation_time": 0.4,
+          "step_index": 4,
+          "label": "COMPUTATIONAL MOTOR MAPPING — decoded simulated neural output converted into a body command; not observed behaviour",
+          "metadata": {
+            "rule": "NO_ACTION → IDLE, ESCAPE → ESCAPE (application interpretation)",
+            "output_spike_count": 0,
+            "gf_sides_metadata_only": "",
+            "direction_decoded": false
+          }
+        },
+        "body_state": {
+          "label": "SIMPLIFIED COMPUTATIONAL BODY — virtual-body movement is not claimed to reproduce real Drosophila biomechanics",
+          "position": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "heading": 0.0,
+          "linear_velocity": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "grounded": true,
+          "simulation_time": 0.5,
+          "step_index": 5
+        },
+        "world_state": {
+          "label": "VIRTUAL WORLD — computational environment state; not a biological measurement",
+          "simulation_time": 0.5,
+          "step_index": 5,
+          "objects": [
+            {
+              "object_id": "looming_1",
+              "object_type": "looming_object",
+              "position": {
+                "x": 15.0,
+                "y": 0.0,
+                "z": 0.0
+              },
+              "velocity": {
+                "x": -10.0,
+                "y": -0.0,
+                "z": -0.0
+              },
+              "size": 1.0,
+              "properties": {
+                "approach_speed": 10.0,
+                "azimuth_deg": 0.0
+              }
+            }
+          ],
+          "metadata": {
+            "adapter": "SimpleWorldAdapter",
+            "label": "COMPUTATIONAL WORLD PARAMETERS — dimensionless world units, not biological measurements"
+          }
+        },
+        "brain_result": null
+      },
+      {
+        "step_index": 5,
+        "simulation_time": 0.5,
+        "dt": 0.1,
+        "observation": {
+          "sensor_type": "virtual_looming",
+          "simulation_time": 0.5,
+          "step_index": 5,
+          "source": "VirtualLoomingSensor: looming_1",
+          "values": {
+            "intensity": 0.08475721853978566,
+            "distance": 15.0,
+            "angular_size_rad": 0.13313632755164762,
+            "bearing_rad": 0.0,
+            "visible": 1.0
+          },
+          "interpretation_label": "COMPUTATIONAL SENSOR INPUT — virtual-world state converted into a neural stimulus; not a biological measurement",
+          "metadata": {
+            "direction": "center",
+            "object_id": "looming_1",
+            "rule": "intensity = min(angular_size / saturation_angle, 1); angular_size = 2·atan(size / distance); direction by bearing sign with a center band; objects outside the field of view give intensity 0"
+          }
+        },
+        "stimulus": {
+          "stimulus": "looming",
+          "direction": "center",
+          "intensity": 0.08475721853978566
+        },
+        "brain": {
+          "escape_config_version": "escape_v1",
+          "neural_steps": 30,
+          "neural_dt": 1.0,
+          "action": "NO_ACTION",
+          "output_spike_count": 0,
+          "first_output_fire_step": null,
+          "fired_output_sides": [],
+          "firing_events": 0,
+          "neurons_activated": 0,
+          "activity_label": "SIMULATED neural activity (simplified LIF-like model); not measured biological activity"
+        },
+        "command": {
+          "command": "IDLE",
+          "magnitude": 0.0,
+          "source_action": "NO_ACTION",
+          "simulation_time": 0.5,
+          "step_index": 5,
+          "label": "COMPUTATIONAL MOTOR MAPPING — decoded simulated neural output converted into a body command; not observed behaviour",
+          "metadata": {
+            "rule": "NO_ACTION → IDLE, ESCAPE → ESCAPE (application interpretation)",
+            "output_spike_count": 0,
+            "gf_sides_metadata_only": "",
+            "direction_decoded": false
+          }
+        },
+        "body_state": {
+          "label": "SIMPLIFIED COMPUTATIONAL BODY — virtual-body movement is not claimed to reproduce real Drosophila biomechanics",
+          "position": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "heading": 0.0,
+          "linear_velocity": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "grounded": true,
+          "simulation_time": 0.6,
+          "step_index": 6
+        },
+        "world_state": {
+          "label": "VIRTUAL WORLD — computational environment state; not a biological measurement",
+          "simulation_time": 0.6,
+          "step_index": 6,
+          "objects": [
+            {
+              "object_id": "looming_1",
+              "object_type": "looming_object",
+              "position": {
+                "x": 14.0,
+                "y": 0.0,
+                "z": 0.0
+              },
+              "velocity": {
+                "x": -10.0,
+                "y": -0.0,
+                "z": -0.0
+              },
+              "size": 1.0,
+              "properties": {
+                "approach_speed": 10.0,
+                "azimuth_deg": 0.0
+              }
+            }
+          ],
+          "metadata": {
+            "adapter": "SimpleWorldAdapter",
+            "label": "COMPUTATIONAL WORLD PARAMETERS — dimensionless world units, not biological measurements"
+          }
+        },
+        "brain_result": null
+      },
+      {
+        "step_index": 6,
+        "simulation_time": 0.6,
+        "dt": 0.1,
+        "observation": {
+          "sensor_type": "virtual_looming",
+          "simulation_time": 0.6,
+          "step_index": 6,
+          "source": "VirtualLoomingSensor: looming_1",
+          "values": {
+            "intensity": 0.0907914839994417,
+            "distance": 14.0,
+            "angular_size_rad": 0.14261492957058064,
+            "bearing_rad": 0.0,
+            "visible": 1.0
+          },
+          "interpretation_label": "COMPUTATIONAL SENSOR INPUT — virtual-world state converted into a neural stimulus; not a biological measurement",
+          "metadata": {
+            "direction": "center",
+            "object_id": "looming_1",
+            "rule": "intensity = min(angular_size / saturation_angle, 1); angular_size = 2·atan(size / distance); direction by bearing sign with a center band; objects outside the field of view give intensity 0"
+          }
+        },
+        "stimulus": {
+          "stimulus": "looming",
+          "direction": "center",
+          "intensity": 0.0907914839994417
+        },
+        "brain": {
+          "escape_config_version": "escape_v1",
+          "neural_steps": 30,
+          "neural_dt": 1.0,
+          "action": "NO_ACTION",
+          "output_spike_count": 0,
+          "first_output_fire_step": null,
+          "fired_output_sides": [],
+          "firing_events": 0,
+          "neurons_activated": 0,
+          "activity_label": "SIMULATED neural activity (simplified LIF-like model); not measured biological activity"
+        },
+        "command": {
+          "command": "IDLE",
+          "magnitude": 0.0,
+          "source_action": "NO_ACTION",
+          "simulation_time": 0.6,
+          "step_index": 6,
+          "label": "COMPUTATIONAL MOTOR MAPPING — decoded simulated neural output converted into a body command; not observed behaviour",
+          "metadata": {
+            "rule": "NO_ACTION → IDLE, ESCAPE → ESCAPE (application interpretation)",
+            "output_spike_count": 0,
+            "gf_sides_metadata_only": "",
+            "direction_decoded": false
+          }
+        },
+        "body_state": {
+          "label": "SIMPLIFIED COMPUTATIONAL BODY — virtual-body movement is not claimed to reproduce real Drosophila biomechanics",
+          "position": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "heading": 0.0,
+          "linear_velocity": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "grounded": true,
+          "simulation_time": 0.7,
+          "step_index": 7
+        },
+        "world_state": {
+          "label": "VIRTUAL WORLD — computational environment state; not a biological measurement",
+          "simulation_time": 0.7,
+          "step_index": 7,
+          "objects": [
+            {
+              "object_id": "looming_1",
+              "object_type": "looming_object",
+              "position": {
+                "x": 13.0,
+                "y": 0.0,
+                "z": 0.0
+              },
+              "velocity": {
+                "x": -10.0,
+                "y": -0.0,
+                "z": -0.0
+              },
+              "size": 1.0,
+              "properties": {
+                "approach_speed": 10.0,
+                "azimuth_deg": 0.0
+              }
+            }
+          ],
+          "metadata": {
+            "adapter": "SimpleWorldAdapter",
+            "label": "COMPUTATIONAL WORLD PARAMETERS — dimensionless world units, not biological measurements"
+          }
+        },
+        "brain_result": null
+      },
+      {
+        "step_index": 7,
+        "simulation_time": 0.7,
+        "dt": 0.1,
+        "observation": {
+          "sensor_type": "virtual_looming",
+          "simulation_time": 0.7,
+          "step_index": 7,
+          "source": "VirtualLoomingSensor: looming_1",
+          "values": {
+            "intensity": 0.09774900788878961,
+            "distance": 13.0,
+            "angular_size_rad": 0.15354378253955608,
+            "bearing_rad": 0.0,
+            "visible": 1.0
+          },
+          "interpretation_label": "COMPUTATIONAL SENSOR INPUT — virtual-world state converted into a neural stimulus; not a biological measurement",
+          "metadata": {
+            "direction": "center",
+            "object_id": "looming_1",
+            "rule": "intensity = min(angular_size / saturation_angle, 1); angular_size = 2·atan(size / distance); direction by bearing sign with a center band; objects outside the field of view give intensity 0"
+          }
+        },
+        "stimulus": {
+          "stimulus": "looming",
+          "direction": "center",
+          "intensity": 0.09774900788878961
+        },
+        "brain": {
+          "escape_config_version": "escape_v1",
+          "neural_steps": 30,
+          "neural_dt": 1.0,
+          "action": "NO_ACTION",
+          "output_spike_count": 0,
+          "first_output_fire_step": null,
+          "fired_output_sides": [],
+          "firing_events": 0,
+          "neurons_activated": 0,
+          "activity_label": "SIMULATED neural activity (simplified LIF-like model); not measured biological activity"
+        },
+        "command": {
+          "command": "IDLE",
+          "magnitude": 0.0,
+          "source_action": "NO_ACTION",
+          "simulation_time": 0.7,
+          "step_index": 7,
+          "label": "COMPUTATIONAL MOTOR MAPPING — decoded simulated neural output converted into a body command; not observed behaviour",
+          "metadata": {
+            "rule": "NO_ACTION → IDLE, ESCAPE → ESCAPE (application interpretation)",
+            "output_spike_count": 0,
+            "gf_sides_metadata_only": "",
+            "direction_decoded": false
+          }
+        },
+        "body_state": {
+          "label": "SIMPLIFIED COMPUTATIONAL BODY — virtual-body movement is not claimed to reproduce real Drosophila biomechanics",
+          "position": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "heading": 0.0,
+          "linear_velocity": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "grounded": true,
+          "simulation_time": 0.7999999999999999,
+          "step_index": 8
+        },
+        "world_state": {
+          "label": "VIRTUAL WORLD — computational environment state; not a biological measurement",
+          "simulation_time": 0.7999999999999999,
+          "step_index": 8,
+          "objects": [
+            {
+              "object_id": "looming_1",
+              "object_type": "looming_object",
+              "position": {
+                "x": 12.0,
+                "y": 0.0,
+                "z": 0.0
+              },
+              "velocity": {
+                "x": -10.0,
+                "y": -0.0,
+                "z": -0.0
+              },
+              "size": 1.0,
+              "properties": {
+                "approach_speed": 10.0,
+                "azimuth_deg": 0.0
+              }
+            }
+          ],
+          "metadata": {
+            "adapter": "SimpleWorldAdapter",
+            "label": "COMPUTATIONAL WORLD PARAMETERS — dimensionless world units, not biological measurements"
+          }
+        },
+        "brain_result": null
+      },
+      {
+        "step_index": 8,
+        "simulation_time": 0.7999999999999999,
+        "dt": 0.1,
+        "observation": {
+          "sensor_type": "virtual_looming",
+          "simulation_time": 0.7999999999999999,
+          "step_index": 8,
+          "source": "VirtualLoomingSensor: looming_1",
+          "values": {
+            "intensity": 0.1058587042383595,
+            "distance": 12.0,
+            "angular_size_rad": 0.16628246377688244,
+            "bearing_rad": 0.0,
+            "visible": 1.0
+          },
+          "interpretation_label": "COMPUTATIONAL SENSOR INPUT — virtual-world state converted into a neural stimulus; not a biological measurement",
+          "metadata": {
+            "direction": "center",
+            "object_id": "looming_1",
+            "rule": "intensity = min(angular_size / saturation_angle, 1); angular_size = 2·atan(size / distance); direction by bearing sign with a center band; objects outside the field of view give intensity 0"
+          }
+        },
+        "stimulus": {
+          "stimulus": "looming",
+          "direction": "center",
+          "intensity": 0.1058587042383595
+        },
+        "brain": {
+          "escape_config_version": "escape_v1",
+          "neural_steps": 30,
+          "neural_dt": 1.0,
+          "action": "NO_ACTION",
+          "output_spike_count": 0,
+          "first_output_fire_step": null,
+          "fired_output_sides": [],
+          "firing_events": 0,
+          "neurons_activated": 0,
+          "activity_label": "SIMULATED neural activity (simplified LIF-like model); not measured biological activity"
+        },
+        "command": {
+          "command": "IDLE",
+          "magnitude": 0.0,
+          "source_action": "NO_ACTION",
+          "simulation_time": 0.7999999999999999,
+          "step_index": 8,
+          "label": "COMPUTATIONAL MOTOR MAPPING — decoded simulated neural output converted into a body command; not observed behaviour",
+          "metadata": {
+            "rule": "NO_ACTION → IDLE, ESCAPE → ESCAPE (application interpretation)",
+            "output_spike_count": 0,
+            "gf_sides_metadata_only": "",
+            "direction_decoded": false
+          }
+        },
+        "body_state": {
+          "label": "SIMPLIFIED COMPUTATIONAL BODY — virtual-body movement is not claimed to reproduce real Drosophila biomechanics",
+          "position": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "heading": 0.0,
+          "linear_velocity": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "grounded": true,
+          "simulation_time": 0.8999999999999999,
+          "step_index": 9
+        },
+        "world_state": {
+          "label": "VIRTUAL WORLD — computational environment state; not a biological measurement",
+          "simulation_time": 0.8999999999999999,
+          "step_index": 9,
+          "objects": [
+            {
+              "object_id": "looming_1",
+              "object_type": "looming_object",
+              "position": {
+                "x": 11.0,
+                "y": 0.0,
+                "z": 0.0
+              },
+              "velocity": {
+                "x": -10.0,
+                "y": -0.0,
+                "z": -0.0
+              },
+              "size": 1.0,
+              "properties": {
+                "approach_speed": 10.0,
+                "azimuth_deg": 0.0
+              }
+            }
+          ],
+          "metadata": {
+            "adapter": "SimpleWorldAdapter",
+            "label": "COMPUTATIONAL WORLD PARAMETERS — dimensionless world units, not biological measurements"
+          }
+        },
+        "brain_result": null
+      },
+      {
+        "step_index": 9,
+        "simulation_time": 0.8999999999999999,
+        "dt": 0.1,
+        "observation": {
+          "sensor_type": "virtual_looming",
+          "simulation_time": 0.8999999999999999,
+          "step_index": 9,
+          "source": "VirtualLoomingSensor: looming_1",
+          "values": {
+            "intensity": 0.11543175350521791,
+            "distance": 11.0,
+            "angular_size_rad": 0.18131977440149022,
+            "bearing_rad": 0.0,
+            "visible": 1.0
+          },
+          "interpretation_label": "COMPUTATIONAL SENSOR INPUT — virtual-world state converted into a neural stimulus; not a biological measurement",
+          "metadata": {
+            "direction": "center",
+            "object_id": "looming_1",
+            "rule": "intensity = min(angular_size / saturation_angle, 1); angular_size = 2·atan(size / distance); direction by bearing sign with a center band; objects outside the field of view give intensity 0"
+          }
+        },
+        "stimulus": {
+          "stimulus": "looming",
+          "direction": "center",
+          "intensity": 0.11543175350521791
+        },
+        "brain": {
+          "escape_config_version": "escape_v1",
+          "neural_steps": 30,
+          "neural_dt": 1.0,
+          "action": "NO_ACTION",
+          "output_spike_count": 0,
+          "first_output_fire_step": null,
+          "fired_output_sides": [],
+          "firing_events": 0,
+          "neurons_activated": 0,
+          "activity_label": "SIMULATED neural activity (simplified LIF-like model); not measured biological activity"
+        },
+        "command": {
+          "command": "IDLE",
+          "magnitude": 0.0,
+          "source_action": "NO_ACTION",
+          "simulation_time": 0.8999999999999999,
+          "step_index": 9,
+          "label": "COMPUTATIONAL MOTOR MAPPING — decoded simulated neural output converted into a body command; not observed behaviour",
+          "metadata": {
+            "rule": "NO_ACTION → IDLE, ESCAPE → ESCAPE (application interpretation)",
+            "output_spike_count": 0,
+            "gf_sides_metadata_only": "",
+            "direction_decoded": false
+          }
+        },
+        "body_state": {
+          "label": "SIMPLIFIED COMPUTATIONAL BODY — virtual-body movement is not claimed to reproduce real Drosophila biomechanics",
+          "position": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "heading": 0.0,
+          "linear_velocity": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "grounded": true,
+          "simulation_time": 0.9999999999999999,
+          "step_index": 10
+        },
+        "world_state": {
+          "label": "VIRTUAL WORLD — computational environment state; not a biological measurement",
+          "simulation_time": 0.9999999999999999,
+          "step_index": 10,
+          "objects": [
+            {
+              "object_id": "looming_1",
+              "object_type": "looming_object",
+              "position": {
+                "x": 10.0,
+                "y": 0.0,
+                "z": 0.0
+              },
+              "velocity": {
+                "x": -10.0,
+                "y": -0.0,
+                "z": -0.0
+              },
+              "size": 1.0,
+              "properties": {
+                "approach_speed": 10.0,
+                "azimuth_deg": 0.0
+              }
+            }
+          ],
+          "metadata": {
+            "adapter": "SimpleWorldAdapter",
+            "label": "COMPUTATIONAL WORLD PARAMETERS — dimensionless world units, not biological measurements"
+          }
+        },
+        "brain_result": null
+      },
+      {
+        "step_index": 10,
+        "simulation_time": 0.9999999999999999,
+        "dt": 0.1,
+        "observation": {
+          "sensor_type": "virtual_looming",
+          "simulation_time": 0.9999999999999999,
+          "step_index": 10,
+          "source": "VirtualLoomingSensor: looming_1",
+          "values": {
+            "intensity": 0.1269020697222143,
+            "distance": 10.0,
+            "angular_size_rad": 0.19933730498232408,
+            "bearing_rad": 0.0,
+            "visible": 1.0
+          },
+          "interpretation_label": "COMPUTATIONAL SENSOR INPUT — virtual-world state converted into a neural stimulus; not a biological measurement",
+          "metadata": {
+            "direction": "center",
+            "object_id": "looming_1",
+            "rule": "intensity = min(angular_size / saturation_angle, 1); angular_size = 2·atan(size / distance); direction by bearing sign with a center band; objects outside the field of view give intensity 0"
+          }
+        },
+        "stimulus": {
+          "stimulus": "looming",
+          "direction": "center",
+          "intensity": 0.1269020697222143
+        },
+        "brain": {
+          "escape_config_version": "escape_v1",
+          "neural_steps": 30,
+          "neural_dt": 1.0,
+          "action": "NO_ACTION",
+          "output_spike_count": 0,
+          "first_output_fire_step": null,
+          "fired_output_sides": [],
+          "firing_events": 0,
+          "neurons_activated": 0,
+          "activity_label": "SIMULATED neural activity (simplified LIF-like model); not measured biological activity"
+        },
+        "command": {
+          "command": "IDLE",
+          "magnitude": 0.0,
+          "source_action": "NO_ACTION",
+          "simulation_time": 0.9999999999999999,
+          "step_index": 10,
+          "label": "COMPUTATIONAL MOTOR MAPPING — decoded simulated neural output converted into a body command; not observed behaviour",
+          "metadata": {
+            "rule": "NO_ACTION → IDLE, ESCAPE → ESCAPE (application interpretation)",
+            "output_spike_count": 0,
+            "gf_sides_metadata_only": "",
+            "direction_decoded": false
+          }
+        },
+        "body_state": {
+          "label": "SIMPLIFIED COMPUTATIONAL BODY — virtual-body movement is not claimed to reproduce real Drosophila biomechanics",
+          "position": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "heading": 0.0,
+          "linear_velocity": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "grounded": true,
+          "simulation_time": 1.0999999999999999,
+          "step_index": 11
+        },
+        "world_state": {
+          "label": "VIRTUAL WORLD — computational environment state; not a biological measurement",
+          "simulation_time": 1.0999999999999999,
+          "step_index": 11,
+          "objects": [
+            {
+              "object_id": "looming_1",
+              "object_type": "looming_object",
+              "position": {
+                "x": 9.0,
+                "y": 0.0,
+                "z": 0.0
+              },
+              "velocity": {
+                "x": -10.0,
+                "y": -0.0,
+                "z": -0.0
+              },
+              "size": 1.0,
+              "properties": {
+                "approach_speed": 10.0,
+                "azimuth_deg": 0.0
+              }
+            }
+          ],
+          "metadata": {
+            "adapter": "SimpleWorldAdapter",
+            "label": "COMPUTATIONAL WORLD PARAMETERS — dimensionless world units, not biological measurements"
+          }
+        },
+        "brain_result": null
+      },
+      {
+        "step_index": 11,
+        "simulation_time": 1.0999999999999999,
+        "dt": 0.1,
+        "observation": {
+          "sensor_type": "virtual_looming",
+          "simulation_time": 1.0999999999999999,
+          "step_index": 11,
+          "source": "VirtualLoomingSensor: looming_1",
+          "values": {
+            "intensity": 0.1408931499091091,
+            "distance": 9.0,
+            "angular_size_rad": 0.22131444234779127,
+            "bearing_rad": 0.0,
+            "visible": 1.0
+          },
+          "interpretation_label": "COMPUTATIONAL SENSOR INPUT — virtual-world state converted into a neural stimulus; not a biological measurement",
+          "metadata": {
+            "direction": "center",
+            "object_id": "looming_1",
+            "rule": "intensity = min(angular_size / saturation_angle, 1); angular_size = 2·atan(size / distance); direction by bearing sign with a center band; objects outside the field of view give intensity 0"
+          }
+        },
+        "stimulus": {
+          "stimulus": "looming",
+          "direction": "center",
+          "intensity": 0.1408931499091091
+        },
+        "brain": {
+          "escape_config_version": "escape_v1",
+          "neural_steps": 30,
+          "neural_dt": 1.0,
+          "action": "NO_ACTION",
+          "output_spike_count": 0,
+          "first_output_fire_step": null,
+          "fired_output_sides": [],
+          "firing_events": 0,
+          "neurons_activated": 0,
+          "activity_label": "SIMULATED neural activity (simplified LIF-like model); not measured biological activity"
+        },
+        "command": {
+          "command": "IDLE",
+          "magnitude": 0.0,
+          "source_action": "NO_ACTION",
+          "simulation_time": 1.0999999999999999,
+          "step_index": 11,
+          "label": "COMPUTATIONAL MOTOR MAPPING — decoded simulated neural output converted into a body command; not observed behaviour",
+          "metadata": {
+            "rule": "NO_ACTION → IDLE, ESCAPE → ESCAPE (application interpretation)",
+            "output_spike_count": 0,
+            "gf_sides_metadata_only": "",
+            "direction_decoded": false
+          }
+        },
+        "body_state": {
+          "label": "SIMPLIFIED COMPUTATIONAL BODY — virtual-body movement is not claimed to reproduce real Drosophila biomechanics",
+          "position": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "heading": 0.0,
+          "linear_velocity": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "grounded": true,
+          "simulation_time": 1.2,
+          "step_index": 12
+        },
+        "world_state": {
+          "label": "VIRTUAL WORLD — computational environment state; not a biological measurement",
+          "simulation_time": 1.2,
+          "step_index": 12,
+          "objects": [
+            {
+              "object_id": "looming_1",
+              "object_type": "looming_object",
+              "position": {
+                "x": 8.0,
+                "y": 0.0,
+                "z": 0.0
+              },
+              "velocity": {
+                "x": -10.0,
+                "y": -0.0,
+                "z": -0.0
+              },
+              "size": 1.0,
+              "properties": {
+                "approach_speed": 10.0,
+                "azimuth_deg": 0.0
+              }
+            }
+          ],
+          "metadata": {
+            "adapter": "SimpleWorldAdapter",
+            "label": "COMPUTATIONAL WORLD PARAMETERS — dimensionless world units, not biological measurements"
+          }
+        },
+        "brain_result": null
+      },
+      {
+        "step_index": 12,
+        "simulation_time": 1.2,
+        "dt": 0.1,
+        "observation": {
+          "sensor_type": "virtual_looming",
+          "simulation_time": 1.2,
+          "step_index": 12,
+          "source": "VirtualLoomingSensor: looming_1",
+          "values": {
+            "intensity": 0.15833369664226218,
+            "distance": 8.0,
+            "angular_size_rad": 0.24870998909352288,
+            "bearing_rad": 0.0,
+            "visible": 1.0
+          },
+          "interpretation_label": "COMPUTATIONAL SENSOR INPUT — virtual-world state converted into a neural stimulus; not a biological measurement",
+          "metadata": {
+            "direction": "center",
+            "object_id": "looming_1",
+            "rule": "intensity = min(angular_size / saturation_angle, 1); angular_size = 2·atan(size / distance); direction by bearing sign with a center band; objects outside the field of view give intensity 0"
+          }
+        },
+        "stimulus": {
+          "stimulus": "looming",
+          "direction": "center",
+          "intensity": 0.15833369664226218
+        },
+        "brain": {
+          "escape_config_version": "escape_v1",
+          "neural_steps": 30,
+          "neural_dt": 1.0,
+          "action": "NO_ACTION",
+          "output_spike_count": 0,
+          "first_output_fire_step": null,
+          "fired_output_sides": [],
+          "firing_events": 0,
+          "neurons_activated": 0,
+          "activity_label": "SIMULATED neural activity (simplified LIF-like model); not measured biological activity"
+        },
+        "command": {
+          "command": "IDLE",
+          "magnitude": 0.0,
+          "source_action": "NO_ACTION",
+          "simulation_time": 1.2,
+          "step_index": 12,
+          "label": "COMPUTATIONAL MOTOR MAPPING — decoded simulated neural output converted into a body command; not observed behaviour",
+          "metadata": {
+            "rule": "NO_ACTION → IDLE, ESCAPE → ESCAPE (application interpretation)",
+            "output_spike_count": 0,
+            "gf_sides_metadata_only": "",
+            "direction_decoded": false
+          }
+        },
+        "body_state": {
+          "label": "SIMPLIFIED COMPUTATIONAL BODY — virtual-body movement is not claimed to reproduce real Drosophila biomechanics",
+          "position": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "heading": 0.0,
+          "linear_velocity": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "grounded": true,
+          "simulation_time": 1.3,
+          "step_index": 13
+        },
+        "world_state": {
+          "label": "VIRTUAL WORLD — computational environment state; not a biological measurement",
+          "simulation_time": 1.3,
+          "step_index": 13,
+          "objects": [
+            {
+              "object_id": "looming_1",
+              "object_type": "looming_object",
+              "position": {
+                "x": 7.0,
+                "y": 0.0,
+                "z": 0.0
+              },
+              "velocity": {
+                "x": -10.0,
+                "y": -0.0,
+                "z": -0.0
+              },
+              "size": 1.0,
+              "properties": {
+                "approach_speed": 10.0,
+                "azimuth_deg": 0.0
+              }
+            }
+          ],
+          "metadata": {
+            "adapter": "SimpleWorldAdapter",
+            "label": "COMPUTATIONAL WORLD PARAMETERS — dimensionless world units, not biological measurements"
+          }
+        },
+        "brain_result": null
+      },
+      {
+        "step_index": 13,
+        "simulation_time": 1.3,
+        "dt": 0.1,
+        "observation": {
+          "sensor_type": "virtual_looming",
+          "simulation_time": 1.3,
+          "step_index": 13,
+          "source": "VirtualLoomingSensor: looming_1",
+          "values": {
+            "intensity": 0.1806689412034662,
+            "distance": 7.0,
+            "angular_size_rad": 0.2837941092083278,
+            "bearing_rad": 0.0,
+            "visible": 1.0
+          },
+          "interpretation_label": "COMPUTATIONAL SENSOR INPUT — virtual-world state converted into a neural stimulus; not a biological measurement",
+          "metadata": {
+            "direction": "center",
+            "object_id": "looming_1",
+            "rule": "intensity = min(angular_size / saturation_angle, 1); angular_size = 2·atan(size / distance); direction by bearing sign with a center band; objects outside the field of view give intensity 0"
+          }
+        },
+        "stimulus": {
+          "stimulus": "looming",
+          "direction": "center",
+          "intensity": 0.1806689412034662
+        },
+        "brain": {
+          "escape_config_version": "escape_v1",
+          "neural_steps": 30,
+          "neural_dt": 1.0,
+          "action": "NO_ACTION",
+          "output_spike_count": 0,
+          "first_output_fire_step": null,
+          "fired_output_sides": [],
+          "firing_events": 0,
+          "neurons_activated": 0,
+          "activity_label": "SIMULATED neural activity (simplified LIF-like model); not measured biological activity"
+        },
+        "command": {
+          "command": "IDLE",
+          "magnitude": 0.0,
+          "source_action": "NO_ACTION",
+          "simulation_time": 1.3,
+          "step_index": 13,
+          "label": "COMPUTATIONAL MOTOR MAPPING — decoded simulated neural output converted into a body command; not observed behaviour",
+          "metadata": {
+            "rule": "NO_ACTION → IDLE, ESCAPE → ESCAPE (application interpretation)",
+            "output_spike_count": 0,
+            "gf_sides_metadata_only": "",
+            "direction_decoded": false
+          }
+        },
+        "body_state": {
+          "label": "SIMPLIFIED COMPUTATIONAL BODY — virtual-body movement is not claimed to reproduce real Drosophila biomechanics",
+          "position": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "heading": 0.0,
+          "linear_velocity": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "grounded": true,
+          "simulation_time": 1.4000000000000001,
+          "step_index": 14
+        },
+        "world_state": {
+          "label": "VIRTUAL WORLD — computational environment state; not a biological measurement",
+          "simulation_time": 1.4000000000000001,
+          "step_index": 14,
+          "objects": [
+            {
+              "object_id": "looming_1",
+              "object_type": "looming_object",
+              "position": {
+                "x": 6.0,
+                "y": 0.0,
+                "z": 0.0
+              },
+              "velocity": {
+                "x": -10.0,
+                "y": -0.0,
+                "z": -0.0
+              },
+              "size": 1.0,
+              "properties": {
+                "approach_speed": 10.0,
+                "azimuth_deg": 0.0
+              }
+            }
+          ],
+          "metadata": {
+            "adapter": "SimpleWorldAdapter",
+            "label": "COMPUTATIONAL WORLD PARAMETERS — dimensionless world units, not biological measurements"
+          }
+        },
+        "brain_result": null
+      },
+      {
+        "step_index": 14,
+        "simulation_time": 1.4000000000000001,
+        "dt": 0.1,
+        "observation": {
+          "sensor_type": "virtual_looming",
+          "simulation_time": 1.4000000000000001,
+          "step_index": 14,
+          "source": "VirtualLoomingSensor: looming_1",
+          "values": {
+            "intensity": 0.21027382684501372,
+            "distance": 6.0,
+            "angular_size_rad": 0.33029735482925365,
+            "bearing_rad": 0.0,
+            "visible": 1.0
+          },
+          "interpretation_label": "COMPUTATIONAL SENSOR INPUT — virtual-world state converted into a neural stimulus; not a biological measurement",
+          "metadata": {
+            "direction": "center",
+            "object_id": "looming_1",
+            "rule": "intensity = min(angular_size / saturation_angle, 1); angular_size = 2·atan(size / distance); direction by bearing sign with a center band; objects outside the field of view give intensity 0"
+          }
+        },
+        "stimulus": {
+          "stimulus": "looming",
+          "direction": "center",
+          "intensity": 0.21027382684501372
+        },
+        "brain": {
+          "escape_config_version": "escape_v1",
+          "neural_steps": 30,
+          "neural_dt": 1.0,
+          "action": "NO_ACTION",
+          "output_spike_count": 0,
+          "first_output_fire_step": null,
+          "fired_output_sides": [],
+          "firing_events": 0,
+          "neurons_activated": 0,
+          "activity_label": "SIMULATED neural activity (simplified LIF-like model); not measured biological activity"
+        },
+        "command": {
+          "command": "IDLE",
+          "magnitude": 0.0,
+          "source_action": "NO_ACTION",
+          "simulation_time": 1.4000000000000001,
+          "step_index": 14,
+          "label": "COMPUTATIONAL MOTOR MAPPING — decoded simulated neural output converted into a body command; not observed behaviour",
+          "metadata": {
+            "rule": "NO_ACTION → IDLE, ESCAPE → ESCAPE (application interpretation)",
+            "output_spike_count": 0,
+            "gf_sides_metadata_only": "",
+            "direction_decoded": false
+          }
+        },
+        "body_state": {
+          "label": "SIMPLIFIED COMPUTATIONAL BODY — virtual-body movement is not claimed to reproduce real Drosophila biomechanics",
+          "position": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "heading": 0.0,
+          "linear_velocity": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "grounded": true,
+          "simulation_time": 1.5000000000000002,
+          "step_index": 15
+        },
+        "world_state": {
+          "label": "VIRTUAL WORLD — computational environment state; not a biological measurement",
+          "simulation_time": 1.5000000000000002,
+          "step_index": 15,
+          "objects": [
+            {
+              "object_id": "looming_1",
+              "object_type": "looming_object",
+              "position": {
+                "x": 5.0,
+                "y": 0.0,
+                "z": 0.0
+              },
+              "velocity": {
+                "x": -10.0,
+                "y": -0.0,
+                "z": -0.0
+              },
+              "size": 1.0,
+              "properties": {
+                "approach_speed": 10.0,
+                "azimuth_deg": 0.0
+              }
+            }
+          ],
+          "metadata": {
+            "adapter": "SimpleWorldAdapter",
+            "label": "COMPUTATIONAL WORLD PARAMETERS — dimensionless world units, not biological measurements"
+          }
+        },
+        "brain_result": null
+      },
+      {
+        "step_index": 15,
+        "simulation_time": 1.5000000000000002,
+        "dt": 0.1,
+        "observation": {
+          "sensor_type": "virtual_looming",
+          "simulation_time": 1.5000000000000002,
+          "step_index": 15,
+          "source": "VirtualLoomingSensor: looming_1",
+          "values": {
+            "intensity": 0.2513318327560048,
+            "distance": 5.0,
+            "angular_size_rad": 0.39479111969976155,
+            "bearing_rad": 0.0,
+            "visible": 1.0
+          },
+          "interpretation_label": "COMPUTATIONAL SENSOR INPUT — virtual-world state converted into a neural stimulus; not a biological measurement",
+          "metadata": {
+            "direction": "center",
+            "object_id": "looming_1",
+            "rule": "intensity = min(angular_size / saturation_angle, 1); angular_size = 2·atan(size / distance); direction by bearing sign with a center band; objects outside the field of view give intensity 0"
+          }
+        },
+        "stimulus": {
+          "stimulus": "looming",
+          "direction": "center",
+          "intensity": 0.2513318327560048
+        },
+        "brain": {
+          "escape_config_version": "escape_v1",
+          "neural_steps": 30,
+          "neural_dt": 1.0,
+          "action": "NO_ACTION",
+          "output_spike_count": 0,
+          "first_output_fire_step": null,
+          "fired_output_sides": [],
+          "firing_events": 0,
+          "neurons_activated": 0,
+          "activity_label": "SIMULATED neural activity (simplified LIF-like model); not measured biological activity"
+        },
+        "command": {
+          "command": "IDLE",
+          "magnitude": 0.0,
+          "source_action": "NO_ACTION",
+          "simulation_time": 1.5000000000000002,
+          "step_index": 15,
+          "label": "COMPUTATIONAL MOTOR MAPPING — decoded simulated neural output converted into a body command; not observed behaviour",
+          "metadata": {
+            "rule": "NO_ACTION → IDLE, ESCAPE → ESCAPE (application interpretation)",
+            "output_spike_count": 0,
+            "gf_sides_metadata_only": "",
+            "direction_decoded": false
+          }
+        },
+        "body_state": {
+          "label": "SIMPLIFIED COMPUTATIONAL BODY — virtual-body movement is not claimed to reproduce real Drosophila biomechanics",
+          "position": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "heading": 0.0,
+          "linear_velocity": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "grounded": true,
+          "simulation_time": 1.6000000000000003,
+          "step_index": 16
+        },
+        "world_state": {
+          "label": "VIRTUAL WORLD — computational environment state; not a biological measurement",
+          "simulation_time": 1.6000000000000003,
+          "step_index": 16,
+          "objects": [
+            {
+              "object_id": "looming_1",
+              "object_type": "looming_object",
+              "position": {
+                "x": 4.0,
+                "y": 0.0,
+                "z": 0.0
+              },
+              "velocity": {
+                "x": -10.0,
+                "y": -0.0,
+                "z": -0.0
+              },
+              "size": 1.0,
+              "properties": {
+                "approach_speed": 10.0,
+                "azimuth_deg": 0.0
+              }
+            }
+          ],
+          "metadata": {
+            "adapter": "SimpleWorldAdapter",
+            "label": "COMPUTATIONAL WORLD PARAMETERS — dimensionless world units, not biological measurements"
+          }
+        },
+        "brain_result": null
+      },
+      {
+        "step_index": 16,
+        "simulation_time": 1.6000000000000003,
+        "dt": 0.1,
+        "observation": {
+          "sensor_type": "virtual_looming",
+          "simulation_time": 1.6000000000000003,
+          "step_index": 16,
+          "source": "VirtualLoomingSensor: looming_1",
+          "values": {
+            "intensity": 0.3119165215094773,
+            "distance": 4.0,
+            "angular_size_rad": 0.4899573262537283,
+            "bearing_rad": 0.0,
+            "visible": 1.0
+          },
+          "interpretation_label": "COMPUTATIONAL SENSOR INPUT — virtual-world state converted into a neural stimulus; not a biological measurement",
+          "metadata": {
+            "direction": "center",
+            "object_id": "looming_1",
+            "rule": "intensity = min(angular_size / saturation_angle, 1); angular_size = 2·atan(size / distance); direction by bearing sign with a center band; objects outside the field of view give intensity 0"
+          }
+        },
+        "stimulus": {
+          "stimulus": "looming",
+          "direction": "center",
+          "intensity": 0.3119165215094773
+        },
+        "brain": {
+          "escape_config_version": "escape_v1",
+          "neural_steps": 30,
+          "neural_dt": 1.0,
+          "action": "ESCAPE",
+          "output_spike_count": 2,
+          "first_output_fire_step": 6,
+          "fired_output_sides": [
+            "L",
+            "R"
+          ],
+          "firing_events": 286,
+          "neurons_activated": 286,
+          "activity_label": "SIMULATED neural activity (simplified LIF-like model); not measured biological activity"
+        },
+        "command": {
+          "command": "ESCAPE",
+          "magnitude": 1.0,
+          "source_action": "ESCAPE",
+          "simulation_time": 1.6000000000000003,
+          "step_index": 16,
+          "label": "COMPUTATIONAL MOTOR MAPPING — decoded simulated neural output converted into a body command; not observed behaviour",
+          "metadata": {
+            "rule": "NO_ACTION → IDLE, ESCAPE → ESCAPE (application interpretation)",
+            "output_spike_count": 2,
+            "gf_sides_metadata_only": "L,R",
+            "direction_decoded": false
+          }
+        },
+        "body_state": {
+          "label": "SIMPLIFIED COMPUTATIONAL BODY — virtual-body movement is not claimed to reproduce real Drosophila biomechanics",
+          "position": {
+            "x": 0.5,
+            "y": 0.0,
+            "z": 0.30000000000000004
+          },
+          "heading": 0.0,
+          "linear_velocity": {
+            "x": 5.0,
+            "y": 0.0,
+            "z": 3.0
+          },
+          "grounded": false,
+          "simulation_time": 1.7000000000000004,
+          "step_index": 17
+        },
+        "world_state": {
+          "label": "VIRTUAL WORLD — computational environment state; not a biological measurement",
+          "simulation_time": 1.7000000000000004,
+          "step_index": 17,
+          "objects": [
+            {
+              "object_id": "looming_1",
+              "object_type": "looming_object",
+              "position": {
+                "x": 3.0,
+                "y": 0.0,
+                "z": 0.0
+              },
+              "velocity": {
+                "x": -10.0,
+                "y": -0.0,
+                "z": -0.0
+              },
+              "size": 1.0,
+              "properties": {
+                "approach_speed": 10.0,
+                "azimuth_deg": 0.0
+              }
+            }
+          ],
+          "metadata": {
+            "adapter": "SimpleWorldAdapter",
+            "label": "COMPUTATIONAL WORLD PARAMETERS — dimensionless world units, not biological measurements"
+          }
+        },
+        "brain_result": null
+      },
+      {
+        "step_index": 17,
+        "simulation_time": 1.7000000000000004,
+        "dt": 0.1,
+        "observation": {
+          "sensor_type": "virtual_looming",
+          "simulation_time": 1.7000000000000004,
+          "step_index": 17,
+          "source": "VirtualLoomingSensor: looming_1",
+          "values": {
+            "intensity": 0.4813452862899941,
+            "distance": 2.5179356624028344,
+            "angular_size_rad": 0.7560954076243607,
+            "bearing_rad": 0.0,
+            "visible": 1.0
+          },
+          "interpretation_label": "COMPUTATIONAL SENSOR INPUT — virtual-world state converted into a neural stimulus; not a biological measurement",
+          "metadata": {
+            "direction": "center",
+            "object_id": "looming_1",
+            "rule": "intensity = min(angular_size / saturation_angle, 1); angular_size = 2·atan(size / distance); direction by bearing sign with a center band; objects outside the field of view give intensity 0"
+          }
+        },
+        "stimulus": {
+          "stimulus": "looming",
+          "direction": "center",
+          "intensity": 0.4813452862899941
+        },
+        "brain": {
+          "escape_config_version": "escape_v1",
+          "neural_steps": 30,
+          "neural_dt": 1.0,
+          "action": "ESCAPE",
+          "output_spike_count": 2,
+          "first_output_fire_step": 4,
+          "fired_output_sides": [
+            "L",
+            "R"
+          ],
+          "firing_events": 286,
+          "neurons_activated": 286,
+          "activity_label": "SIMULATED neural activity (simplified LIF-like model); not measured biological activity"
+        },
+        "command": {
+          "command": "ESCAPE",
+          "magnitude": 1.0,
+          "source_action": "ESCAPE",
+          "simulation_time": 1.7000000000000004,
+          "step_index": 17,
+          "label": "COMPUTATIONAL MOTOR MAPPING — decoded simulated neural output converted into a body command; not observed behaviour",
+          "metadata": {
+            "rule": "NO_ACTION → IDLE, ESCAPE → ESCAPE (application interpretation)",
+            "output_spike_count": 2,
+            "gf_sides_metadata_only": "L,R",
+            "direction_decoded": false
+          }
+        },
+        "body_state": {
+          "label": "SIMPLIFIED COMPUTATIONAL BODY — virtual-body movement is not claimed to reproduce real Drosophila biomechanics",
+          "position": {
+            "x": 1.0,
+            "y": 0.0,
+            "z": 0.6000000000000001
+          },
+          "heading": 0.0,
+          "linear_velocity": {
+            "x": 5.0,
+            "y": 0.0,
+            "z": 3.0
+          },
+          "grounded": false,
+          "simulation_time": 1.8000000000000005,
+          "step_index": 18
+        },
+        "world_state": {
+          "label": "VIRTUAL WORLD — computational environment state; not a biological measurement",
+          "simulation_time": 1.8000000000000005,
+          "step_index": 18,
+          "objects": [
+            {
+              "object_id": "looming_1",
+              "object_type": "looming_object",
+              "position": {
+                "x": 2.0,
+                "y": 0.0,
+                "z": 0.0
+              },
+              "velocity": {
+                "x": -10.0,
+                "y": -0.0,
+                "z": -0.0
+              },
+              "size": 1.0,
+              "properties": {
+                "approach_speed": 10.0,
+                "azimuth_deg": 0.0
+              }
+            }
+          ],
+          "metadata": {
+            "adapter": "SimpleWorldAdapter",
+            "label": "COMPUTATIONAL WORLD PARAMETERS — dimensionless world units, not biological measurements"
+          }
+        },
+        "brain_result": null
+      },
+      {
+        "step_index": 18,
+        "simulation_time": 1.8000000000000005,
+        "dt": 0.1,
+        "observation": {
+          "sensor_type": "virtual_looming",
+          "simulation_time": 1.8000000000000005,
+          "step_index": 18,
+          "source": "VirtualLoomingSensor: looming_1",
+          "values": {
+            "intensity": 0.9025078928017051,
+            "distance": 1.1661903789690602,
+            "angular_size_rad": 1.4176560829163205,
+            "bearing_rad": 0.0,
+            "visible": 1.0
+          },
+          "interpretation_label": "COMPUTATIONAL SENSOR INPUT — virtual-world state converted into a neural stimulus; not a biological measurement",
+          "metadata": {
+            "direction": "center",
+            "object_id": "looming_1",
+            "rule": "intensity = min(angular_size / saturation_angle, 1); angular_size = 2·atan(size / distance); direction by bearing sign with a center band; objects outside the field of view give intensity 0"
+          }
+        },
+        "stimulus": {
+          "stimulus": "looming",
+          "direction": "center",
+          "intensity": 0.9025078928017051
+        },
+        "brain": {
+          "escape_config_version": "escape_v1",
+          "neural_steps": 30,
+          "neural_dt": 1.0,
+          "action": "ESCAPE",
+          "output_spike_count": 2,
+          "first_output_fire_step": 3,
+          "fired_output_sides": [
+            "L",
+            "R"
+          ],
+          "firing_events": 286,
+          "neurons_activated": 286,
+          "activity_label": "SIMULATED neural activity (simplified LIF-like model); not measured biological activity"
+        },
+        "command": {
+          "command": "ESCAPE",
+          "magnitude": 1.0,
+          "source_action": "ESCAPE",
+          "simulation_time": 1.8000000000000005,
+          "step_index": 18,
+          "label": "COMPUTATIONAL MOTOR MAPPING — decoded simulated neural output converted into a body command; not observed behaviour",
+          "metadata": {
+            "rule": "NO_ACTION → IDLE, ESCAPE → ESCAPE (application interpretation)",
+            "output_spike_count": 2,
+            "gf_sides_metadata_only": "L,R",
+            "direction_decoded": false
+          }
+        },
+        "body_state": {
+          "label": "SIMPLIFIED COMPUTATIONAL BODY — virtual-body movement is not claimed to reproduce real Drosophila biomechanics",
+          "position": {
+            "x": 1.5,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "heading": 0.0,
+          "linear_velocity": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "grounded": true,
+          "simulation_time": 1.9000000000000006,
+          "step_index": 19
+        },
+        "world_state": {
+          "label": "VIRTUAL WORLD — computational environment state; not a biological measurement",
+          "simulation_time": 1.9000000000000006,
+          "step_index": 19,
+          "objects": [
+            {
+              "object_id": "looming_1",
+              "object_type": "looming_object",
+              "position": {
+                "x": 1.0,
+                "y": 0.0,
+                "z": 0.0
+              },
+              "velocity": {
+                "x": -10.0,
+                "y": -0.0,
+                "z": -0.0
+              },
+              "size": 1.0,
+              "properties": {
+                "approach_speed": 10.0,
+                "azimuth_deg": 0.0
+              }
+            }
+          ],
+          "metadata": {
+            "adapter": "SimpleWorldAdapter",
+            "label": "COMPUTATIONAL WORLD PARAMETERS — dimensionless world units, not biological measurements"
+          }
+        },
+        "brain_result": null
+      },
+      {
+        "step_index": 19,
+        "simulation_time": 1.9000000000000006,
+        "dt": 0.1,
+        "observation": {
+          "sensor_type": "virtual_looming",
+          "simulation_time": 1.9000000000000006,
+          "step_index": 19,
+          "source": "VirtualLoomingSensor: looming_1",
+          "values": {
+            "intensity": 0.0,
+            "distance": 0.5,
+            "angular_size_rad": 3.141592653589793,
+            "bearing_rad": 3.141592653589793,
+            "visible": 0.0
+          },
+          "interpretation_label": "COMPUTATIONAL SENSOR INPUT — virtual-world state converted into a neural stimulus; not a biological measurement",
+          "metadata": {
+            "direction": "center",
+            "object_id": "looming_1",
+            "rule": "intensity = min(angular_size / saturation_angle, 1); angular_size = 2·atan(size / distance); direction by bearing sign with a center band; objects outside the field of view give intensity 0"
+          }
+        },
+        "stimulus": {
+          "stimulus": "looming",
+          "direction": "center",
+          "intensity": 0.0
+        },
+        "brain": {
+          "escape_config_version": "escape_v1",
+          "neural_steps": 30,
+          "neural_dt": 1.0,
+          "action": "NO_ACTION",
+          "output_spike_count": 0,
+          "first_output_fire_step": null,
+          "fired_output_sides": [],
+          "firing_events": 0,
+          "neurons_activated": 0,
+          "activity_label": "SIMULATED neural activity (simplified LIF-like model); not measured biological activity"
+        },
+        "command": {
+          "command": "IDLE",
+          "magnitude": 0.0,
+          "source_action": "NO_ACTION",
+          "simulation_time": 1.9000000000000006,
+          "step_index": 19,
+          "label": "COMPUTATIONAL MOTOR MAPPING — decoded simulated neural output converted into a body command; not observed behaviour",
+          "metadata": {
+            "rule": "NO_ACTION → IDLE, ESCAPE → ESCAPE (application interpretation)",
+            "output_spike_count": 0,
+            "gf_sides_metadata_only": "",
+            "direction_decoded": false
+          }
+        },
+        "body_state": {
+          "label": "SIMPLIFIED COMPUTATIONAL BODY — virtual-body movement is not claimed to reproduce real Drosophila biomechanics",
+          "position": {
+            "x": 1.5,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "heading": 0.0,
+          "linear_velocity": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "grounded": true,
+          "simulation_time": 2.0000000000000004,
+          "step_index": 20
+        },
+        "world_state": {
+          "label": "VIRTUAL WORLD — computational environment state; not a biological measurement",
+          "simulation_time": 2.0000000000000004,
+          "step_index": 20,
+          "objects": [
+            {
+              "object_id": "looming_1",
+              "object_type": "looming_object",
+              "position": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+              },
+              "velocity": {
+                "x": -10.0,
+                "y": -0.0,
+                "z": -0.0
+              },
+              "size": 1.0,
+              "properties": {
+                "approach_speed": 10.0,
+                "azimuth_deg": 0.0
+              }
+            }
+          ],
+          "metadata": {
+            "adapter": "SimpleWorldAdapter",
+            "label": "COMPUTATIONAL WORLD PARAMETERS — dimensionless world units, not biological measurements"
+          }
+        },
+        "brain_result": null
+      },
+      {
+        "step_index": 20,
+        "simulation_time": 2.0000000000000004,
+        "dt": 0.1,
+        "observation": {
+          "sensor_type": "virtual_looming",
+          "simulation_time": 2.0000000000000004,
+          "step_index": 20,
+          "source": "VirtualLoomingSensor: looming_1",
+          "values": {
+            "intensity": 0.0,
+            "distance": 1.5,
+            "angular_size_rad": 1.176005207095135,
+            "bearing_rad": 3.141592653589793,
+            "visible": 0.0
+          },
+          "interpretation_label": "COMPUTATIONAL SENSOR INPUT — virtual-world state converted into a neural stimulus; not a biological measurement",
+          "metadata": {
+            "direction": "center",
+            "object_id": "looming_1",
+            "rule": "intensity = min(angular_size / saturation_angle, 1); angular_size = 2·atan(size / distance); direction by bearing sign with a center band; objects outside the field of view give intensity 0"
+          }
+        },
+        "stimulus": {
+          "stimulus": "looming",
+          "direction": "center",
+          "intensity": 0.0
+        },
+        "brain": {
+          "escape_config_version": "escape_v1",
+          "neural_steps": 30,
+          "neural_dt": 1.0,
+          "action": "NO_ACTION",
+          "output_spike_count": 0,
+          "first_output_fire_step": null,
+          "fired_output_sides": [],
+          "firing_events": 0,
+          "neurons_activated": 0,
+          "activity_label": "SIMULATED neural activity (simplified LIF-like model); not measured biological activity"
+        },
+        "command": {
+          "command": "IDLE",
+          "magnitude": 0.0,
+          "source_action": "NO_ACTION",
+          "simulation_time": 2.0000000000000004,
+          "step_index": 20,
+          "label": "COMPUTATIONAL MOTOR MAPPING — decoded simulated neural output converted into a body command; not observed behaviour",
+          "metadata": {
+            "rule": "NO_ACTION → IDLE, ESCAPE → ESCAPE (application interpretation)",
+            "output_spike_count": 0,
+            "gf_sides_metadata_only": "",
+            "direction_decoded": false
+          }
+        },
+        "body_state": {
+          "label": "SIMPLIFIED COMPUTATIONAL BODY — virtual-body movement is not claimed to reproduce real Drosophila biomechanics",
+          "position": {
+            "x": 1.5,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "heading": 0.0,
+          "linear_velocity": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "grounded": true,
+          "simulation_time": 2.1000000000000005,
+          "step_index": 21
+        },
+        "world_state": {
+          "label": "VIRTUAL WORLD — computational environment state; not a biological measurement",
+          "simulation_time": 2.1000000000000005,
+          "step_index": 21,
+          "objects": [
+            {
+              "object_id": "looming_1",
+              "object_type": "looming_object",
+              "position": {
+                "x": -1.0,
+                "y": 0.0,
+                "z": 0.0
+              },
+              "velocity": {
+                "x": -10.0,
+                "y": -0.0,
+                "z": -0.0
+              },
+              "size": 1.0,
+              "properties": {
+                "approach_speed": 10.0,
+                "azimuth_deg": 0.0
+              }
+            }
+          ],
+          "metadata": {
+            "adapter": "SimpleWorldAdapter",
+            "label": "COMPUTATIONAL WORLD PARAMETERS — dimensionless world units, not biological measurements"
+          }
+        },
+        "brain_result": null
+      },
+      {
+        "step_index": 21,
+        "simulation_time": 2.1000000000000005,
+        "dt": 0.1,
+        "observation": {
+          "sensor_type": "virtual_looming",
+          "simulation_time": 2.1000000000000005,
+          "step_index": 21,
+          "source": "VirtualLoomingSensor: looming_1",
+          "values": {
+            "intensity": 0.0,
+            "distance": 2.5,
+            "angular_size_rad": 0.7610127542247298,
+            "bearing_rad": 3.141592653589793,
+            "visible": 0.0
+          },
+          "interpretation_label": "COMPUTATIONAL SENSOR INPUT — virtual-world state converted into a neural stimulus; not a biological measurement",
+          "metadata": {
+            "direction": "center",
+            "object_id": "looming_1",
+            "rule": "intensity = min(angular_size / saturation_angle, 1); angular_size = 2·atan(size / distance); direction by bearing sign with a center band; objects outside the field of view give intensity 0"
+          }
+        },
+        "stimulus": {
+          "stimulus": "looming",
+          "direction": "center",
+          "intensity": 0.0
+        },
+        "brain": {
+          "escape_config_version": "escape_v1",
+          "neural_steps": 30,
+          "neural_dt": 1.0,
+          "action": "NO_ACTION",
+          "output_spike_count": 0,
+          "first_output_fire_step": null,
+          "fired_output_sides": [],
+          "firing_events": 0,
+          "neurons_activated": 0,
+          "activity_label": "SIMULATED neural activity (simplified LIF-like model); not measured biological activity"
+        },
+        "command": {
+          "command": "IDLE",
+          "magnitude": 0.0,
+          "source_action": "NO_ACTION",
+          "simulation_time": 2.1000000000000005,
+          "step_index": 21,
+          "label": "COMPUTATIONAL MOTOR MAPPING — decoded simulated neural output converted into a body command; not observed behaviour",
+          "metadata": {
+            "rule": "NO_ACTION → IDLE, ESCAPE → ESCAPE (application interpretation)",
+            "output_spike_count": 0,
+            "gf_sides_metadata_only": "",
+            "direction_decoded": false
+          }
+        },
+        "body_state": {
+          "label": "SIMPLIFIED COMPUTATIONAL BODY — virtual-body movement is not claimed to reproduce real Drosophila biomechanics",
+          "position": {
+            "x": 1.5,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "heading": 0.0,
+          "linear_velocity": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "grounded": true,
+          "simulation_time": 2.2000000000000006,
+          "step_index": 22
+        },
+        "world_state": {
+          "label": "VIRTUAL WORLD — computational environment state; not a biological measurement",
+          "simulation_time": 2.2000000000000006,
+          "step_index": 22,
+          "objects": [
+            {
+              "object_id": "looming_1",
+              "object_type": "looming_object",
+              "position": {
+                "x": -2.0,
+                "y": 0.0,
+                "z": 0.0
+              },
+              "velocity": {
+                "x": -10.0,
+                "y": -0.0,
+                "z": -0.0
+              },
+              "size": 1.0,
+              "properties": {
+                "approach_speed": 10.0,
+                "azimuth_deg": 0.0
+              }
+            }
+          ],
+          "metadata": {
+            "adapter": "SimpleWorldAdapter",
+            "label": "COMPUTATIONAL WORLD PARAMETERS — dimensionless world units, not biological measurements"
+          }
+        },
+        "brain_result": null
+      },
+      {
+        "step_index": 22,
+        "simulation_time": 2.2000000000000006,
+        "dt": 0.1,
+        "observation": {
+          "sensor_type": "virtual_looming",
+          "simulation_time": 2.2000000000000006,
+          "step_index": 22,
+          "source": "VirtualLoomingSensor: looming_1",
+          "values": {
+            "intensity": 0.0,
+            "distance": 3.5,
+            "angular_size_rad": 0.5565993180102227,
+            "bearing_rad": 3.141592653589793,
+            "visible": 0.0
+          },
+          "interpretation_label": "COMPUTATIONAL SENSOR INPUT — virtual-world state converted into a neural stimulus; not a biological measurement",
+          "metadata": {
+            "direction": "center",
+            "object_id": "looming_1",
+            "rule": "intensity = min(angular_size / saturation_angle, 1); angular_size = 2·atan(size / distance); direction by bearing sign with a center band; objects outside the field of view give intensity 0"
+          }
+        },
+        "stimulus": {
+          "stimulus": "looming",
+          "direction": "center",
+          "intensity": 0.0
+        },
+        "brain": {
+          "escape_config_version": "escape_v1",
+          "neural_steps": 30,
+          "neural_dt": 1.0,
+          "action": "NO_ACTION",
+          "output_spike_count": 0,
+          "first_output_fire_step": null,
+          "fired_output_sides": [],
+          "firing_events": 0,
+          "neurons_activated": 0,
+          "activity_label": "SIMULATED neural activity (simplified LIF-like model); not measured biological activity"
+        },
+        "command": {
+          "command": "IDLE",
+          "magnitude": 0.0,
+          "source_action": "NO_ACTION",
+          "simulation_time": 2.2000000000000006,
+          "step_index": 22,
+          "label": "COMPUTATIONAL MOTOR MAPPING — decoded simulated neural output converted into a body command; not observed behaviour",
+          "metadata": {
+            "rule": "NO_ACTION → IDLE, ESCAPE → ESCAPE (application interpretation)",
+            "output_spike_count": 0,
+            "gf_sides_metadata_only": "",
+            "direction_decoded": false
+          }
+        },
+        "body_state": {
+          "label": "SIMPLIFIED COMPUTATIONAL BODY — virtual-body movement is not claimed to reproduce real Drosophila biomechanics",
+          "position": {
+            "x": 1.5,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "heading": 0.0,
+          "linear_velocity": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "grounded": true,
+          "simulation_time": 2.3000000000000007,
+          "step_index": 23
+        },
+        "world_state": {
+          "label": "VIRTUAL WORLD — computational environment state; not a biological measurement",
+          "simulation_time": 2.3000000000000007,
+          "step_index": 23,
+          "objects": [
+            {
+              "object_id": "looming_1",
+              "object_type": "looming_object",
+              "position": {
+                "x": -3.0,
+                "y": 0.0,
+                "z": 0.0
+              },
+              "velocity": {
+                "x": -10.0,
+                "y": -0.0,
+                "z": -0.0
+              },
+              "size": 1.0,
+              "properties": {
+                "approach_speed": 10.0,
+                "azimuth_deg": 0.0
+              }
+            }
+          ],
+          "metadata": {
+            "adapter": "SimpleWorldAdapter",
+            "label": "COMPUTATIONAL WORLD PARAMETERS — dimensionless world units, not biological measurements"
+          }
+        },
+        "brain_result": null
+      },
+      {
+        "step_index": 23,
+        "simulation_time": 2.3000000000000007,
+        "dt": 0.1,
+        "observation": {
+          "sensor_type": "virtual_looming",
+          "simulation_time": 2.3000000000000007,
+          "step_index": 23,
+          "source": "VirtualLoomingSensor: looming_1",
+          "values": {
+            "intensity": 0.0,
+            "distance": 4.5,
+            "angular_size_rad": 0.4373378917478839,
+            "bearing_rad": 3.141592653589793,
+            "visible": 0.0
+          },
+          "interpretation_label": "COMPUTATIONAL SENSOR INPUT — virtual-world state converted into a neural stimulus; not a biological measurement",
+          "metadata": {
+            "direction": "center",
+            "object_id": "looming_1",
+            "rule": "intensity = min(angular_size / saturation_angle, 1); angular_size = 2·atan(size / distance); direction by bearing sign with a center band; objects outside the field of view give intensity 0"
+          }
+        },
+        "stimulus": {
+          "stimulus": "looming",
+          "direction": "center",
+          "intensity": 0.0
+        },
+        "brain": {
+          "escape_config_version": "escape_v1",
+          "neural_steps": 30,
+          "neural_dt": 1.0,
+          "action": "NO_ACTION",
+          "output_spike_count": 0,
+          "first_output_fire_step": null,
+          "fired_output_sides": [],
+          "firing_events": 0,
+          "neurons_activated": 0,
+          "activity_label": "SIMULATED neural activity (simplified LIF-like model); not measured biological activity"
+        },
+        "command": {
+          "command": "IDLE",
+          "magnitude": 0.0,
+          "source_action": "NO_ACTION",
+          "simulation_time": 2.3000000000000007,
+          "step_index": 23,
+          "label": "COMPUTATIONAL MOTOR MAPPING — decoded simulated neural output converted into a body command; not observed behaviour",
+          "metadata": {
+            "rule": "NO_ACTION → IDLE, ESCAPE → ESCAPE (application interpretation)",
+            "output_spike_count": 0,
+            "gf_sides_metadata_only": "",
+            "direction_decoded": false
+          }
+        },
+        "body_state": {
+          "label": "SIMPLIFIED COMPUTATIONAL BODY — virtual-body movement is not claimed to reproduce real Drosophila biomechanics",
+          "position": {
+            "x": 1.5,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "heading": 0.0,
+          "linear_velocity": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "grounded": true,
+          "simulation_time": 2.400000000000001,
+          "step_index": 24
+        },
+        "world_state": {
+          "label": "VIRTUAL WORLD — computational environment state; not a biological measurement",
+          "simulation_time": 2.400000000000001,
+          "step_index": 24,
+          "objects": [
+            {
+              "object_id": "looming_1",
+              "object_type": "looming_object",
+              "position": {
+                "x": -4.0,
+                "y": 0.0,
+                "z": 0.0
+              },
+              "velocity": {
+                "x": -10.0,
+                "y": -0.0,
+                "z": -0.0
+              },
+              "size": 1.0,
+              "properties": {
+                "approach_speed": 10.0,
+                "azimuth_deg": 0.0
+              }
+            }
+          ],
+          "metadata": {
+            "adapter": "SimpleWorldAdapter",
+            "label": "COMPUTATIONAL WORLD PARAMETERS — dimensionless world units, not biological measurements"
+          }
+        },
+        "brain_result": null
+      },
+      {
+        "step_index": 24,
+        "simulation_time": 2.400000000000001,
+        "dt": 0.1,
+        "observation": {
+          "sensor_type": "virtual_looming",
+          "simulation_time": 2.400000000000001,
+          "step_index": 24,
+          "source": "VirtualLoomingSensor: looming_1",
+          "values": {
+            "intensity": 0.0,
+            "distance": 5.5,
+            "angular_size_rad": 0.35970699958495655,
+            "bearing_rad": 3.141592653589793,
+            "visible": 0.0
+          },
+          "interpretation_label": "COMPUTATIONAL SENSOR INPUT — virtual-world state converted into a neural stimulus; not a biological measurement",
+          "metadata": {
+            "direction": "center",
+            "object_id": "looming_1",
+            "rule": "intensity = min(angular_size / saturation_angle, 1); angular_size = 2·atan(size / distance); direction by bearing sign with a center band; objects outside the field of view give intensity 0"
+          }
+        },
+        "stimulus": {
+          "stimulus": "looming",
+          "direction": "center",
+          "intensity": 0.0
+        },
+        "brain": {
+          "escape_config_version": "escape_v1",
+          "neural_steps": 30,
+          "neural_dt": 1.0,
+          "action": "NO_ACTION",
+          "output_spike_count": 0,
+          "first_output_fire_step": null,
+          "fired_output_sides": [],
+          "firing_events": 0,
+          "neurons_activated": 0,
+          "activity_label": "SIMULATED neural activity (simplified LIF-like model); not measured biological activity"
+        },
+        "command": {
+          "command": "IDLE",
+          "magnitude": 0.0,
+          "source_action": "NO_ACTION",
+          "simulation_time": 2.400000000000001,
+          "step_index": 24,
+          "label": "COMPUTATIONAL MOTOR MAPPING — decoded simulated neural output converted into a body command; not observed behaviour",
+          "metadata": {
+            "rule": "NO_ACTION → IDLE, ESCAPE → ESCAPE (application interpretation)",
+            "output_spike_count": 0,
+            "gf_sides_metadata_only": "",
+            "direction_decoded": false
+          }
+        },
+        "body_state": {
+          "label": "SIMPLIFIED COMPUTATIONAL BODY — virtual-body movement is not claimed to reproduce real Drosophila biomechanics",
+          "position": {
+            "x": 1.5,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "heading": 0.0,
+          "linear_velocity": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "grounded": true,
+          "simulation_time": 2.500000000000001,
+          "step_index": 25
+        },
+        "world_state": {
+          "label": "VIRTUAL WORLD — computational environment state; not a biological measurement",
+          "simulation_time": 2.500000000000001,
+          "step_index": 25,
+          "objects": [
+            {
+              "object_id": "looming_1",
+              "object_type": "looming_object",
+              "position": {
+                "x": -5.0,
+                "y": 0.0,
+                "z": 0.0
+              },
+              "velocity": {
+                "x": -10.0,
+                "y": -0.0,
+                "z": -0.0
+              },
+              "size": 1.0,
+              "properties": {
+                "approach_speed": 10.0,
+                "azimuth_deg": 0.0
+              }
+            }
+          ],
+          "metadata": {
+            "adapter": "SimpleWorldAdapter",
+            "label": "COMPUTATIONAL WORLD PARAMETERS — dimensionless world units, not biological measurements"
+          }
+        },
+        "brain_result": null
+      },
+      {
+        "step_index": 25,
+        "simulation_time": 2.500000000000001,
+        "dt": 0.1,
+        "observation": {
+          "sensor_type": "virtual_looming",
+          "simulation_time": 2.500000000000001,
+          "step_index": 25,
+          "source": "VirtualLoomingSensor: looming_1",
+          "values": {
+            "intensity": 0.0,
+            "distance": 6.5,
+            "angular_size_rad": 0.3052986567905303,
+            "bearing_rad": 3.141592653589793,
+            "visible": 0.0
+          },
+          "interpretation_label": "COMPUTATIONAL SENSOR INPUT — virtual-world state converted into a neural stimulus; not a biological measurement",
+          "metadata": {
+            "direction": "center",
+            "object_id": "looming_1",
+            "rule": "intensity = min(angular_size / saturation_angle, 1); angular_size = 2·atan(size / distance); direction by bearing sign with a center band; objects outside the field of view give intensity 0"
+          }
+        },
+        "stimulus": {
+          "stimulus": "looming",
+          "direction": "center",
+          "intensity": 0.0
+        },
+        "brain": {
+          "escape_config_version": "escape_v1",
+          "neural_steps": 30,
+          "neural_dt": 1.0,
+          "action": "NO_ACTION",
+          "output_spike_count": 0,
+          "first_output_fire_step": null,
+          "fired_output_sides": [],
+          "firing_events": 0,
+          "neurons_activated": 0,
+          "activity_label": "SIMULATED neural activity (simplified LIF-like model); not measured biological activity"
+        },
+        "command": {
+          "command": "IDLE",
+          "magnitude": 0.0,
+          "source_action": "NO_ACTION",
+          "simulation_time": 2.500000000000001,
+          "step_index": 25,
+          "label": "COMPUTATIONAL MOTOR MAPPING — decoded simulated neural output converted into a body command; not observed behaviour",
+          "metadata": {
+            "rule": "NO_ACTION → IDLE, ESCAPE → ESCAPE (application interpretation)",
+            "output_spike_count": 0,
+            "gf_sides_metadata_only": "",
+            "direction_decoded": false
+          }
+        },
+        "body_state": {
+          "label": "SIMPLIFIED COMPUTATIONAL BODY — virtual-body movement is not claimed to reproduce real Drosophila biomechanics",
+          "position": {
+            "x": 1.5,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "heading": 0.0,
+          "linear_velocity": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "grounded": true,
+          "simulation_time": 2.600000000000001,
+          "step_index": 26
+        },
+        "world_state": {
+          "label": "VIRTUAL WORLD — computational environment state; not a biological measurement",
+          "simulation_time": 2.600000000000001,
+          "step_index": 26,
+          "objects": [
+            {
+              "object_id": "looming_1",
+              "object_type": "looming_object",
+              "position": {
+                "x": -6.0,
+                "y": 0.0,
+                "z": 0.0
+              },
+              "velocity": {
+                "x": -10.0,
+                "y": -0.0,
+                "z": -0.0
+              },
+              "size": 1.0,
+              "properties": {
+                "approach_speed": 10.0,
+                "azimuth_deg": 0.0
+              }
+            }
+          ],
+          "metadata": {
+            "adapter": "SimpleWorldAdapter",
+            "label": "COMPUTATIONAL WORLD PARAMETERS — dimensionless world units, not biological measurements"
+          }
+        },
+        "brain_result": null
+      },
+      {
+        "step_index": 26,
+        "simulation_time": 2.600000000000001,
+        "dt": 0.1,
+        "observation": {
+          "sensor_type": "virtual_looming",
+          "simulation_time": 2.600000000000001,
+          "step_index": 26,
+          "source": "VirtualLoomingSensor: looming_1",
+          "values": {
+            "intensity": 0.0,
+            "distance": 7.5,
+            "angular_size_rad": 0.26510306459334804,
+            "bearing_rad": 3.141592653589793,
+            "visible": 0.0
+          },
+          "interpretation_label": "COMPUTATIONAL SENSOR INPUT — virtual-world state converted into a neural stimulus; not a biological measurement",
+          "metadata": {
+            "direction": "center",
+            "object_id": "looming_1",
+            "rule": "intensity = min(angular_size / saturation_angle, 1); angular_size = 2·atan(size / distance); direction by bearing sign with a center band; objects outside the field of view give intensity 0"
+          }
+        },
+        "stimulus": {
+          "stimulus": "looming",
+          "direction": "center",
+          "intensity": 0.0
+        },
+        "brain": {
+          "escape_config_version": "escape_v1",
+          "neural_steps": 30,
+          "neural_dt": 1.0,
+          "action": "NO_ACTION",
+          "output_spike_count": 0,
+          "first_output_fire_step": null,
+          "fired_output_sides": [],
+          "firing_events": 0,
+          "neurons_activated": 0,
+          "activity_label": "SIMULATED neural activity (simplified LIF-like model); not measured biological activity"
+        },
+        "command": {
+          "command": "IDLE",
+          "magnitude": 0.0,
+          "source_action": "NO_ACTION",
+          "simulation_time": 2.600000000000001,
+          "step_index": 26,
+          "label": "COMPUTATIONAL MOTOR MAPPING — decoded simulated neural output converted into a body command; not observed behaviour",
+          "metadata": {
+            "rule": "NO_ACTION → IDLE, ESCAPE → ESCAPE (application interpretation)",
+            "output_spike_count": 0,
+            "gf_sides_metadata_only": "",
+            "direction_decoded": false
+          }
+        },
+        "body_state": {
+          "label": "SIMPLIFIED COMPUTATIONAL BODY — virtual-body movement is not claimed to reproduce real Drosophila biomechanics",
+          "position": {
+            "x": 1.5,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "heading": 0.0,
+          "linear_velocity": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "grounded": true,
+          "simulation_time": 2.700000000000001,
+          "step_index": 27
+        },
+        "world_state": {
+          "label": "VIRTUAL WORLD — computational environment state; not a biological measurement",
+          "simulation_time": 2.700000000000001,
+          "step_index": 27,
+          "objects": [
+            {
+              "object_id": "looming_1",
+              "object_type": "looming_object",
+              "position": {
+                "x": -7.0,
+                "y": 0.0,
+                "z": 0.0
+              },
+              "velocity": {
+                "x": -10.0,
+                "y": -0.0,
+                "z": -0.0
+              },
+              "size": 1.0,
+              "properties": {
+                "approach_speed": 10.0,
+                "azimuth_deg": 0.0
+              }
+            }
+          ],
+          "metadata": {
+            "adapter": "SimpleWorldAdapter",
+            "label": "COMPUTATIONAL WORLD PARAMETERS — dimensionless world units, not biological measurements"
+          }
+        },
+        "brain_result": null
+      },
+      {
+        "step_index": 27,
+        "simulation_time": 2.700000000000001,
+        "dt": 0.1,
+        "observation": {
+          "sensor_type": "virtual_looming",
+          "simulation_time": 2.700000000000001,
+          "step_index": 27,
+          "source": "VirtualLoomingSensor: looming_1",
+          "values": {
+            "intensity": 0.0,
+            "distance": 8.5,
+            "angular_size_rad": 0.23421748913372856,
+            "bearing_rad": 3.141592653589793,
+            "visible": 0.0
+          },
+          "interpretation_label": "COMPUTATIONAL SENSOR INPUT — virtual-world state converted into a neural stimulus; not a biological measurement",
+          "metadata": {
+            "direction": "center",
+            "object_id": "looming_1",
+            "rule": "intensity = min(angular_size / saturation_angle, 1); angular_size = 2·atan(size / distance); direction by bearing sign with a center band; objects outside the field of view give intensity 0"
+          }
+        },
+        "stimulus": {
+          "stimulus": "looming",
+          "direction": "center",
+          "intensity": 0.0
+        },
+        "brain": {
+          "escape_config_version": "escape_v1",
+          "neural_steps": 30,
+          "neural_dt": 1.0,
+          "action": "NO_ACTION",
+          "output_spike_count": 0,
+          "first_output_fire_step": null,
+          "fired_output_sides": [],
+          "firing_events": 0,
+          "neurons_activated": 0,
+          "activity_label": "SIMULATED neural activity (simplified LIF-like model); not measured biological activity"
+        },
+        "command": {
+          "command": "IDLE",
+          "magnitude": 0.0,
+          "source_action": "NO_ACTION",
+          "simulation_time": 2.700000000000001,
+          "step_index": 27,
+          "label": "COMPUTATIONAL MOTOR MAPPING — decoded simulated neural output converted into a body command; not observed behaviour",
+          "metadata": {
+            "rule": "NO_ACTION → IDLE, ESCAPE → ESCAPE (application interpretation)",
+            "output_spike_count": 0,
+            "gf_sides_metadata_only": "",
+            "direction_decoded": false
+          }
+        },
+        "body_state": {
+          "label": "SIMPLIFIED COMPUTATIONAL BODY — virtual-body movement is not claimed to reproduce real Drosophila biomechanics",
+          "position": {
+            "x": 1.5,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "heading": 0.0,
+          "linear_velocity": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "grounded": true,
+          "simulation_time": 2.800000000000001,
+          "step_index": 28
+        },
+        "world_state": {
+          "label": "VIRTUAL WORLD — computational environment state; not a biological measurement",
+          "simulation_time": 2.800000000000001,
+          "step_index": 28,
+          "objects": [
+            {
+              "object_id": "looming_1",
+              "object_type": "looming_object",
+              "position": {
+                "x": -8.0,
+                "y": 0.0,
+                "z": 0.0
+              },
+              "velocity": {
+                "x": -10.0,
+                "y": -0.0,
+                "z": -0.0
+              },
+              "size": 1.0,
+              "properties": {
+                "approach_speed": 10.0,
+                "azimuth_deg": 0.0
+              }
+            }
+          ],
+          "metadata": {
+            "adapter": "SimpleWorldAdapter",
+            "label": "COMPUTATIONAL WORLD PARAMETERS — dimensionless world units, not biological measurements"
+          }
+        },
+        "brain_result": null
+      },
+      {
+        "step_index": 28,
+        "simulation_time": 2.800000000000001,
+        "dt": 0.1,
+        "observation": {
+          "sensor_type": "virtual_looming",
+          "simulation_time": 2.800000000000001,
+          "step_index": 28,
+          "source": "VirtualLoomingSensor: looming_1",
+          "values": {
+            "intensity": 0.0,
+            "distance": 9.5,
+            "angular_size_rad": 0.20975387746046778,
+            "bearing_rad": 3.141592653589793,
+            "visible": 0.0
+          },
+          "interpretation_label": "COMPUTATIONAL SENSOR INPUT — virtual-world state converted into a neural stimulus; not a biological measurement",
+          "metadata": {
+            "direction": "center",
+            "object_id": "looming_1",
+            "rule": "intensity = min(angular_size / saturation_angle, 1); angular_size = 2·atan(size / distance); direction by bearing sign with a center band; objects outside the field of view give intensity 0"
+          }
+        },
+        "stimulus": {
+          "stimulus": "looming",
+          "direction": "center",
+          "intensity": 0.0
+        },
+        "brain": {
+          "escape_config_version": "escape_v1",
+          "neural_steps": 30,
+          "neural_dt": 1.0,
+          "action": "NO_ACTION",
+          "output_spike_count": 0,
+          "first_output_fire_step": null,
+          "fired_output_sides": [],
+          "firing_events": 0,
+          "neurons_activated": 0,
+          "activity_label": "SIMULATED neural activity (simplified LIF-like model); not measured biological activity"
+        },
+        "command": {
+          "command": "IDLE",
+          "magnitude": 0.0,
+          "source_action": "NO_ACTION",
+          "simulation_time": 2.800000000000001,
+          "step_index": 28,
+          "label": "COMPUTATIONAL MOTOR MAPPING — decoded simulated neural output converted into a body command; not observed behaviour",
+          "metadata": {
+            "rule": "NO_ACTION → IDLE, ESCAPE → ESCAPE (application interpretation)",
+            "output_spike_count": 0,
+            "gf_sides_metadata_only": "",
+            "direction_decoded": false
+          }
+        },
+        "body_state": {
+          "label": "SIMPLIFIED COMPUTATIONAL BODY — virtual-body movement is not claimed to reproduce real Drosophila biomechanics",
+          "position": {
+            "x": 1.5,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "heading": 0.0,
+          "linear_velocity": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "grounded": true,
+          "simulation_time": 2.9000000000000012,
+          "step_index": 29
+        },
+        "world_state": {
+          "label": "VIRTUAL WORLD — computational environment state; not a biological measurement",
+          "simulation_time": 2.9000000000000012,
+          "step_index": 29,
+          "objects": [
+            {
+              "object_id": "looming_1",
+              "object_type": "looming_object",
+              "position": {
+                "x": -9.0,
+                "y": 0.0,
+                "z": 0.0
+              },
+              "velocity": {
+                "x": -10.0,
+                "y": -0.0,
+                "z": -0.0
+              },
+              "size": 1.0,
+              "properties": {
+                "approach_speed": 10.0,
+                "azimuth_deg": 0.0
+              }
+            }
+          ],
+          "metadata": {
+            "adapter": "SimpleWorldAdapter",
+            "label": "COMPUTATIONAL WORLD PARAMETERS — dimensionless world units, not biological measurements"
+          }
+        },
+        "brain_result": null
+      },
+      {
+        "step_index": 29,
+        "simulation_time": 2.9000000000000012,
+        "dt": 0.1,
+        "observation": {
+          "sensor_type": "virtual_looming",
+          "simulation_time": 2.9000000000000012,
+          "step_index": 29,
+          "source": "VirtualLoomingSensor: looming_1",
+          "values": {
+            "intensity": 0.0,
+            "distance": 10.5,
+            "angular_size_rad": 0.18990341268551264,
+            "bearing_rad": 3.141592653589793,
+            "visible": 0.0
+          },
+          "interpretation_label": "COMPUTATIONAL SENSOR INPUT — virtual-world state converted into a neural stimulus; not a biological measurement",
+          "metadata": {
+            "direction": "center",
+            "object_id": "looming_1",
+            "rule": "intensity = min(angular_size / saturation_angle, 1); angular_size = 2·atan(size / distance); direction by bearing sign with a center band; objects outside the field of view give intensity 0"
+          }
+        },
+        "stimulus": {
+          "stimulus": "looming",
+          "direction": "center",
+          "intensity": 0.0
+        },
+        "brain": {
+          "escape_config_version": "escape_v1",
+          "neural_steps": 30,
+          "neural_dt": 1.0,
+          "action": "NO_ACTION",
+          "output_spike_count": 0,
+          "first_output_fire_step": null,
+          "fired_output_sides": [],
+          "firing_events": 0,
+          "neurons_activated": 0,
+          "activity_label": "SIMULATED neural activity (simplified LIF-like model); not measured biological activity"
+        },
+        "command": {
+          "command": "IDLE",
+          "magnitude": 0.0,
+          "source_action": "NO_ACTION",
+          "simulation_time": 2.9000000000000012,
+          "step_index": 29,
+          "label": "COMPUTATIONAL MOTOR MAPPING — decoded simulated neural output converted into a body command; not observed behaviour",
+          "metadata": {
+            "rule": "NO_ACTION → IDLE, ESCAPE → ESCAPE (application interpretation)",
+            "output_spike_count": 0,
+            "gf_sides_metadata_only": "",
+            "direction_decoded": false
+          }
+        },
+        "body_state": {
+          "label": "SIMPLIFIED COMPUTATIONAL BODY — virtual-body movement is not claimed to reproduce real Drosophila biomechanics",
+          "position": {
+            "x": 1.5,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "heading": 0.0,
+          "linear_velocity": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "grounded": true,
+          "simulation_time": 3.0000000000000013,
+          "step_index": 30
+        },
+        "world_state": {
+          "label": "VIRTUAL WORLD — computational environment state; not a biological measurement",
+          "simulation_time": 3.0000000000000013,
+          "step_index": 30,
+          "objects": [
+            {
+              "object_id": "looming_1",
+              "object_type": "looming_object",
+              "position": {
+                "x": -10.0,
+                "y": 0.0,
+                "z": 0.0
+              },
+              "velocity": {
+                "x": -10.0,
+                "y": -0.0,
+                "z": -0.0
+              },
+              "size": 1.0,
+              "properties": {
+                "approach_speed": 10.0,
+                "azimuth_deg": 0.0
+              }
+            }
+          ],
+          "metadata": {
+            "adapter": "SimpleWorldAdapter",
+            "label": "COMPUTATIONAL WORLD PARAMETERS — dimensionless world units, not biological measurements"
+          }
+        },
+        "brain_result": null
+      }
+    ],
+    "summary": {
+      "loop_steps": 30,
+      "actions": {
+        "ESCAPE": 3,
+        "NO_ACTION": 27
+      },
+      "commands": {
+        "ESCAPE": 3,
+        "IDLE": 27
+      },
+      "first_escape_step": 16,
+      "final_body_position": {
+        "x": 1.5,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "displacement": 1.5,
+      "final_grounded": true
+    },
+    "runtime_seconds": 0.049811
+  }
+}
