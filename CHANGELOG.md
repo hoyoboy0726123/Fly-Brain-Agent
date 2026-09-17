@@ -5,7 +5,30 @@ All notable changes to FlyBrain Agent are documented here. The format follows
 
 ## [Unreleased]
 
+P7 is delivered in three parts: **P7.0** (embodiment architecture, below), **P7.1** (the visual
+Virtual Threat Lab, below) and **P7.2** (neural intervention in the lab — planned, not
+implemented).
+
 ### Added
+- **Virtual Threat Lab (P7.1)** — `GET /embodiment/config` and `POST /embodiment/run`
+  (`backend/app/api/embodiment.py`): one deterministic P7.0 closed-loop experiment per request
+  (safe parameters only: seed, `max_steps ≤ 200`, world start distance / approach speed /
+  azimuth; no neural parameter), returning a replayable timeline (world, body, sensor,
+  simulated brain group activity, decoded action, motor command per loop step), outcome events
+  (`first_escape`, `escape`, `landed`), provenance and the disclaimer; failures return no
+  partial timeline. New frontend tab **Virtual Threat Lab** (`frontend/src/threatlab/`): SVG
+  top-down arena (object = `WorldState`, fly = `BodyState`, fly's-eye angular-size inset),
+  DISTANCE / LOOMING INPUT / BODY POSITION / ACTION metrics, WORLD / BODY / SENSOR read-outs,
+  brain panel labelled SIMULATED NEURAL ACTIVITY with per-neural-step spike bars, closed-loop
+  story WORLD ↓ SENSOR ↓ BRAIN ↓ MOTOR ↓ BODY ↺ WORLD, replay controls (RUN, PLAY, PAUSE,
+  RESET, STEP, slider, ⚡ ESCAPE markers), WAITING FOR EXPERIMENT / NO RESULT states,
+  scientific boundaries and disclaimer served by the backend. The frontend renders recorded
+  states only (tween between steps is presentation only). `scripts/smoke_threat_lab.py` /
+  `make smoke-threat-lab` (also in CI), `backend/tests/test_api_embodiment.py`,
+  `frontend/tests/threat-lab.spec.ts`, `frontend/tests/smoke-threat-lab.spec.ts`
+  (screenshots `docs/screenshots/threatlab-A…E.png`), `docs/EMBODIMENT.md` §10.
+  `BrainStepSummary` (P7.0) gained the additive fields `sensory_first_fire_step` and
+  `group_fired_counts`. `CURRENT_PHASE = "P7.1"`. No scientific logic of P0–P7.0 changed.
 - **Embodiment architecture foundation (P7.0)** — `backend/app/embodiment/`: frozen domain
   models (`WorldState`, `BodyState`, `SensoryObservation`, `MotorCommand`, `SimulationClock`,
   configs, records, provenance), adapter interfaces (`WorldAdapter`, `SensorAdapter`,

@@ -79,7 +79,7 @@ way (`/api/ws/escape` -> `/ws/escape`).
 
 | Job | Steps | Data |
 |---|---|---|
-| backend (Python 3.11, 3.12) | `pip install -e backend[dev]`, `ruff check` + `ruff format --check` (backend + scripts), `pytest`, smoke scripts (health, fixture inspection, fixture circuit / simulation, escape demo, web demo API, embodiment loop) | synthetic fixture + committed `escape_v1` artifact |
+| backend (Python 3.11, 3.12) | `pip install -e backend[dev]`, `ruff check` + `ruff format --check` (backend + scripts), `pytest`, smoke scripts (health, fixture inspection, fixture circuit / simulation, escape demo, web demo API, embodiment loop, Threat Lab API) | synthetic fixture + committed `escape_v1` artifact |
 | frontend (Node 22) | `npm ci`, `npm run typecheck`, `npm run build` | — |
 | e2e | backend + frontend install, `npx playwright install --with-deps chromium`, `scripts/run_demo.py --check`, `--smoke`, `npm run test:e2e` (all specs, live backend) | committed `escape_v1` artifact |
 
@@ -102,6 +102,8 @@ make lint               # ruff check on backend
 make smoke              # all of the following (+ data / circuit / simulation / escape smokes)
 make smoke-backend      # scripts/smoke_test.py: boots uvicorn on a free port, asserts GET /health
 make smoke-web          # scripts/smoke_web_demo.py: escape API over REST + WebSocket (P5)
+make smoke-embodiment   # scripts/smoke_embodiment.py: closed loop in-process (P7.0)
+make smoke-threat-lab   # scripts/smoke_threat_lab.py: /embodiment/config + /embodiment/run over HTTP (P7.1)
 make smoke-frontend     # cd frontend && npm run test:e2e (Playwright)
 ```
 
@@ -111,7 +113,9 @@ The Playwright run starts **both** servers itself (backend via `backend/.venv` P
 `tests/escape-demo.spec.ts` (the P5 demo: controls, live runs, error states, disclaimer) and
 `tests/smoke-demo.spec.ts` (the three documented scenarios), `tests/inspector.spec.ts` (P6 brain
 inspector), `tests/landing.spec.ts` (P6.1 landing, story, presets), `tests/smoke-inspector.spec.ts`
-(MVP screenshots A–E) and `tests/release-screenshots.spec.ts` (release screenshots). Screenshot
+(MVP screenshots A–E), `tests/release-screenshots.spec.ts` (release screenshots),
+`tests/threat-lab.spec.ts` (P7.1 Virtual Threat Lab: 19 tests, replay compared with the captured
+backend payload) and `tests/smoke-threat-lab.spec.ts` (Threat Lab screenshots A–E). Screenshot
 specs write to `frontend/test-results/screenshots/` (git-ignored); `make screenshots` sets
 `FLYBRAIN_SCREENSHOT_DIR=../docs/screenshots` to refresh the curated set. Happy paths always hit
 the live backend; only error states are mocked.
@@ -269,6 +273,24 @@ Design, boundaries, timing and future adapters: `docs/EMBODIMENT.md`.
 ```bash
 make smoke-embodiment      # closed loop: looming object → virtual fly (escape_v1 brain unchanged)
                            # -> data/simulations/embodiment_smoke.report.json
+```
+
+## 4i. Virtual Threat Lab (P7.1)
+
+`backend/app/api/embodiment.py` — `GET /embodiment/config`, `POST /embodiment/run`
+(`ThreatLabService`: a fresh P7.0 `EmbodiedAgentLoop` per request on the shared escape_v1
+brain; timeline = reshaped `EmbodiedStepRecord`s, no embodiment logic in the API layer).
+Tests: `backend/tests/test_api_embodiment.py` (config, run shape, ordering, fidelity to a direct
+P7.0 loop, simulated group activity, provenance, disclaimer, determinism, isolation, validation,
+limits, failure → 500 without timeline, 503 / 504, payload without per-neuron states, P5 / P6
+paths unchanged). Frontend: `frontend/src/threatlab/` (`useThreatLab`, `ThreatLabView`, `Arena`,
+`ThreatLabBrain`, `LoopStory`, `ReplayControls`, `Panels`, `ParamsForm`, `Boundaries`), tab
+`Virtual Threat Lab` / hash `#threat-lab`. Design and replay semantics: `docs/EMBODIMENT.md` §10.
+
+```bash
+make smoke-threat-lab      # boots uvicorn, GET /embodiment/config, POST /embodiment/run, checks the replay
+                           # -> data/simulations/threat_lab_smoke.report.json (runtime, payload size)
+cd frontend && npx playwright test tests/threat-lab.spec.ts tests/smoke-threat-lab.spec.ts
 ```
 
 ## 5. Configuration

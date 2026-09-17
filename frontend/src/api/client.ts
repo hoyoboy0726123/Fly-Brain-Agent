@@ -10,6 +10,8 @@ import {
   isHealthResponse,
   isNeighborsResponse,
   isNeuronDetail,
+  isThreatLabConfig,
+  isThreatLabRunResult,
   type CircuitEdgeRecord,
   type CircuitNodeRecord,
   type CircuitProvenance,
@@ -21,6 +23,9 @@ import {
   type HealthResponse,
   type NeighborsResponse,
   type NeuronDetail,
+  type ThreatLabConfig,
+  type ThreatLabRunRequest,
+  type ThreatLabRunResult,
 } from './types.ts'
 
 /** Base URL for the backend API. `/api` is proxied to FastAPI by the Vite dev server. */
@@ -33,6 +38,7 @@ export type ErrorCode =
   | 'circuit_unavailable'
   | 'circuit_mismatch'
   | 'simulation_error'
+  | 'embodiment_error'
   | 'timeout'
   | 'backend_unavailable'
   | 'unexpected_response'
@@ -66,6 +72,8 @@ export function describeErrorCode(code: ErrorCode): string {
       return 'Circuit mismatch (hash / id differs from the configured expectation)'
     case 'simulation_error':
       return 'Simulation error'
+    case 'embodiment_error':
+      return 'Embodiment error (world / sensor / motor / body adapter)'
     case 'timeout':
       return 'Timeout'
     case 'unexpected_response':
@@ -263,4 +271,25 @@ export function fetchNeighbors(circuitId: string, neuronId: string, signal?: Abo
 
 export function fetchEdge(circuitId: string, pre: string, post: string, signal?: AbortSignal): Promise<EdgeDetail> {
   return getGuarded(`/circuits/${enc(circuitId)}/edges/${enc(pre)}/${enc(post)}`, isEdgeDetail, 'edge', signal)
+}
+
+// ---------------------------------------------------------------------------- virtual threat lab (P7.1)
+
+export function fetchThreatLabConfig(signal?: AbortSignal): Promise<ThreatLabConfig> {
+  return getGuarded('/embodiment/config', isThreatLabConfig, '/embodiment/config', signal)
+}
+
+/** `POST /embodiment/run` — one deterministic closed-loop experiment computed by the backend. */
+export async function runThreatLab(request: ThreatLabRunRequest, signal?: AbortSignal): Promise<ThreatLabRunResult> {
+  const init: RequestInit = {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(request),
+  }
+  if (signal) init.signal = signal
+  const payload = await requestJson('/embodiment/run', init)
+  if (!isThreatLabRunResult(payload)) {
+    throw new ApiError('Backend returned an unexpected /embodiment/run payload', { code: 'unexpected_response' })
+  }
+  return payload
 }

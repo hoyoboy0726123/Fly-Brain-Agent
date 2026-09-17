@@ -145,15 +145,15 @@ Every derived artifact carries its provenance: `data/processed/provenance.json` 
 make test           # backend pytest + frontend typecheck
 make lint           # ruff check + format check (backend + scripts)
 make build-frontend # production build (frontend/dist)
-make smoke          # health · fixture data · circuit · simulation · escape demo · web demo API · embodiment · Playwright
+make smoke          # health · fixture data · circuit · simulation · escape demo · web demo API · embodiment · threat lab · Playwright
 make demo-smoke     # start both servers via the launcher, verify, stop
 ```
 
 | Suite | What it covers | Data used |
 |---|---|---|
-| `pytest` (backend) | dataset adapters, canonical-graph guards, extractor, simulation engine, escape pipeline, escape API, circuits API (incl. "every served edge exists in the artifact"), launcher validation | synthetic fixture + committed `escape_v1` artifact |
-| Playwright (frontend) | health smoke, P5 demo, landing / presets / story, P6 inspector, screenshot specs — happy paths on the live backend, error states intercepted | committed `escape_v1` artifact |
-| smoke scripts | health, fixture inspection, fixture extraction / simulation (production steps skipped without data), escape demo, web demo REST + WebSocket + inspector API | fixture + committed artifact |
+| `pytest` (backend) | dataset adapters, canonical-graph guards, extractor, simulation engine, escape pipeline, escape API, circuits API (incl. "every served edge exists in the artifact"), embodiment loop, Threat Lab API (timeline = P7.0 loop records, determinism, limits, failure → no timeline), launcher validation | synthetic fixture + committed `escape_v1` artifact |
+| Playwright (frontend) | health smoke, P5 demo, landing / presets / story, P6 inspector, P7.1 Virtual Threat Lab (replay = backend record, ESCAPE marker, body moves only per `BodyState`, NO RESULT on failure), screenshot specs — happy paths on the live backend, error states intercepted | committed `escape_v1` artifact |
+| smoke scripts | health, fixture inspection, fixture extraction / simulation (production steps skipped without data), escape demo, web demo REST + WebSocket + inspector API, embodiment loop, Threat Lab API over HTTP | fixture + committed artifact |
 
 **Continuous integration** ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)) runs on every push and pull request: backend (Python 3.11 and 3.12: ruff, pytest, smoke scripts), frontend (Node 22: `npm ci`, typecheck, production build) and end-to-end (launcher `--check` and `--smoke`, then the full Playwright suite against the live backend with the committed artifact). **CI never downloads the MaleCNS dataset**; steps that need the raw data (`make normalize`, technical extraction / simulation on the canonical graph, `make build-escape-config`) are local-only and skip themselves in CI.
 
@@ -171,10 +171,44 @@ no Three.js, no FlyGym yet). Try `make smoke-embodiment`; design in
 > Structural connectivity is biological data. Neural activity is simulated. Virtual sensing,
 > motor mapping, body dynamics, and world physics are computational interpretations.
 
+## Virtual Threat Lab (P7.1)
+
+The third tab, **Virtual Threat Lab**, makes the P7.0 closed loop visible, interactive and
+replayable. Press **RUN EXPERIMENT**: the backend runs `World → Sensor → Brain → Motor → Body
+→ World` for up to 200 loop steps (`POST /embodiment/run`) and returns the whole timeline;
+the browser then replays it (PLAY / PAUSE / STEP / slider / RESET, ⚡ ESCAPE markers). Every
+panel — the top-down arena, DISTANCE / LOOMING INPUT / BODY POSITION / ACTION, the WORLD /
+BODY / SENSOR read-outs, the LC4 / LPLC2 → DNp01 brain panel with per-neural-step spike bars,
+and the WORLD ↓ SENSOR ↓ BRAIN ↓ MOTOR ↓ BODY story — shows the state recorded at the selected
+step. **The frontend never generates behaviour**: no rule such as "intensity > 0.5 ⇒ LC4
+active" exists in the UI, the fly moves only where the recorded `BodyState` moved, and a
+failed run shows **NO RESULT** (never a default ESCAPE, never synthesised steps). The short
+tween between two recorded steps is presentation only. Only world geometry (start distance,
+approach speed, azimuth), loop length and the seed can be changed; neural parameters are not
+exposed. Neural intervention (silence / stimulate / lesion) is **P7.2 — not implemented**.
+
+| Screenshot | State |
+|---|---|
+| [`docs/screenshots/threatlab-A-initial.png`](docs/screenshots/threatlab-A-initial.png) | WAITING FOR EXPERIMENT (no fake activity, no fly, no object) |
+| [`docs/screenshots/threatlab-B-approaching.png`](docs/screenshots/threatlab-B-approaching.png) | object approaching, NO_ACTION |
+| [`docs/screenshots/threatlab-C-escape-event.png`](docs/screenshots/threatlab-C-escape-event.png) | ESCAPE decoded (loop step 16) |
+| [`docs/screenshots/threatlab-D-post-escape-body.png`](docs/screenshots/threatlab-D-post-escape-body.png) | body airborne one loop step later |
+| [`docs/screenshots/threatlab-E-replay-escape-step.png`](docs/screenshots/threatlab-E-replay-escape-step.png) | replay jumped to the ⚡ marker |
+
+```bash
+make smoke-threat-lab      # scripts/smoke_threat_lab.py: /embodiment/config + /embodiment/run over HTTP
+```
+
+API: `GET /embodiment/config` (experiment, world / sensor / body / motor / loop configs, timing,
+circuit, dataset, labels, scientific boundaries, disclaimer, request limits) and
+`POST /embodiment/run` (`seed`, `max_steps ≤ 200`, `world.{start_distance, approach_speed,
+azimuth_deg}`; unknown or neural fields → 422). Details in
+[docs/EMBODIMENT.md §10](docs/EMBODIMENT.md#10-virtual-threat-lab-p71).
+
 ## Roadmap
 
 - **Release:** v0.1.0 tag and GitHub Release — pending explicit authorization by the project owner (license decision resolved: Apache-2.0).
-- P7.0 — embodiment architecture foundation (done, awaiting review); P7.1+ — visual virtual world / body (Three.js), then FlyGym / NeuroMechFly adapters; food seeking only after its own research gate.
+- P7.0 — embodiment architecture foundation (done, approved); P7.1 — Virtual Threat Lab (done, awaiting review); P7.2 — neural intervention (silence / stimulate / lesion) in the lab, planned; later — FlyGym / NeuroMechFly adapters; food seeking only after its own research gate.
 - P8 — webcam stimulus adapter; P9 — safe robot / physical adapter.
 - Candidate `escape_v2`: DNp02 / DNp04 / DNp11 (forward / backward takeoff) once directional decoding is evidence-backed; contralateral giant-fiber inputs.
 - Inspector: per-neuron voltage traces, snapshot export / import.

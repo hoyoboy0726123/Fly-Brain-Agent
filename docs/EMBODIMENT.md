@@ -1,4 +1,4 @@
-# Embodiment architecture (P7.0)
+# Embodiment architecture (P7.0) and Virtual Threat Lab (P7.1)
 
 > Structural connectivity is biological data. Neural activity is simulated.
 > Virtual sensing, motor mapping, body dynamics, and world physics are computational
@@ -135,7 +135,7 @@ timing. `scripts/smoke_embodiment.py` writes a full record to
 
 | Adapter | Role | Notes |
 |---|---|---|
-| `SimpleBodyAdapter` | point body for architecture tests | **implemented** (P7.0) |
+| `SimpleBodyAdapter` | point body for architecture tests and the P7.1 Virtual Threat Lab | **implemented** (P7.0) |
 | `ThreeJSBodyAdapter` | drives a visual body in the browser from `BodyState` / `MotorCommand` | later phase; the browser renders, it never owns the state |
 | `FlyGymAdapter` (NeuroMechFly / MuJoCo) | maps `MotorCommand` to a physics-based fly body and reads its pose back into `BodyState` | later phase; requires an explicit biomechanics provenance record |
 | `RobotAdapter` | maps `MotorCommand` to a physical actuator with safety limits | later phase; safety gate first |
@@ -147,12 +147,98 @@ mapping stay unchanged.
 
 No Three.js / 3D model, no MuJoCo / FlyGym / NeuroMechFly, no robotics, no food seeking, no
 odor, no locomotion or six-leg gait, no collision physics, no new circuits, no new
-endpoints (embodiment is additive and purely backend in P7.0), no change to P0–P6 behaviour
-(`escape_v1` produces the same deterministic results under the same configuration).
+endpoints (embodiment is additive and purely backend in P7.0; P7.1 adds the read-only
+replay API below), no change to P0–P6 behaviour (`escape_v1` produces the same deterministic
+results under the same configuration).
 
 ## 9. Running it
 
 ```bash
 make smoke-embodiment      # scripts/smoke_embodiment.py: looming object → virtual fly, 30 loop steps
-make test-backend          # includes backend/tests/test_embodiment.py
+make smoke-threat-lab      # scripts/smoke_threat_lab.py: the same loop through the P7.1 API over HTTP
+make test-backend          # includes backend/tests/test_embodiment.py and test_api_embodiment.py
+make demo                  # then open the "Virtual Threat Lab" tab (or /#threat-lab)
 ```
+
+## 10. Virtual Threat Lab (P7.1)
+
+P7.1 makes the P7.0 loop **visible, interactive and replayable** without touching its
+scientific logic. Roles of the three P7 sub-phases:
+
+| Phase | Role | Status |
+|---|---|---|
+| P7.0 | embodiment architecture: models, adapters, `EmbodiedAgentLoop` | done |
+| P7.1 | Virtual Threat Lab: replayable API + 2D arena / brain / loop-story UI | done |
+| P7.2 | neural intervention in the lab (silence / stimulate / lesion groups) | planned, **not implemented** |
+
+### 10.1 API (`backend/app/api/embodiment.py`)
+
+`ThreatLabService` builds a **fresh** `EmbodiedAgentLoop` per request from the shared
+escape_v1 brain (`EscapeService.experiment`, unchanged parameters) and the P7.0 adapters
+(`SimpleWorldAdapter` with the requested world geometry, `VirtualLoomingSensor`,
+`EscapeMotorAdapter`, `SimpleBodyAdapter`, `LoopConfig(dt=0.1, max_steps, random_seed)`).
+It does not duplicate any embodiment logic: each timeline entry is the P7.0
+`EmbodiedStepRecord` reshaped for replay.
+
+| Endpoint | Returns |
+|---|---|
+| `GET /embodiment/config` | `experiment_name` (`virtual_threat_lab_v1`), `disclaimer`, `labels` (world physics COMPUTATIONAL · virtual sensing COMPUTATIONAL SENSOR INPUT · neural activity SIMULATED · structural connectivity BIOLOGICAL DATA · body SIMPLIFIED COMPUTATIONAL BODY · motor mapping COMPUTATIONAL MOTOR MAPPING), `scientific_boundaries`, `units_note`, world / sensor / body / motor / loop configs, `timing`, `circuit` (id, hash, dataset, neurons, edges, biological status, research document), `groups`, `group_edges`, `max_loop_steps` (200), `run_request_limits` |
+| `POST /embodiment/run` | `experiment_id`, `created_at`, `disclaimer`, `labels`, `request`, `provenance` (P7.0 `EmbodimentProvenance`), `groups`, `initial_world`, `initial_body`, `timeline[]`, `outcome`, `runtime_seconds` |
+
+Request (`extra="forbid"`; anything else, including any neural parameter, is a 422):
+`seed ≥ 0`, `max_steps 1…200` (default 30), `world.start_distance 1…100`,
+`world.approach_speed 0…50`, `world.azimuth_deg −180…180`. Errors: 422 `invalid_request`,
+503 `circuit_unavailable` / `circuit_mismatch` / `config_unavailable` (same holder as
+`/escape`), 500 `simulation_error` / `embodiment_error` (no partial timeline is returned),
+504 `timeout`.
+
+Each `timeline[i]` (`step_index = i`, 0-based; `simulation_time = i · dt`) carries:
+
+| Key | Source (P7.0) | Content |
+|---|---|---|
+| `world` | state observed at loop step 1 (`WorldState`) | `simulation_time`, `step_index`, objects (`position`, `velocity`, `size`, type) — label COMPUTATIONAL WORLD |
+| `body` | state observed at loop step 2 (`BodyState`) | `position`, `velocity`, `heading`, `grounded` — label SIMPLIFIED COMPUTATIONAL BODY |
+| `sensor` | `SensoryObservation` (step 3) | `intensity`, `direction`, `distance`, `bearing_rad`, `angular_size_rad`, `visible` — label COMPUTATIONAL SENSOR INPUT |
+| `brain` | `BrainStepSummary` (step 5–6) | `stimulus`, `neural_steps`, `neural_dt`, `group_fired_counts` (per group, per neural step — the P4 `group_activity`), `group_peak_fired`, `sensory_first_fire_step`, `first_output_fire_step`, `output_spike_count`, `fired_output_sides`, `firing_events`, `neurons_activated`, decoded `action` — label SIMULATED NEURAL ACTIVITY |
+| `motor` | `MotorCommand` (step 7) | `command` (IDLE / ESCAPE), `magnitude`, `source_action`, `direction_decoded = false` — label COMPUTATIONAL MOTOR MAPPING |
+
+Replay semantics: step *N* shows the geometry the sensor actually saw at *N* and the
+brain / motor results computed from it; the body movement caused by that command is the
+**observed body of step N + 1** (exactly the P7.0 order World → Sensor → Brain → Motor → Body
+→ World). `outcome.events` marks `first_escape`, further `escape` steps and `landed` (first
+observed step back on the ground). To keep payloads small, **no per-neuron state** is
+returned (a 30-step run is ≈ 66 KiB); per-neuron traces remain in the P5 API and P6 inspector.
+
+Additive P7.0 change for this: `BrainStepSummary` gained `sensory_first_fire_step` and
+`group_fired_counts` (copied from the P4 result; no computation).
+
+### 10.2 UI (`frontend/src/threatlab/`)
+
+- `useThreatLab.ts` — loads the config, runs one experiment, keeps a replay cursor
+  (`step`), PLAY / PAUSE / STEP / seek / RESET (rewinds to step 0). Phases: `idle`
+  (WAITING FOR EXPERIMENT) → `running` → `ready` | `error` (NO RESULT). `?pace=<ms>` sets the
+  replay pace (default 140 ms per loop step).
+- `Arena.tsx` — SVG top-down world (no Three.js): object = `WorldState`, fly = `BodyState`
+  (heading, airborne lift from `z`), fly's-eye inset radius = recorded `angular_size_rad`.
+  Nothing is drawn before a run or after a failure. **Interpolation is presentation only**:
+  a 110 ms CSS transition tweens between two recorded positions (disabled under
+  `prefers-reduced-motion`); the DOM `data-x/y/z/heading/grounded` attributes always hold the
+  exact recorded values (the Playwright tests assert on them).
+- `Panels.tsx` — DISTANCE (units) / LOOMING INPUT / BODY POSITION / ACTION metrics and the
+  WORLD / BODY / SENSOR read-outs; `ThreatLabBrain.tsx` — group nodes (identity = biological
+  structure, glow = simulated peak activity of the loop step) plus per-neural-step spike bars,
+  labelled SIMULATED NEURAL ACTIVITY; `LoopStory.tsx` — WORLD ↓ SENSOR ↓ BRAIN ↓ MOTOR ↓ BODY
+  ↺ WORLD with the highlighted stage derived from the record (deepest stage carrying signal:
+  looming input > 0, simulated spikes > 0, ESCAPE command, body moving); `ReplayControls.tsx`
+  — RUN / PLAY / PAUSE / STEP / RESET, slider, ⚡ ESCAPE and ▼ landed markers (click = jump);
+  `Boundaries.tsx` — labels, scientific boundaries, provenance and the disclaimer served by the
+  backend; `ParamsForm.tsx` — world geometry, steps, seed only.
+- Selecting step *N* (slider, markers, STEP, PLAY) re-renders every panel from
+  `timeline[N]`; the P5 demo and the P6 inspector are untouched.
+
+### 10.3 What P7.1 does not do
+
+No neural intervention (silence / stimulate / lesion — P7.2), no food or odor, no Three.js /
+3D body, no FlyGym / NeuroMechFly / MuJoCo, no six-leg gait, no robotics, no change to the
+P0–P7.0 scientific logic, no frontend-generated activity or movement, no default outcome when
+the backend fails. The v0.1.0 tag / release are not touched.
