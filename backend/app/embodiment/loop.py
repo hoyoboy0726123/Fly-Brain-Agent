@@ -130,6 +130,10 @@ class EmbodiedAgentLoop:
                 firing_events=result.firing_events,
                 neurons_activated=result.neurons_activated,
                 activity_label=result.activity_label,
+                sensory_first_fire_step=next(
+                    (e.step for e in result.timeline if e.tag == "t1_sensory_activation"), None
+                ),
+                group_fired_counts=dict(result.group_activity.fired_counts),
             ),
             command=command,
             body_state=body_after,

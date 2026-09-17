@@ -206,6 +206,8 @@ Embodiment layer (P7.0): `backend/app/embodiment/` implements the closed loop
 World → Sensor → Brain → Motor → Body → World with adapter interfaces; no endpoints yet
 (additive, backend-only). See `docs/EMBODIMENT.md`.
 
+Virtual Threat Lab (P7.1): `backend/app/api/embodiment.py` exposes that loop read-only (`GET /embodiment/config`, `POST /embodiment/run`; a fresh `EmbodiedAgentLoop` per request on the shared escape_v1 brain, safe world / seed / step parameters only, no neural parameter). The `frontend/src/threatlab/` view replays the returned timeline — every panel renders `timeline[step]`; the browser never simulates, decodes or moves anything, and a failed run shows NO RESULT. Neural intervention is P7.2 (not implemented). See `docs/EMBODIMENT.md` §10.
+
 ## 8. Frontend
 Main layout:
 - left: virtual environment

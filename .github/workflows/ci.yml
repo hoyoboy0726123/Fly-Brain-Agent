@@ -39,7 +39,7 @@ jobs:
       - name: pytest (fixture + committed escape_v1 artifact; no dataset download)
         working-directory: backend
         run: python -m pytest -q
-      - name: Smoke scripts (health, fixture data/circuit/simulation, escape demo, web demo API)
+      - name: Smoke scripts (health, fixture data/circuit/simulation, escape demo, web demo API, embodiment, threat lab)
         run: |
           python scripts/smoke_test.py
           python scripts/inspect_dataset.py --fixture --keep-dangling
@@ -49,6 +49,7 @@ jobs:
           python scripts/smoke_escape.py
           python scripts/smoke_web_demo.py
           python scripts/smoke_embodiment.py
+          python scripts/smoke_threat_lab.py
 
   frontend:
     name: frontend (node 22)

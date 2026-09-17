@@ -6,8 +6,10 @@ import { DemoView } from './demo/DemoView.tsx'
 import { useEscapeDemo, type DemoOptions } from './demo/useEscapeDemo.ts'
 import { InspectorView } from './inspector/InspectorView.tsx'
 import { Hero } from './landing/Hero.tsx'
+import { ThreatLabView } from './threatlab/ThreatLabView.tsx'
+import { useThreatLab } from './threatlab/useThreatLab.ts'
 
-type View = 'demo' | 'inspector'
+type View = 'demo' | 'inspector' | 'threat-lab'
 
 /** `?pace=<ms>` speeds replay up for tests; `?transport=rest` forces the REST path. */
 function optionsFromLocation(): DemoOptions {
@@ -20,12 +22,16 @@ function optionsFromLocation(): DemoOptions {
 }
 
 function viewFromHash(): View {
-  return window.location.hash === '#inspector' ? 'inspector' : 'demo'
+  if (window.location.hash === '#inspector') return 'inspector'
+  if (window.location.hash === '#threat-lab') return 'threat-lab'
+  return 'demo'
 }
 
 export function App() {
   const options = useMemo(optionsFromLocation, [])
   const demo = useEscapeDemo(options)
+  const labOptions = useMemo(() => (options.paceMs === undefined ? {} : { paceMs: options.paceMs }), [options])
+  const lab = useThreatLab(labOptions)
   const { state } = demo
   const [view, setView] = useState<View>(viewFromHash)
   const labels = state.config?.scientific_labels ?? SCIENTIFIC_LABELS
@@ -38,7 +44,7 @@ export function App() {
 
   const switchView = (next: View) => {
     setView(next)
-    const hash = next === 'inspector' ? '#inspector' : ''
+    const hash = next === 'inspector' ? '#inspector' : next === 'threat-lab' ? '#threat-lab' : ''
     window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}${hash}`)
     window.scrollTo({ top: 0 })
   }
@@ -53,7 +59,13 @@ export function App() {
       <header className={`app__header ${view === 'demo' ? 'app__header--landing' : ''}`}>
         <div className="app__brand">
           {view === 'demo' ? (
-            <Hero running={state.phase === 'requesting'} canRun={demo.intensityValid} onRunDemo={runDemo} onExplore={() => switchView('inspector')} />
+            <Hero
+              running={state.phase === 'requesting'}
+              canRun={demo.intensityValid}
+              onRunDemo={runDemo}
+              onExplore={() => switchView('inspector')}
+              onThreatLab={() => switchView('threat-lab')}
+            />
           ) : (
             <>
               <h1>{APP_TITLE}</h1>
@@ -85,6 +97,15 @@ export function App() {
             >
               Brain Inspector
             </button>
+            <button
+              type="button"
+              className={`tabs__tab ${view === 'threat-lab' ? 'tabs__tab--active' : ''}`}
+              aria-pressed={view === 'threat-lab'}
+              onClick={() => switchView('threat-lab')}
+              data-testid="tab-threat-lab"
+            >
+              Virtual Threat Lab
+            </button>
           </nav>
         </div>
       </header>
@@ -99,7 +120,13 @@ export function App() {
         </div>
       )}
 
-      {view === 'demo' ? <DemoView demo={demo} /> : <InspectorView demo={demo} paceMs={options.paceMs ?? DEFAULT_PACE_MS} />}
+      {view === 'demo' ? (
+        <DemoView demo={demo} />
+      ) : view === 'inspector' ? (
+        <InspectorView demo={demo} paceMs={options.paceMs ?? DEFAULT_PACE_MS} />
+      ) : (
+        <ThreatLabView lab={lab} />
+      )}
 
       <footer className="app__footer">
         <p className="disclaimer" data-testid="disclaimer">

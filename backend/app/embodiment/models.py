@@ -304,6 +304,10 @@ class BrainStepSummary(Frozen):
     firing_events: int = Field(ge=0)
     neurons_activated: int = Field(ge=0)
     activity_label: str
+    #: first neural step at which a sensory neuron fired (None = never)
+    sensory_first_fire_step: int | None = None
+    #: SIMULATED spike counts per group (cell_type × side) per neural step (P4 group_activity)
+    group_fired_counts: dict[str, list[int]] = Field(default_factory=dict)
 
 
 class EmbodiedStepRecord(Frozen):

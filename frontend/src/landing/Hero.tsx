@@ -5,10 +5,11 @@ export interface HeroProps {
   canRun: boolean
   onRunDemo: () => void
   onExplore: () => void
+  onThreatLab: () => void
 }
 
 /** Above-the-fold summary: what this is, in one glance, with the two entry points. */
-export function Hero({ running, canRun, onRunDemo, onExplore }: HeroProps) {
+export function Hero({ running, canRun, onRunDemo, onExplore, onThreatLab }: HeroProps) {
   return (
     <section className="hero" data-testid="hero" aria-labelledby="hero-title">
       <h1 id="hero-title" className="hero__title">
@@ -25,6 +26,9 @@ export function Hero({ running, canRun, onRunDemo, onExplore }: HeroProps) {
         </button>
         <button type="button" className="btn btn--large" onClick={onExplore} data-testid="cta-explore">
           EXPLORE THE BRAIN
+        </button>
+        <button type="button" className="btn btn--large" onClick={onThreatLab} data-testid="cta-threat-lab">
+          VIRTUAL THREAT LAB
         </button>
       </div>
       <p className="hero__qualifier subtitle" data-testid="subtitle">

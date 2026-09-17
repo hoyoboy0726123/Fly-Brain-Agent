@@ -1,0 +1,180 @@
+{
+  "title": "VIRTUAL THREAT LAB SMOKE — REPLAY OF A BACKEND-GENERATED CLOSED LOOP",
+  "disclaimer": "Structural connectivity is biological data. Neural activity is simulated. Virtual sensing, motor mapping, body dynamics, and world physics are computational interpretations.",
+  "config": {
+    "experiment_name": "virtual_threat_lab_v1",
+    "circuit": {
+      "circuit_id": "escape_v1",
+      "circuit_hash": "db7c46e6a165354d7aed499525e303131bd8d6367e492b2e4fc31117cdc2c78d",
+      "dataset": "male-cns",
+      "dataset_version": "v1.0",
+      "canonical_selection_rule": "status == \"Traced\"",
+      "neurons": 286,
+      "edges": 932,
+      "biological_status": "PARTIALLY SUPPORTED",
+      "research_document": "docs/circuits/escape_v1.md"
+    },
+    "timing": {
+      "loop_dt": 0.1,
+      "neural_dt": 1.0,
+      "neural_steps_per_loop_step": 30,
+      "note": "P7.0 uses one common deterministic loop timestep for the world and the body; each loop step runs a fresh neural experiment of neural_steps_per_loop_step model steps (neural dt = SimulationConfig.dt, a dimensionless model unit). The two time bases are recorded separately and are not claimed to be physically related."
+    },
+    "labels": {
+      "world_physics": "COMPUTATIONAL",
+      "virtual_sensing": "COMPUTATIONAL SENSOR INPUT",
+      "neural_activity": "SIMULATED",
+      "structural_connectivity": "BIOLOGICAL DATA",
+      "body": "SIMPLIFIED COMPUTATIONAL BODY",
+      "motor_mapping": "COMPUTATIONAL MOTOR MAPPING"
+    },
+    "max_loop_steps": 200
+  },
+  "run": {
+    "request": {
+      "seed": 0,
+      "max_steps": 30,
+      "world": {
+        "start_distance": 20.0,
+        "approach_speed": 10.0,
+        "azimuth_deg": 0.0
+      }
+    },
+    "experiment_id": "28202ad3-d9c0-48a4-9bbb-87e689c52af8",
+    "steps": 30,
+    "outcome": {
+      "loop_steps": 30,
+      "actions": {
+        "ESCAPE": 3,
+        "NO_ACTION": 27
+      },
+      "commands": {
+        "ESCAPE": 3,
+        "IDLE": 27
+      },
+      "first_escape_step": 16,
+      "escape_steps": [
+        16,
+        17,
+        18
+      ],
+      "final_action": "NO_ACTION",
+      "final_body_position": {
+        "x": 1.5,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "displacement": 1.5,
+      "final_grounded": true,
+      "events": [
+        {
+          "step_index": 16,
+          "kind": "first_escape",
+          "description": "first ESCAPE command (decoded from simulated giant-fiber activity)"
+        },
+        {
+          "step_index": 17,
+          "kind": "escape",
+          "description": "ESCAPE command"
+        },
+        {
+          "step_index": 18,
+          "kind": "escape",
+          "description": "ESCAPE command"
+        },
+        {
+          "step_index": 19,
+          "kind": "landed",
+          "description": "body back on the ground"
+        }
+      ]
+    },
+    "provenance": {
+      "disclaimer": "Structural connectivity is biological data. Neural activity is simulated. Virtual sensing, motor mapping, body dynamics, and world physics are computational interpretations.",
+      "dataset": "male-cns",
+      "dataset_version": "v1.0",
+      "canonical_selection_rule": "status == \"Traced\"",
+      "circuit_id": "escape_v1",
+      "circuit_hash": "db7c46e6a165354d7aed499525e303131bd8d6367e492b2e4fc31117cdc2c78d",
+      "biological_status": "PARTIALLY SUPPORTED",
+      "escape_config_version": "escape_v1",
+      "simulation_config": {
+        "label": "COMPUTATIONAL MODEL PARAMETERS — NOT MEASURED MALECNS PARAMETERS",
+        "dt": 1.0,
+        "resting_potential": 0.0,
+        "reset_potential": 0.0,
+        "threshold": 1.0,
+        "leak": 0.2,
+        "refractory_steps": 2,
+        "weight_transform": "log1p",
+        "weight_scale": 1.0,
+        "stimulus_gain": 1.0,
+        "noise_std": 0.0,
+        "max_potential": 100.0,
+        "max_steps_per_run": 10000,
+        "random_seed": 0,
+        "sign_mode": "unsigned_excitatory_only"
+      },
+      "random_seed": 0,
+      "world_adapter": "SimpleWorldAdapter",
+      "world_config": {
+        "label": "COMPUTATIONAL WORLD PARAMETERS — dimensionless world units, not biological measurements",
+        "looming_object": true,
+        "object_id": "looming_1",
+        "object_type": "looming_object",
+        "start_distance": 20.0,
+        "approach_speed": 10.0,
+        "object_size": 1.0,
+        "azimuth_deg": 0.0,
+        "height": 0.0
+      },
+      "sensor_adapter": "VirtualLoomingSensor",
+      "sensor_config": {
+        "label": "COMPUTATIONAL SENSOR PARAMETERS — angular-size rule, not a retinal model",
+        "object_type": "looming_object",
+        "saturation_angle_rad": 1.5707963267948966,
+        "center_half_angle_rad": 0.3490658503988659,
+        "field_of_view_rad": 3.141592653589793
+      },
+      "motor_adapter": "EscapeMotorAdapter",
+      "motor_config": {
+        "label": "COMPUTATIONAL MOTOR PARAMETERS — NO_ACTION → IDLE, ESCAPE → ESCAPE; no direction",
+        "escape_magnitude": 1.0
+      },
+      "body_adapter": "SimpleBodyAdapter",
+      "body_config": {
+        "label": "COMPUTATIONAL BODY PARAMETERS — not biological measurements",
+        "initial_position": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "initial_heading": 0.0,
+        "escape_speed": 5.0,
+        "escape_vertical_speed": 3.0,
+        "airborne_duration": 0.3,
+        "ground_drag": 1.0
+      },
+      "loop_config": {
+        "label": "COMPUTATIONAL LOOP PARAMETERS — not biological timing",
+        "dt": 0.1,
+        "max_steps": 30,
+        "brain_steps_per_loop_step": null,
+        "keep_full_brain_results": false,
+        "random_seed": 0
+      },
+      "timing": {
+        "loop_dt": 0.1,
+        "neural_dt": 1.0,
+        "neural_steps_per_loop_step": 30,
+        "note": "P7.0 uses one common deterministic loop timestep for the world and the body; each loop step runs a fresh neural experiment of neural_steps_per_loop_step model steps (neural dt = SimulationConfig.dt, a dimensionless model unit). The two time bases are recorded separately and are not claimed to be physically related."
+      }
+    },
+    "performance": {
+      "backend_runtime_seconds": 0.053044,
+      "http_wall_seconds": 0.0574,
+      "payload_bytes": 68041
+    }
+  },
+  "problems": []
+}

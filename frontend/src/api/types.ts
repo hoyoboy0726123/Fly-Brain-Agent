@@ -628,3 +628,288 @@ export function isCircuitSummary(value: unknown): value is CircuitSummary {
 export function isCircuitProvenance(value: unknown): value is CircuitProvenance {
   return isRecord(value) && typeof value['circuit_hash'] === 'string' && isRecord(value['canonical_graph']) && isRecord(value['loaded_circuit'])
 }
+
+// ---------------------------------------------------------------------------- virtual threat lab (P7.1)
+// Mirrors of `app.api.embodiment`. Every value below is produced by the backend's P7.0
+// closed loop; the UI only renders it (interpolation between steps is presentation only).
+
+export interface Vector3 {
+  x: number
+  y: number
+  z: number
+}
+
+export interface ThreatLabWorldObject {
+  object_id: string
+  object_type: string
+  position: Vector3
+  velocity: Vector3
+  size: number
+}
+
+export interface ThreatLabWorld {
+  label: string
+  simulation_time: number
+  step_index: number
+  objects: ThreatLabWorldObject[]
+}
+
+export interface ThreatLabBody {
+  label: string
+  position: Vector3
+  velocity: Vector3
+  heading: number
+  grounded: boolean
+}
+
+export interface ThreatLabSensor {
+  label: string
+  sensor_type: string
+  source: string
+  intensity: number
+  direction: string
+  distance: number | null
+  bearing_rad: number | null
+  angular_size_rad: number | null
+  visible: boolean
+}
+
+export interface ThreatLabBrain {
+  label: string
+  stimulus: LoomingStimulus
+  neural_steps: number
+  neural_dt: number
+  /** group key -> SIMULATED spike counts per neural step of this loop step */
+  group_fired_counts: Record<string, number[]>
+  group_peak_fired: Record<string, number>
+  sensory_first_fire_step: number | null
+  first_output_fire_step: number | null
+  output_spike_count: number
+  fired_output_sides: string[]
+  firing_events: number
+  neurons_activated: number
+  action: ActionValue
+  activity_label: string
+}
+
+export type MotorCommandValue = 'IDLE' | 'ESCAPE'
+
+export interface ThreatLabMotor {
+  label: string
+  command: MotorCommandValue
+  magnitude: number
+  source_action: ActionValue
+  direction_decoded: boolean
+}
+
+export interface ThreatLabStep {
+  step_index: number
+  simulation_time: number
+  dt: number
+  world: ThreatLabWorld
+  body: ThreatLabBody
+  sensor: ThreatLabSensor
+  brain: ThreatLabBrain
+  motor: ThreatLabMotor
+}
+
+export type ThreatLabEventKind = 'first_escape' | 'escape' | 'landed'
+
+export interface ThreatLabEvent {
+  step_index: number
+  kind: ThreatLabEventKind
+  description: string
+}
+
+export interface ThreatLabOutcome {
+  loop_steps: number
+  actions: Record<string, number>
+  commands: Record<string, number>
+  first_escape_step: number | null
+  escape_steps: number[]
+  final_action: ActionValue
+  final_body_position: Vector3
+  displacement: number
+  final_grounded: boolean
+  events: ThreatLabEvent[]
+}
+
+export interface ThreatLabTiming {
+  loop_dt: number
+  neural_dt: number
+  neural_steps_per_loop_step: number
+  note: string
+}
+
+export interface ThreatLabProvenance {
+  disclaimer: string
+  dataset: string
+  dataset_version: string
+  canonical_selection_rule: string
+  circuit_id: string
+  circuit_hash: string
+  biological_status: string
+  escape_config_version: string
+  random_seed: number
+  world_adapter: string
+  world_config: Record<string, unknown>
+  sensor_adapter: string
+  sensor_config: Record<string, unknown>
+  motor_adapter: string
+  motor_config: Record<string, unknown>
+  body_adapter: string
+  body_config: Record<string, unknown>
+  loop_config: Record<string, unknown>
+  timing: ThreatLabTiming
+  simulation_config: Record<string, unknown>
+}
+
+export interface ThreatLabWorldParams {
+  start_distance: number
+  approach_speed: number
+  azimuth_deg: number
+}
+
+/** Safe application-level parameters only — no neural parameter is exposed. */
+export interface ThreatLabRunRequest {
+  experiment: 'virtual_threat_lab_v1'
+  seed: number
+  max_steps: number
+  world: ThreatLabWorldParams
+}
+
+export interface ThreatLabRunResult {
+  experiment_id: string
+  experiment_name: string
+  created_at: string
+  disclaimer: string
+  labels: Record<string, string>
+  units_note: string
+  request: ThreatLabRunRequest
+  provenance: ThreatLabProvenance
+  groups: ActivityGroup[]
+  initial_world: ThreatLabWorld
+  initial_body: ThreatLabBody
+  timeline: ThreatLabStep[]
+  outcome: ThreatLabOutcome
+  runtime_seconds: number
+}
+
+export interface ThreatLabBoundary {
+  label: string
+  scope: string
+}
+
+export interface ThreatLabCircuitInfo {
+  circuit_id: string
+  circuit_hash: string
+  dataset: string
+  dataset_version: string
+  canonical_selection_rule: string
+  neurons: number
+  edges: number
+  biological_status: string
+  research_document: string
+}
+
+export interface ThreatLabWorldConfig {
+  label: string
+  start_distance: number
+  approach_speed: number
+  object_size: number
+  azimuth_deg: number
+  object_type: string
+}
+
+export interface ThreatLabRangeLimit {
+  min?: number
+  max?: number
+  default?: number
+}
+
+export interface ThreatLabConfig {
+  experiment_name: string
+  disclaimer: string
+  labels: Record<string, string>
+  scientific_boundaries: ThreatLabBoundary[]
+  units_note: string
+  world_config: ThreatLabWorldConfig
+  sensor_config: Record<string, unknown>
+  body_config: Record<string, unknown>
+  motor_config: Record<string, unknown>
+  loop_config: Record<string, unknown>
+  timing: ThreatLabTiming
+  circuit: ThreatLabCircuitInfo
+  dataset: string
+  dataset_version: string
+  escape_config_version: string
+  groups: ActivityGroup[]
+  group_edges: GroupEdge[]
+  max_loop_steps: number
+  run_request_limits: Record<string, ThreatLabRangeLimit | string>
+}
+
+function isVector3(value: unknown): value is Vector3 {
+  return isRecord(value) && typeof value['x'] === 'number' && typeof value['y'] === 'number' && typeof value['z'] === 'number'
+}
+
+export function isThreatLabStep(value: unknown): value is ThreatLabStep {
+  if (!isRecord(value)) return false
+  const world = value['world']
+  const body = value['body']
+  const sensor = value['sensor']
+  const brain = value['brain']
+  const motor = value['motor']
+  return (
+    typeof value['step_index'] === 'number' &&
+    typeof value['simulation_time'] === 'number' &&
+    isRecord(world) &&
+    Array.isArray(world['objects']) &&
+    isRecord(body) &&
+    isVector3(body['position']) &&
+    typeof body['grounded'] === 'boolean' &&
+    isRecord(sensor) &&
+    typeof sensor['intensity'] === 'number' &&
+    isRecord(brain) &&
+    isRecord(brain['group_fired_counts']) &&
+    isActionValue(brain['action']) &&
+    isRecord(motor) &&
+    (motor['command'] === 'IDLE' || motor['command'] === 'ESCAPE')
+  )
+}
+
+export function isThreatLabConfig(value: unknown): value is ThreatLabConfig {
+  if (!isRecord(value)) return false
+  const circuit = value['circuit']
+  return (
+    typeof value['experiment_name'] === 'string' &&
+    typeof value['disclaimer'] === 'string' &&
+    isRecord(value['labels']) &&
+    Array.isArray(value['scientific_boundaries']) &&
+    isRecord(value['world_config']) &&
+    isRecord(value['timing']) &&
+    isRecord(circuit) &&
+    typeof circuit['circuit_hash'] === 'string' &&
+    Array.isArray(value['groups']) &&
+    Array.isArray(value['group_edges']) &&
+    typeof value['max_loop_steps'] === 'number'
+  )
+}
+
+export function isThreatLabRunResult(value: unknown): value is ThreatLabRunResult {
+  if (!isRecord(value)) return false
+  const outcome = value['outcome']
+  const timeline = value['timeline']
+  return (
+    typeof value['experiment_id'] === 'string' &&
+    typeof value['disclaimer'] === 'string' &&
+    isRecord(value['provenance']) &&
+    Array.isArray(value['groups']) &&
+    Array.isArray(timeline) &&
+    timeline.every(isThreatLabStep) &&
+    isRecord(outcome) &&
+    Array.isArray(outcome['escape_steps']) &&
+    Array.isArray(outcome['events']) &&
+    typeof value['runtime_seconds'] === 'number'
+  )
+}
