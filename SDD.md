@@ -202,6 +202,10 @@ artifact, `backend/app/api/circuits.py`). `POST /circuits/extract`, `/simulation
 `WS /ws/simulation` are not exposed in v0.1 (extraction and generic stepping stay CLI-side).
 The frontend reaches the backend via the `/api` prefix.
 
+Embodiment layer (P7.0): `backend/app/embodiment/` implements the closed loop
+World → Sensor → Brain → Motor → Body → World with adapter interfaces; no endpoints yet
+(additive, backend-only). See `docs/EMBODIMENT.md`.
+
 ## 8. Frontend
 Main layout:
 - left: virtual environment

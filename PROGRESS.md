@@ -10,16 +10,17 @@
 | P5 Web UI | ✅ Done (reviewer approved, PR #7) | interactive end-to-end demo |
 | P6 Brain inspector | ✅ Done (reviewer approved, PR #8) — MVP v0.1 APPROVED | inspectable provenance |
 | P6.1 Release polish | ✅ Done (awaiting human confirmation) — v0.1.0 release candidate, no tag | CI, one-command demo, presentation-ready docs |
-| P7 Food | ⬜ Future | second behavior |
+| P7.0 Embodiment architecture | ✅ Done — P7.0 COMPLETE — WAITING FOR HUMAN REVIEW | closed-loop World → Sensor → Brain → Motor → Body foundation |
+| P7.1+ Visual body / FlyGym / food | ⬜ Not started | second behaviour, visual & physics bodies |
 | P8 Webcam | ⬜ Future | camera stimulus adapter |
 | P9 Robot | ⬜ Future | safe physical adapter |
 
 ## Current Phase
-P6.1 (MVP Release Polish) complete, including the final license fix — v0.1.0 release candidate. Project code license: Apache-2.0 (owner decision, root `LICENSE`); MaleCNS dataset stays CC-BY 4.0. No tag or GitHub Release created (not authorized). Stopped before P7, waiting for human confirmation.
+**P7.0 COMPLETE — WAITING FOR HUMAN REVIEW.** Embodiment architecture foundation (`backend/app/embodiment/`, `docs/EMBODIMENT.md`, `scripts/smoke_embodiment.py`). P0–P6 behaviour unchanged; escape_v1 regression tests pass. Stopped before P7.1 (no visual world, no Three.js, no FlyGym / NeuroMechFly / MuJoCo, no food seeking). The v0.1.0 tag / GitHub Release are the owner's to create (not possible from this session) and were not modified.
 
 ## Blockers
 - ~~Release blocker (human decision): the repository has no project-code `LICENSE`.~~ **Resolved 2026-09-16:** the owner selected the Apache License 2.0; root `LICENSE` added, README / DATA.md / CHANGELOG / package metadata updated. The dataset license (CC-BY 4.0) remains a separate domain.
-- Remaining (needs explicit authorization): create the `v0.1.0` tag and GitHub Release.
+- `v0.1.0` tag and GitHub Release: authorized, but this session cannot create tags or releases (git proxy 403 on tag push; releases / git-refs API writes blocked for this session type). Owner creates them locally or on GitHub; release notes were delivered.
 
 ## Decision Log
 - MVP is P0-P6.
@@ -74,6 +75,12 @@ P6.1 (MVP Release Polish) complete, including the final license fix — v0.1.0 r
 - (P6.1) Landing: hero (title, "Real fruit-fly connectome. Simulated neural activity. Observable behavior.", RUN LOOMING DEMO, EXPLORE THE BRAIN, qualifier) + four-step story strip (OBJECT APPROACHES → LC4 / LPLC2 ACTIVATE → SIGNAL REACHES GIANT FIBER → ESCAPE) driven by the replayed backend result; demo presets LOW / MEDIUM / HIGH labelled "Expected current model result" (never biological thresholds); manual controls unchanged. Scientific labels and disclaimer untouched.
 - (P6.1) Screenshots are curated: specs write to `frontend/test-results/screenshots/` (ignored) and `make screenshots` refreshes `docs/screenshots/` (`release-*` + `mvp-*`); the superseded `p5-*` set was removed. Version bumped to 0.1.0 (backend + frontend); `CURRENT_PHASE = "P6.1"`.
 - (P6.1) README rewritten as the presentation-ready entry point (one-liner, hero, story, Mermaid diagrams, quick start, scientific boundaries, inspector, provenance + attribution, testing + CI coverage, roadmap); the original Chinese brief is preserved verbatim in `docs/PROJECT_BRIEF.md`. `CHANGELOG.md` v0.1.0 added. No tag / release created. Project code license: not chosen — recorded as a release blocker, not invented.
+- (P7.0) Embodiment is an additive, backend-only APPLICATION / EMBODIMENT INTERPRETATION layer (`backend/app/embodiment/`). The loop `World → Sensor → Brain → Motor → Body → World` reuses the P4 `EscapeExperiment` as the brain (structural `BrainAdapter` protocol; no new brain code); the brain receives only a `LoomingStimulus` and returns only an `EscapeResult`. All state models are frozen and finite-only, so body coordinates change only inside a `BodyAdapter`.
+- (P7.0) Command vocabulary is `IDLE` / `ESCAPE` only; `FORWARD`, `TURN_LEFT`, `TURN_RIGHT`, `JUMP` are reserved names, not enum members. The motor mapping ignores the giant-fiber side (metadata only): no directional escape is decoded, consistent with P4 (GF azimuth-invariant). The SimpleBody escapes along its current heading — an application choice, documented as such.
+- (P7.0) Timing: one common deterministic loop `dt` (default 0.1 s, computational) for world and body; each loop step runs a fresh neural experiment of `simulation_steps` model steps (neural `dt` = 1.0 model unit). Both time bases are recorded separately in provenance; neural state is not carried across loop steps in P7.0.
+- (P7.0) The virtual sensor is a plain angular-size rule (`intensity = min(2·atan(size/distance) / saturation_angle, 1)`, direction by bearing with a 20° center band, 180° field of view); it is labelled COMPUTATIONAL SENSOR INPUT and is not a retinal or LC4/LPLC2 model. Body parameters (escape speed 5 units/s, vertical 3 units/s, airborne 0.3 s) are labelled computational, not measurements.
+- (P7.0) Every embodied record carries `EmbodimentProvenance` (dataset, version, canonical rule, circuit id + hash, biological status, escape config version, simulation config, loop seed, adapter names + configs, loop config, timing) and the disclaimer "Structural connectivity is biological data. Neural activity is simulated. Virtual sensing, motor mapping, body dynamics, and world physics are computational interpretations."
+- (P7.0) No endpoints, UI or Three.js in this phase; `CURRENT_PHASE = "P7.0"`; existing API / UI / Playwright suites unchanged apart from the phase string.
 - (P1.1) **Source dataset ≠ canonical simulation graph** (DATA.md §8). SOURCE DATASET = MaleCNS v1.0, ≈166,700 neurons (project figure; equals the 166,700 bodies with a `superclass`; paper 166,691). CANONICAL SIMULATION GRAPH = `status == "Traced"`, 165,122 neurons, 25,563,197 connections. The canonical count is never presented as the dataset census. Both blocks are mandatory in `provenance.json` for biological data (`Provenance` validator), reported by `inspect_dataset.py`, written into the parquet schema metadata, and guarded by `tests/test_canonical_graph.py`. Traced filtering behaviour is unchanged.
 
 ---
@@ -686,3 +693,51 @@ Owner decision: **Apache License 2.0** for FlyBrain Agent project code. Document
 - **E. Stale references** — README (2), DATA.md (1), CHANGELOG (1) rewritten; PROGRESS current-state lines updated and the historical P6.1 report annotated (not rewritten).
 - **F/G. Tests / CI** — recorded in the conversation report after the validation run.
 - **H. Remaining blockers** — only the `v0.1.0` tag / GitHub Release, which need explicit authorization.
+
+---
+
+## P7.0 Report (2026-09-17) — Embodiment Architecture Foundation
+
+**Status: P7.0 COMPLETE — WAITING FOR HUMAN REVIEW.** Baseline `2498eff` (v0.1.0 candidate); no scientific behaviour of P0–P6 changed.
+
+### Implementation (`backend/app/embodiment/`)
+- `models.py` — frozen, finite-only domain models: `Vector3`, `WorldObject`, `WorldState`, `BodyState` (SIMPLIFIED COMPUTATIONAL BODY label), `SensoryObservation` (fixed literal label COMPUTATIONAL SENSOR INPUT), `MotorCommandType` (IDLE / ESCAPE) + `RESERVED_FUTURE_COMMANDS`, `MotorCommand` (COMPUTATIONAL MOTOR MAPPING), `SimulationClock`, `TimingInfo`, configs (`LoopConfig`, `SimpleWorldConfig`, `VirtualLoomingSensorConfig`, `EscapeMotorConfig`, `SimpleBodyConfig` — all "COMPUTATIONAL … PARAMETERS"), records (`BrainStepSummary`, `EmbodiedStepRecord`, `EmbodimentProvenance`, `EmbodiedExperimentRecord`), `validate_dt`, `EMBODIMENT_DISCLAIMER`.
+- `world.py` — `WorldAdapter` ABC (`reset / step / get_state`), `SimpleWorldAdapter` (one looming object approaching the origin in a straight line; deterministic).
+- `sensors.py` — `SensorAdapter` ABC (`observe(world_state, body_state)`), `VirtualLoomingSensor` (angular size + bearing → intensity / direction), `StimulusEncoder` (→ P4 `LoomingStimulus`).
+- `motor.py` — `MotorAdapter` ABC (`translate(decision, clock)`), `EscapeMotorAdapter` (NO_ACTION → IDLE, ESCAPE → ESCAPE; GF side metadata only, `direction_decoded=False`; unknown action → `UnsupportedActionError`).
+- `body.py` — `BodyAdapter` ABC (`reset / apply_command / step / get_state`), `SimpleBodyAdapter` (IDLE: no movement; ESCAPE: heading-aligned displacement + 0.3 s airborne phase, landing stops motion; escape while airborne adds no impulse).
+- `loop.py` — `BrainAdapter` Protocol (satisfied by `EscapeExperiment`), `EmbodiedAgentLoop` (`reset / step / run / provenance / record`) with the 11-step ordering; `LoopLimitError` at `max_steps`.
+- `errors.py` — `EmbodimentError`, `InvalidTimestepError`, `InvalidStateError`, `AdapterError`, `UnsupportedActionError`, `LoopLimitError`.
+- `scripts/smoke_embodiment.py` + `make smoke-embodiment` (also in CI's backend job); `docs/EMBODIMENT.md` (Mermaid diagram, boundaries, models, adapters, timing, determinism / provenance, future adapters, non-goals); README / DEVELOPMENT §4h / SDD / CHANGELOG (Unreleased) updated; `CURRENT_PHASE = "P7.0"`.
+
+### Tests (`backend/tests/test_embodiment.py`, 26)
+World / Body / Observation / Command validation (frozen, NaN/Inf, vocabulary without LEFT/RIGHT); deterministic `SimpleWorldAdapter` and `SimpleBodyAdapter`; escape while airborne; NO_ACTION → IDLE and ESCAPE → ESCAPE (GF side never changes the command; `ESCAPE_LEFT` rejected); sensor geometry rules (center / left / right / behind / inside / no object) and encoder; **brain cannot mutate body state** (spy brain sees only a `LoomingStimulus`, body unchanged while it runs, `BodyState` frozen); **closed-loop step ordering** (spies: world.get_state → body.get_state → sensor.observe → brain.run → motor.translate → body.apply_command → body.step → world.step); **reproducibility** (two runs → identical records; provenance keys; timing); ESCAPE when the object arrives (synthetic circuit); different initial worlds → different observations (near / far / left / right / none); reset restores initial state; invalid dt (0, negative, NaN, Inf, string, bool) fails loudly in `validate_dt`, `LoopConfig`, world and body; NaN/Inf states fail loudly; loop limits / misuse; **closed loop with the committed escape_v1 artifact** (provenance = escape_v1 hash, PARTIALLY SUPPORTED, non-decreasing intensity while approaching, NO_ACTION → ESCAPE, displacement > 0, only IDLE / ESCAPE commands).
+Full backend suite: **327 passed** (301 existing incl. escape_v1 regression + P0–P6 API tests, unchanged, + 26). `ruff` clean. Frontend typecheck + build clean; Playwright **59 passed** (phase string only). **CI: success on commit `28e4401`** (backend 3.11 / 3.12, frontend, playwright): https://github.com/hoyoboy0726123/Fly-Brain-Agent/actions/runs/35229523909.
+
+### Smoke result (`make smoke-embodiment`, escape_v1 unchanged, P3 defaults)
+World: looming object radius 1.0 at 20 units straight ahead (azimuth 0°), approaching at 10 units/s; loop dt 0.1 s; 30 neural steps per loop step; 30 loop steps.
+| loop step | distance | intensity | action | command | body (x, z) | grounded |
+|---|---|---|---|---|---|---|
+| 0 | 20.0 | 0.064 | NO_ACTION | IDLE | (0.00, 0.00) | yes |
+| 10 | 10.0 | 0.127 | NO_ACTION | IDLE | (0.00, 0.00) | yes |
+| 15 | 5.0 | 0.251 | NO_ACTION | IDLE | (0.00, 0.00) | yes |
+| 16 | 4.0 | 0.312 | **ESCAPE** | **ESCAPE** | (0.50, 0.30) | no |
+| 17 | 2.5 | 0.481 | ESCAPE | ESCAPE (airborne, no new impulse) | (1.00, 0.60) | no |
+| 18 | 1.2 | 0.903 | ESCAPE | ESCAPE (landing) | (1.50, 0.00) | yes |
+| 19–29 | object passed / behind | 0.000 | NO_ACTION | IDLE | (1.50, 0.00) | yes |
+Summary: first ESCAPE at loop step 16 (intensity 0.312, consistent with the P4 model: 5 stimulus steps at intensity ≥ ≈0.30 reach threshold), 3 ESCAPE / 27 NO_ACTION, displacement 1.5 units, final grounded. Nothing was tuned; the model's NO_ACTION at low intensity is reported as observed. Report: `data/simulations/embodiment_smoke.report.json`. Whole `make smoke` PASS.
+
+### Scientific boundaries
+BIOLOGICAL DATA = MaleCNS structural connectivity (escape_v1 artifact, hash-verified); SIMULATED NEURAL ACTIVITY = P3 dynamics; COMPUTATIONAL SENSOR MAPPING = virtual angular-size rule → `LoomingStimulus`; COMPUTATIONAL MOTOR MAPPING = NO_ACTION → IDLE, ESCAPE → ESCAPE; SIMPLIFIED COMPUTATIONAL BODY = point body, not Drosophila biomechanics. No directional GF decoding, no food / odor biology, no new biological claims. Disclaimer carried by every provenance record.
+
+### Known limitations
+- Neural state is not carried across loop steps (fresh P4 experiment per loop step); the loop dt and neural dt are recorded but not physically related.
+- The sensor is a geometric heuristic (no retina, no LC4/LPLC2 tuning); the body is a point with a heading (no legs, wings, mass, collisions, world physics); the world is a straight-line object.
+- Escape direction = body heading (application choice); no turning; the object can pass through the body (no collision).
+- Backend-only: no API / UI / Three.js integration yet (P7.1+).
+
+### Performance
+30 loop steps with the real escape_v1 brain (286 neurons, 30 neural steps each) ≈ 0.05 s (~1.7 ms per loop step, dominated by the neural run); models are small frozen pydantic objects.
+
+### Files changed
+`backend/app/embodiment/{__init__,models,world,sensors,motor,body,loop,errors}.py` (new), `backend/tests/test_embodiment.py` (new), `scripts/smoke_embodiment.py` (new), `docs/EMBODIMENT.md` (new), `Makefile` (smoke-embodiment), `.github/workflows/ci.yml` (smoke step), `backend/app/__init__.py` (phase), `frontend/tests/{smoke,escape-demo}.spec.ts` (phase string), `README.md`, `docs/DEVELOPMENT.md`, `SDD.md`, `CHANGELOG.md`, `PROGRESS.md`.

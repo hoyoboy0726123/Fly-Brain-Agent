@@ -3,6 +3,19 @@
 All notable changes to FlyBrain Agent are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions follow semantic versioning.
 
+## [Unreleased]
+
+### Added
+- **Embodiment architecture foundation (P7.0)** — `backend/app/embodiment/`: frozen domain
+  models (`WorldState`, `BodyState`, `SensoryObservation`, `MotorCommand`, `SimulationClock`,
+  configs, records, provenance), adapter interfaces (`WorldAdapter`, `SensorAdapter`,
+  `MotorAdapter`, `BodyAdapter`) and `EmbodiedAgentLoop` (World → Sensor → Brain → Motor →
+  Body → World). Deterministic `SimpleWorldAdapter` / `SimpleBodyAdapter` (SIMPLIFIED
+  COMPUTATIONAL BODY), `VirtualLoomingSensor` (computational angular-size rule),
+  `EscapeMotorAdapter` (NO_ACTION → IDLE, ESCAPE → ESCAPE; no direction decoded).
+  `scripts/smoke_embodiment.py` / `make smoke-embodiment`, `docs/EMBODIMENT.md`, 26 tests.
+  Additive and backend-only: no new endpoints, P0–P6 behaviour unchanged.
+
 ## [0.1.0] — 2026-09-16 — FlyBrain Agent v0.1.0 (MVP)
 
 Release candidate prepared in P6.1. No Git tag or GitHub Release has been created yet

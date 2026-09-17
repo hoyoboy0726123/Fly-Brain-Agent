@@ -8,7 +8,7 @@ VENV_PY      := $(VENV)/bin/python
 
 .PHONY: help install install-backend install-frontend backend frontend \
         test test-backend typecheck-frontend lint smoke smoke-backend smoke-frontend smoke-data \
-        smoke-circuit smoke-simulation smoke-escape smoke-web normalize normalize-fixture inspect \
+        smoke-circuit smoke-simulation smoke-escape smoke-web smoke-embodiment normalize normalize-fixture inspect \
         extract simulate build-escape-config demo demo-check demo-smoke screenshots build-frontend clean
 
 help:
@@ -30,6 +30,7 @@ help:
 	@echo "make build-escape-config  rebuild escape_v1 config + circuit artifact from the canonical graph"
 	@echo "make smoke-escape       TECHNICAL CONNECTOME-GROUNDED ESCAPE DEMO (escape_v1)"
 	@echo "make smoke-web          WEB DEMO SMOKE: escape API over REST + WebSocket + inspector API"
+	@echo "make smoke-embodiment   TECHNICAL EMBODIMENT SMOKE: closed loop with the SIMPLIFIED COMPUTATIONAL BODY (P7.0)"
 	@echo "make demo-smoke         start both servers, verify they answer, stop (release/CI check)"
 	@echo "make screenshots        refresh docs/screenshots/release-*.png with Playwright"
 	@echo "make build-frontend     production build of the frontend (frontend/dist)"
@@ -64,7 +65,7 @@ lint:
 build-frontend:
 	cd $(FRONTEND_DIR) && npm run build
 
-smoke: smoke-backend smoke-data smoke-circuit smoke-simulation smoke-escape smoke-web smoke-frontend
+smoke: smoke-backend smoke-data smoke-circuit smoke-simulation smoke-escape smoke-web smoke-embodiment smoke-frontend
 
 smoke-backend:
 	$(VENV_PY) scripts/smoke_test.py
@@ -96,6 +97,9 @@ smoke-escape:
 
 smoke-web:
 	$(VENV_PY) scripts/smoke_web_demo.py
+
+smoke-embodiment:
+	$(VENV_PY) scripts/smoke_embodiment.py
 
 demo:
 	$(VENV_PY) scripts/run_demo.py

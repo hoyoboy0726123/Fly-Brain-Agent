@@ -145,7 +145,7 @@ Every derived artifact carries its provenance: `data/processed/provenance.json` 
 make test           # backend pytest + frontend typecheck
 make lint           # ruff check + format check (backend + scripts)
 make build-frontend # production build (frontend/dist)
-make smoke          # health · fixture data · circuit · simulation · escape demo · web demo API · Playwright
+make smoke          # health · fixture data · circuit · simulation · escape demo · web demo API · embodiment · Playwright
 make demo-smoke     # start both servers via the launcher, verify, stop
 ```
 
@@ -157,10 +157,24 @@ make demo-smoke     # start both servers via the launcher, verify, stop
 
 **Continuous integration** ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)) runs on every push and pull request: backend (Python 3.11 and 3.12: ruff, pytest, smoke scripts), frontend (Node 22: `npm ci`, typecheck, production build) and end-to-end (launcher `--check` and `--smoke`, then the full Playwright suite against the live backend with the committed artifact). **CI never downloads the MaleCNS dataset**; steps that need the raw data (`make normalize`, technical extraction / simulation on the canonical graph, `make build-escape-config`) are local-only and skip themselves in CI.
 
+## Embodiment architecture (P7.0)
+
+P7.0 adds the closed-loop foundation `World → Sensor → Brain → Motor → Body → World` in
+`backend/app/embodiment/` (frozen domain models, `WorldAdapter` / `SensorAdapter` /
+`MotorAdapter` / `BodyAdapter` interfaces, `EmbodiedAgentLoop`, a deterministic
+`SimpleWorldAdapter` + `SimpleBodyAdapter` labelled **SIMPLIFIED COMPUTATIONAL BODY**). The
+existing escape_v1 brain is reused unchanged; the brain never touches body coordinates; no
+direction is decoded from giant-fiber activity. Backend-only and additive (no new endpoints,
+no Three.js, no FlyGym yet). Try `make smoke-embodiment`; design in
+[docs/EMBODIMENT.md](docs/EMBODIMENT.md).
+
+> Structural connectivity is biological data. Neural activity is simulated. Virtual sensing,
+> motor mapping, body dynamics, and world physics are computational interpretations.
+
 ## Roadmap
 
 - **Release:** v0.1.0 tag and GitHub Release — pending explicit authorization by the project owner (license decision resolved: Apache-2.0).
-- P7 — second behaviour (food seeking): research gate first, same config + runner pattern.
+- P7.0 — embodiment architecture foundation (done, awaiting review); P7.1+ — visual virtual world / body (Three.js), then FlyGym / NeuroMechFly adapters; food seeking only after its own research gate.
 - P8 — webcam stimulus adapter; P9 — safe robot / physical adapter.
 - Candidate `escape_v2`: DNp02 / DNp04 / DNp11 (forward / backward takeoff) once directional decoding is evidence-backed; contralateral giant-fiber inputs.
 - Inspector: per-neuron voltage traces, snapshot export / import.
@@ -180,4 +194,4 @@ The Apache-2.0 license covers FlyBrain Agent's code only. It does **not** replac
 
 ## Project documents
 
-[START_HERE.md](START_HERE.md) · [PRD.md](PRD.md) · [SDD.md](SDD.md) · [DATA.md](DATA.md) · [NEUROSCIENCE.md](NEUROSCIENCE.md) · [AGENTS.md](AGENTS.md) · [TASKS.md](TASKS.md) · [PROGRESS.md](PROGRESS.md) · [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) · [docs/dataset_research.md](docs/dataset_research.md) · [docs/circuits/escape_v1.md](docs/circuits/escape_v1.md) · [docs/PROJECT_BRIEF.md](docs/PROJECT_BRIEF.md)（原始專案簡介，中文）
+[START_HERE.md](START_HERE.md) · [PRD.md](PRD.md) · [SDD.md](SDD.md) · [DATA.md](DATA.md) · [NEUROSCIENCE.md](NEUROSCIENCE.md) · [AGENTS.md](AGENTS.md) · [TASKS.md](TASKS.md) · [PROGRESS.md](PROGRESS.md) · [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) · [docs/dataset_research.md](docs/dataset_research.md) · [docs/circuits/escape_v1.md](docs/circuits/escape_v1.md) · [docs/EMBODIMENT.md](docs/EMBODIMENT.md) · [docs/PROJECT_BRIEF.md](docs/PROJECT_BRIEF.md)（原始專案簡介，中文）

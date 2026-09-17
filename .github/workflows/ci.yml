@@ -48,6 +48,7 @@ jobs:
           python scripts/smoke_simulation.py
           python scripts/smoke_escape.py
           python scripts/smoke_web_demo.py
+          python scripts/smoke_embodiment.py
 
   frontend:
     name: frontend (node 22)
